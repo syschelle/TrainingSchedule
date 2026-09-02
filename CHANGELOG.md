@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.2.33 - 2026-09-02
+
+### Security
+
+- Entwicklungsabhaengigkeit `pytest` von 9.0.2 auf 9.1.1 aktualisiert.
+- Behebt den Dependabot-Hinweis `pytest has vulnerable tmpdir handling` (CVE-2025-71176 / GHSA-6w46-j5rx-g56g); betroffen sind pytest-Versionen kleiner 9.0.3.
+- Regressionstest fuer den sicheren pytest-Pin in `requirements-dev.txt` ergaenzt.
+- Keine Aenderung an Runtime-Abhaengigkeiten, Datenbankschema oder Anwendungsfunktion.
+
 ## v0.2.32 - 2026-09-02
 
 ### Security

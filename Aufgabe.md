@@ -1197,3 +1197,13 @@ Die Version wurde auf `v0.2.32` erhoeht.
 - Markdown-Ueberschriften, Aufzaehlungen und Nummerierungen werden beim DOCX-Export nun mit deterministischer Zeichenanalyse statt regulaeren Ausdruecken erkannt.
 - Auch die Inline-Markdown-Verarbeitung und die Erkennung von Word-Ueberschriftenstilen im DOCX-Pfad wurden ohne regulaere Ausdruecke umgesetzt.
 - Regressionstests decken sehr lange unkontrollierte Markdown-Zeilen und fehlerhafte Markdown-Marker ab.
+
+---
+
+# Anpassungsnotiz 2026-09-02 - v0.2.33
+
+- Die Version wurde auf `v0.2.33` erhoeht.
+- Die Entwicklungsabhaengigkeit `pytest` wurde von `9.0.2` auf `9.1.1` aktualisiert.
+- Damit wird der Dependabot-Hinweis `pytest has vulnerable tmpdir handling` (CVE-2025-71176 / GHSA-6w46-j5rx-g56g) behoben; betroffen sind pytest-Versionen kleiner `9.0.3`.
+- Ein Regressionstest prueft den sicheren pytest-Pin in `requirements-dev.txt`.
+- Runtime-Abhaengigkeiten, Datenbankschema und Anwendungsfunktionen bleiben unveraendert.

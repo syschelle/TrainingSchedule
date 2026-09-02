@@ -1,6 +1,10 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.2.32**
+Aktuelle Version: **v0.2.33**
+
+## Security-Hinweis v0.2.33
+
+Die Entwicklungsabhaengigkeit `pytest` ist auf `9.1.1` aktualisiert. Damit liegt sie oberhalb der fuer CVE-2025-71176 / GHSA-6w46-j5rx-g56g gepatchten Mindestversion `9.0.3`. Die Aenderung betrifft ausschliesslich Tests und CI; das Produktionsimage erhaelt dadurch keine zusaetzliche Runtime-Abhaengigkeit.
 
 ## Security-Hinweis v0.2.32
 
@@ -183,12 +187,12 @@ curl http://127.0.0.1:18083/api/health
 Erwartet:
 
 ```json
-{"status":"ok","version":"0.2.32"}
+{"status":"ok","version":"0.2.33"}
 ```
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.2.32` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.2.33` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -196,7 +200,7 @@ Bei einem Release-Tag wie `v0.2.32` baut `.github/workflows/release-image.yml` n
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.32
+ghcr.io/syschelle/schulungsplantool:0.2.33
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -218,7 +222,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.2.32` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.2.33` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -226,7 +230,7 @@ Bei einem Release-Tag wie `v0.2.32` baut der Workflow `.github/workflows/release
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.32
+ghcr.io/syschelle/schulungsplantool:0.2.33
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
