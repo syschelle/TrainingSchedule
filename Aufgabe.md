@@ -1124,3 +1124,15 @@ Die Version wurde auf `v0.2.27` erhoeht.
 - DOCX-Dateien werden nicht persistent gespeichert und nicht an externe Dienste uebertragen.
 - Die DOCX-Verarbeitung und OOXML-Sicherheitspruefung erfolgen vollstaendig lokal im Anwendungscontainer.
 
+---
+
+# 60. Anpassungsnotiz 2026-09-02
+
+Die Version wurde auf `v0.2.28` erhoeht.
+
+- Pro Schulungsinhalt werden dauerhaft maximal 5 Eintraege der Markdown-Aenderungshistorie gespeichert.
+- Beim Speichern oder Wiederherstellen eines sechsten Standes wird automatisch der jeweils aelteste Historieneintrag geloescht.
+- Bereits vorhandene Historien mit mehr als 5 Eintraegen werden beim Start der Anwendung automatisch auf die 5 neuesten Staende reduziert.
+- Die Historienanzeige weist auf die maximale Anzahl von 5 gespeicherten Staenden hin.
+- In der Markdown-Live-Vorschau werden Ueberschriften der Ebene 2 und Ebene 3 mit unterschiedlichen Farben dargestellt, damit die Gliederung schneller erkennbar ist.
+

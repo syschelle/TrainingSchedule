@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, inspect, text
+from sqlalchemy import create_engine, inspect, select, text
 from sqlalchemy.orm import Session
 
 import app.server.content_db as content_db
@@ -7,10 +7,13 @@ from app.server.content_db import (
     Base,
     DEFAULT_PRODUCTS,
     DEFAULT_TRAINING_CONTENTS,
+    TRAINING_CONTENT_HISTORY_LIMIT,
+    TrainingContentRevisionRecord,
     create_product,
     create_training_content,
     seed_database,
     list_training_content_history,
+    prune_training_content_history,
     restore_training_content_revision,
     update_training_content,
     update_training_content_markdown,
@@ -157,6 +160,58 @@ def test_markdown_content_has_persistent_history_and_can_be_restored():
         assert len(history_after_restore) == 3
         assert history_after_restore[0]["change_type"] == "restored"
 
+
+
+def test_markdown_history_keeps_only_five_latest_revisions():
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    with Session(engine) as session:
+        seed_database(session)
+        for index in range(1, 8):
+            updated = update_training_content_markdown(
+                session,
+                "du-diagnost-basic",
+                f"## Version {index}\n\n- Punkt {index}",
+            )
+            assert updated is not None
+
+        history = list_training_content_history(session, "du-diagnost-basic", limit=99)
+        assert history is not None
+        assert len(history) == TRAINING_CONTENT_HISTORY_LIMIT == 5
+        assert "Version 7" in history[0]["markdown_content"]
+        assert "Version 3" in history[-1]["markdown_content"]
+
+        stored = session.scalars(
+            select(TrainingContentRevisionRecord).where(
+                TrainingContentRevisionRecord.content_id == "du-diagnost-basic"
+            )
+        ).all()
+        assert len(stored) == 5
+
+
+def test_existing_history_is_pruned_to_five_revisions_on_cleanup():
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    with Session(engine) as session:
+        seed_database(session)
+        session.add_all([
+            TrainingContentRevisionRecord(
+                content_id="du-diagnost-basic",
+                markdown_content=f"## Altbestand {index}",
+                change_type="saved",
+            )
+            for index in range(1, 8)
+        ])
+        session.commit()
+
+        prune_training_content_history(session)
+
+        stored = session.scalars(
+            select(TrainingContentRevisionRecord).where(
+                TrainingContentRevisionRecord.content_id == "du-diagnost-basic"
+            )
+        ).all()
+        assert len(stored) == TRAINING_CONTENT_HISTORY_LIMIT == 5
 
 def test_existing_training_contents_table_gets_markdown_column(monkeypatch):
     legacy_engine = create_engine("sqlite+pysqlite:///:memory:")

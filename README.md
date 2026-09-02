@@ -1,6 +1,6 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.2.27**
+Aktuelle Version: **v0.2.28**
 
 Lokale Webanwendung zur Erstellung, Bearbeitung, Validierung und zum Export mehrtaegiger Schulungsplaene. Die Anwendung laeuft vollstaendig in Docker und verwendet PostgreSQL fuer den strukturierten Schulungsinhalte-Katalog.
 
@@ -177,12 +177,12 @@ curl http://127.0.0.1:18083/api/health
 Erwartet:
 
 ```json
-{"status":"ok","version":"0.2.27"}
+{"status":"ok","version":"0.2.28"}
 ```
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.2.27` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.2.28` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -190,7 +190,7 @@ Bei einem Release-Tag wie `v0.2.27` baut `.github/workflows/release-image.yml` n
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.27
+ghcr.io/syschelle/schulungsplantool:0.2.28
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -212,7 +212,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.2.27` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.2.28` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -220,7 +220,7 @@ Bei einem Release-Tag wie `v0.2.27` baut der Workflow `.github/workflows/release
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.27
+ghcr.io/syschelle/schulungsplantool:0.2.28
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -268,7 +268,7 @@ Das Produktions-Compose verwendet standardmaessig `ghcr.io/syschelle/schulungspl
 
 Unter `Schulungsinhalte` kann beim ausgewaehlten Inhalt ueber `Schulungspunkte bearbeiten` ein lokaler Markdown-Editor geoeffnet werden. Der Editor zeigt den aktuell gespeicherten Inhalt, bietet eine Live-Vorschau und speichert den Markdown-Quelltext direkt in PostgreSQL.
 
-Bei jeder inhaltlichen Aenderung wird ein neuer Historienstand gespeichert. Die letzten Versionen werden im Editor angezeigt und koennen dort wiederhergestellt werden. Wiederherstellungen werden ebenfalls als neuer Historieneintrag protokolliert. Der Editor verwendet keine externe CDN- oder Cloud-Verbindung.
+Bei jeder inhaltlichen Aenderung wird ein neuer Historienstand gespeichert. Pro Schulungsinhalt werden dauerhaft maximal 5 Historienstaende vorgehalten; beim Speichern einer sechsten Version wird automatisch der aelteste Stand entfernt. Bereits vorhandene Historien mit mehr als 5 Eintraegen werden beim Anwendungsstart auf die 5 neuesten Staende reduziert. Die gespeicherten Versionen koennen im Editor wiederhergestellt werden. Wiederherstellungen werden ebenfalls als neuer Historieneintrag protokolliert und unterliegen derselben 5-Versionen-Grenze. In der Live-Vorschau werden Markdown-Ueberschriften der Ebenen 2 und 3 zur besseren visuellen Unterscheidung unterschiedlich farbig dargestellt. Der Editor verwendet keine externe CDN- oder Cloud-Verbindung.
 
 
 ### DOCX Import und Export fuer Schulungspunkte

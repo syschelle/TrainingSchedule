@@ -26,3 +26,13 @@ def test_markdown_editor_is_present_and_calendar_empty_hint_is_removed() -> None
     assert 'Schulungspunkte bearbeiten' in javascript
     assert 'Keine sichtbaren Bloecke.' not in javascript
     assert 'api/training-contents/${encodeURIComponent(item.id)}/markdown' in javascript
+
+
+def test_markdown_preview_distinguishes_heading_levels_two_and_three() -> None:
+    css = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    assert ".markdown-preview h2 {" in css
+    assert "color: var(--primary);" in css
+    assert ".markdown-preview h3 {" in css
+    assert "color: var(--success);" in css
+    assert "maximal 5 gespeicherte Staende" in html

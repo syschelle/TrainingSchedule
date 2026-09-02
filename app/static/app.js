@@ -874,7 +874,7 @@ async function loadMarkdownHistory(contentId) {
     const response = await fetch(`api/training-contents/${encodeURIComponent(contentId)}/history`);
     if (!response.ok) throw new Error("history");
     const items = (await response.json()).items || [];
-    status.textContent = items.length ? `${items.length} Version${items.length === 1 ? "" : "en"}` : "Noch keine Versionen";
+    status.textContent = items.length ? `${items.length} von max. 5 gespeichert` : "Noch keine Versionen";
     history.innerHTML = items.length ? items.map(markdownHistoryItem).join("") : '<p class="muted">Nach dem ersten Speichern erscheint hier die Aenderungshistorie.</p>';
     history.querySelectorAll("[data-restore-markdown]").forEach((button) => button.addEventListener("click", restoreMarkdownVersion));
   } catch (error) {

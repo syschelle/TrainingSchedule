@@ -1102,8 +1102,14 @@ body.modal-open {
 }
 
 .markdown-preview h1 { font-size: 1.4rem; }
-.markdown-preview h2 { font-size: 1.18rem; }
-.markdown-preview h3 { font-size: 1.02rem; }
+.markdown-preview h2 {
+  color: var(--primary);
+  font-size: 1.18rem;
+}
+.markdown-preview h3 {
+  color: var(--success);
+  font-size: 1.02rem;
+}
 
 .markdown-preview p,
 .markdown-preview ul,

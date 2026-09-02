@@ -11,6 +11,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, rela
 
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite+pysqlite:///:memory:")
+TRAINING_CONTENT_HISTORY_LIMIT = 5
 
 
 class Base(DeclarativeBase):
@@ -227,6 +228,7 @@ def init_database() -> None:
     ensure_training_content_columns()
     with SessionLocal() as session:
         seed_database(session)
+        prune_training_content_history(session)
 
 
 def ensure_training_content_columns() -> None:
@@ -358,6 +360,29 @@ def training_content_to_dict(item: TrainingContentRecord) -> dict:
     }
 
 
+def _prune_training_content_history_for_content(
+    session: Session,
+    content_id: str,
+    keep: int = TRAINING_CONTENT_HISTORY_LIMIT,
+) -> None:
+    session.flush()
+    statement = (
+        select(TrainingContentRevisionRecord)
+        .where(TrainingContentRevisionRecord.content_id == content_id)
+        .order_by(TrainingContentRevisionRecord.created_at.desc(), TrainingContentRevisionRecord.id.desc())
+        .offset(max(0, keep))
+    )
+    for revision in session.scalars(statement).all():
+        session.delete(revision)
+
+
+def prune_training_content_history(session: Session) -> None:
+    content_ids = session.scalars(select(TrainingContentRevisionRecord.content_id).distinct()).all()
+    for content_id in content_ids:
+        _prune_training_content_history_for_content(session, content_id)
+    session.commit()
+
+
 def update_training_content_markdown(session: Session, content_id: str, markdown_content: str, change_type: str = "saved") -> dict | None:
     record = session.get(TrainingContentRecord, content_id)
     if not record:
@@ -370,19 +395,24 @@ def update_training_content_markdown(session: Session, content_id: str, markdown
             markdown_content=markdown_content,
             change_type=change_type,
         ))
+        _prune_training_content_history_for_content(session, content_id)
         session.commit()
         session.refresh(record)
     return training_content_to_dict(record)
 
 
-def list_training_content_history(session: Session, content_id: str, limit: int = 50) -> list[dict] | None:
+def list_training_content_history(
+    session: Session,
+    content_id: str,
+    limit: int = TRAINING_CONTENT_HISTORY_LIMIT,
+) -> list[dict] | None:
     if not session.get(TrainingContentRecord, content_id):
         return None
     statement = (
         select(TrainingContentRevisionRecord)
         .where(TrainingContentRevisionRecord.content_id == content_id)
         .order_by(TrainingContentRevisionRecord.created_at.desc(), TrainingContentRevisionRecord.id.desc())
-        .limit(max(1, min(limit, 100)))
+        .limit(max(1, min(limit, TRAINING_CONTENT_HISTORY_LIMIT)))
     )
     records = session.scalars(statement).all()
     return [training_content_revision_to_dict(item) for item in records]
@@ -399,6 +429,7 @@ def restore_training_content_revision(session: Session, content_id: str, revisio
         markdown_content=revision.markdown_content,
         change_type="restored",
     ))
+    _prune_training_content_history_for_content(session, content_id)
     session.commit()
     session.refresh(record)
     return training_content_to_dict(record)

@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.2.28 - 2026-09-02
+
+### Begrenzte Markdown-Historie und verbesserte Vorschau
+
+- pro Schulungsinhalt werden dauerhaft maximal 5 Markdown-Historienstaende gespeichert
+- beim Speichern oder Wiederherstellen einer sechsten Version wird automatisch der aelteste Historieneintrag entfernt
+- vorhandene Datenbanken mit mehr als 5 Historieneintraegen pro Schulungsinhalt werden beim Start automatisch auf die 5 neuesten Staende bereinigt
+- die Historienanzeige weist sichtbar auf das Maximum von 5 gespeicherten Staenden hin
+- Markdown-Ueberschriften der Ebene 2 werden in der Live-Vorschau in der Primaerfarbe dargestellt
+- Markdown-Ueberschriften der Ebene 3 werden in der Live-Vorschau in einer davon abweichenden Erfolgsfarbe dargestellt
+- automatisierte Regressionstests fuer Historienlimit, Altbestandsbereinigung und Vorschauformatierung hinzugefuegt
+- Version auf v0.2.28 angehoben
+
 ## v0.2.27 - 2026-09-02
 
 ### DOCX Import/Export fuer Schulungspunkte
