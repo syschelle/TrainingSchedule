@@ -1260,3 +1260,13 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Eingabe und bestehender Schulungsplan koennen direkt gewechselt werden, ohne eine Neuberechnung zu starten.
 - Nur der explizite Button `Plan erstellen` darf `/api/plan` aufrufen und einen neuen automatischen Plan erzeugen.
 - Version auf `v0.2.37` erhoeht.
+
+
+## Erweiterung v0.2.38 - Kompakte Trainerverwaltung
+
+- Trainer in den Grunddaten werden als kompakte, responsive Eingabegruppe dargestellt statt je Trainer eine volle Zeile zu belegen.
+- Vorhandene Trainer koennen direkt im kompakten Feld umbenannt oder ueber das unmittelbar zugeordnete `×` entfernt werden.
+- `+ Trainer` fuegt einen weiteren Trainer hinzu und fokussiert das neue Eingabefeld.
+- `Enter` im Trainerfeld speichert den Namen und oeffnet direkt das naechste Feld.
+- Die bestehende Trainerzuordnung von Kalenderbloecken bleibt bei Umbenennen und Entfernen erhalten bzw. wird wie bisher aktualisiert.
+- Version auf `v0.2.38` erhoeht.

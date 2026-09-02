@@ -1006,6 +1006,15 @@ footer {
   .content-card-title {
     grid-template-columns: 1fr;
   }
+
+  .trainer-editor-heading small {
+    display: none;
+  }
+
+  .trainer-row {
+    flex: 1 1 190px;
+    max-width: none;
+  }
 }
 
 
@@ -1234,7 +1243,7 @@ body.modal-open {
 /* v0.2.34 planning import placement and quarter-hour timing */
 .trainer-editor {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .trainer-editor-heading,
@@ -1247,20 +1256,91 @@ body.modal-open {
   gap: 10px;
 }
 
+.trainer-editor-heading {
+  justify-content: flex-start;
+}
+
 .trainer-editor-heading > span {
   font-weight: 800;
 }
 
+.trainer-editor-heading small {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
 .trainer-list {
-  display: grid;
-  gap: 7px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
 }
 
 .trainer-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 7px;
+  display: inline-flex;
+  flex: 0 1 230px;
+  min-width: 175px;
+  max-width: 280px;
   align-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.trainer-name-input {
+  min-width: 0;
+  min-height: 34px;
+  padding: 6px 9px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.trainer-name-input:focus {
+  border-color: transparent;
+  box-shadow: inset 0 0 0 2px rgba(49, 87, 213, 0.18);
+}
+
+.trainer-remove {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  margin-right: 1px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--danger, #dc2626);
+  font-size: 1rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.trainer-remove:hover,
+.trainer-remove:focus {
+  background: rgba(220, 38, 38, 0.09);
+}
+
+.trainer-add-button {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border: 1px dashed rgba(49, 87, 213, 0.45);
+  border-radius: 8px;
+  background: rgba(49, 87, 213, 0.04);
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.trainer-add-button:hover,
+.trainer-add-button:focus {
+  border-style: solid;
+  background: var(--primary-soft);
 }
 
 .trainer-weeks {
@@ -1560,3 +1640,6 @@ body.modal-open {
     grid-column: auto;
   }
 }
+
+
+/* v0.2.38 compact trainer management */

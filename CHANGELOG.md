@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.2.38 - 2026-09-02
+
+### Kompaktere Trainerverwaltung
+
+- Die Trainerverwaltung in den Grunddaten verwendet jetzt kompakte, nebeneinander umbrechende Eingabefelder statt einer vollbreiten Zeile pro Trainer.
+- Hinzufuegen und Entfernen sind direkt an der kompakten Trainerliste erreichbar.
+- `Enter` speichert den aktuellen Namen und oeffnet direkt das Eingabefeld fuer den naechsten Trainer.
+- Neue Trainerfelder werden automatisch fokussiert, damit mehrere Namen schnell hintereinander erfasst werden koennen.
+- Auf schmalen Displays bricht die Liste responsiv um, ohne die Lesbarkeit zu verlieren.
+
 ## v0.2.37 - 2026-09-02
 
 ### Uebersichtsseite, eindeutige Projektdateien und zustandsbehaftete Navigation

@@ -1,7 +1,10 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.2.37**
+Aktuelle Version: **v0.2.38**
 
+## Aenderungen v0.2.38
+
+Die Trainerverwaltung in den Grunddaten ist jetzt deutlich kompakter: vorhandene Trainer stehen in kleinen, nebeneinander umbrechenden Eingabefeldern, der Entfernen-Button sitzt direkt am jeweiligen Namen und ein kompakter `+ Trainer`-Button fuegt weitere Trainer hinzu. Mit `Enter` kann ein Name gespeichert und sofort das naechste Trainerfeld geoeffnet werden. Die Darstellung bleibt auf kleinen Displays responsiv.
 
 ## Aenderungen v0.2.37
 
@@ -206,12 +209,12 @@ curl http://127.0.0.1:18083/api/health
 Erwartet:
 
 ```json
-{"status":"ok","version":"0.2.37"}
+{"status":"ok","version":"0.2.38"}
 ```
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.2.37` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.2.38` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -219,7 +222,7 @@ Bei einem Release-Tag wie `v0.2.37` baut `.github/workflows/release-image.yml` n
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.37
+ghcr.io/syschelle/schulungsplantool:0.2.38
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -241,7 +244,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.2.37` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.2.38` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -249,7 +252,7 @@ Bei einem Release-Tag wie `v0.2.37` baut der Workflow `.github/workflows/release
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.37
+ghcr.io/syschelle/schulungsplantool:0.2.38
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 

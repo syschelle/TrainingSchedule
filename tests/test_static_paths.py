@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.2.37"' in html
+    assert 'src="calendar.js?v=0.2.38"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -182,3 +182,16 @@ def test_input_and_plan_can_switch_without_creating_a_new_plan() -> None:
     assert "createPlan(" not in navigation
     assert javascript.count('fetch("api/plan"') == 1
     assert 'fetch("api/plan"' in javascript.split("async function createPlan()", 1)[1].split("function renderPages()", 1)[0]
+
+
+def test_trainer_editor_is_compact_and_keyboard_friendly() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    css = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
+    assert 'class="trainer-name-input"' in javascript
+    assert 'class="trainer-add-button"' in javascript
+    assert 'handleTrainerKeydown' in javascript
+    assert 'addTrainer(true)' in javascript
+    assert '.trainer-list {' in css
+    assert 'flex-wrap: wrap;' in css
+    assert '.trainer-row {' in css
+    assert 'flex: 0 1 230px;' in css

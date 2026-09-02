@@ -186,20 +186,27 @@ function renderBaseFields() {
   ].join("");
   $("#projectMode").addEventListener("change", updateProjectMode);
   $("#base-fields").querySelectorAll("input[data-field-name]").forEach((input) => input.addEventListener("input", updateProjectField));
-  $("#base-fields").querySelectorAll("input[data-trainer-index]").forEach((input) => input.addEventListener("change", updateTrainerField));
+  $("#base-fields").querySelectorAll("input[data-trainer-index]").forEach((input) => {
+    input.addEventListener("change", updateTrainerField);
+    input.addEventListener("keydown", handleTrainerKeydown);
+  });
   const addTrainerButton = $("#addTrainer");
-  if (addTrainerButton) addTrainerButton.addEventListener("click", addTrainer);
+  if (addTrainerButton) addTrainerButton.addEventListener("click", () => addTrainer(true));
 }
 
 function trainerEditor() {
   const values = Array.isArray(project.trainers) && project.trainers.length ? project.trainers : [""];
   return `<div class="field field-wide trainer-editor">
-    <div class="trainer-editor-heading"><span>Trainer</span><button type="button" id="addTrainer" class="button button-ghost">Trainer hinzufuegen</button></div>
-    <div class="trainer-list">
+    <div class="trainer-editor-heading">
+      <span>Trainer</span>
+      <small>Enter speichert und fuegt den naechsten Trainer hinzu.</small>
+    </div>
+    <div class="trainer-list" role="group" aria-label="Trainer">
       ${values.map((name, index) => `<div class="trainer-row">
-        <input data-trainer-index="${index}" data-original-trainer="${escapeHtml(name)}" value="${escapeHtml(name)}" placeholder="Trainername" autocomplete="off" spellcheck="false">
-        ${values.length > 1 || name ? `<button type="button" class="icon danger" onclick="deleteTrainer(${index})" title="Trainer entfernen">×</button>` : ""}
+        <input class="trainer-name-input" data-trainer-index="${index}" data-original-trainer="${escapeHtml(name)}" value="${escapeHtml(name)}" placeholder="Trainername" autocomplete="off" spellcheck="false" aria-label="Trainer ${index + 1}">
+        ${values.length > 1 || name ? `<button type="button" class="trainer-remove" onclick="deleteTrainer(${index})" title="Trainer entfernen" aria-label="Trainer ${index + 1} entfernen">×</button>` : ""}
       </div>`).join("")}
+      <button type="button" id="addTrainer" class="trainer-add-button" title="Weiteren Trainer hinzufuegen"><span aria-hidden="true">＋</span> Trainer</button>
     </div>
   </div>`;
 }
@@ -226,10 +233,35 @@ function updateTrainerField(event) {
   render();
 }
 
-function addTrainer() {
+function focusTrainerInput(index) {
+  requestAnimationFrame(() => {
+    const input = $(`#base-fields input[data-trainer-index="${index}"]`);
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  });
+}
+
+function addTrainer(focusNew = false) {
   project.trainers = Array.isArray(project.trainers) ? [...project.trainers] : [];
-  if (!project.trainers.length || project.trainers[project.trainers.length - 1].trim()) project.trainers.push("");
+  let index = project.trainers.length - 1;
+  if (!project.trainers.length || project.trainers[index].trim()) {
+    project.trainers.push("");
+    index = project.trainers.length - 1;
+  }
   renderBaseFields();
+  if (focusNew) focusTrainerInput(index);
+}
+
+function handleTrainerKeydown(event) {
+  if (event.key !== "Enter") return;
+  event.preventDefault();
+  const input = event.currentTarget;
+  const index = Number(input.dataset.trainerIndex);
+  updateTrainerField({ target: input });
+  const current = String((project.trainers || [])[index] || "").trim();
+  if (current) addTrainer(true);
 }
 
 function deleteTrainer(index) {
