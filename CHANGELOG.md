@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.2.25 - 2026-09-02
+
+### Traefik Subpath Deployment
+
+- Frontend-Assets verwenden relative URLs und funktionieren damit sowohl am Webroot als auch unter `/trainingschedule/`
+- API-Aufrufe im Browser verwenden relative URLs und bleiben hinter Traefik `StripPrefix` innerhalb des konfigurierten Subpaths
+- Regressionstests pruefen, dass keine absoluten `/styles.css`, `/app.js` oder `/api/...`-Pfade wieder eingefuehrt werden
+- `docker-compose.images.yml` verwendet fuer den Produktivbetrieb standardmaessig `ghcr.io/syschelle/schulungsplantool:latest`
+- Version auf v0.2.25 angehoben
+
 ## v0.2.24 - 2026-09-02
 
 ### Image-Compose und isolierte PostgreSQL-Datenbank

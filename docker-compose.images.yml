@@ -22,7 +22,7 @@ services:
     # The database is reachable only as postgres:5432 inside this Compose network.
 
   schulungsplantool:
-    image: ${APP_IMAGE:-ghcr.io/syschelle/schulungsplantool:0.2.24}
+    image: ${APP_IMAGE:-ghcr.io/syschelle/schulungsplantool:latest}
     pull_policy: always
     container_name: schulungsplantool
     init: true
@@ -30,7 +30,7 @@ services:
       - "${APP_BIND:-0.0.0.0}:${APP_PORT:-18083}:8000"
     environment:
       TZ: ${TZ:-Europe/Berlin}
-      APP_VERSION: 0.2.24
+      APP_VERSION: 0.2.25
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-25}
       DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set in .env}
     depends_on:

@@ -1,6 +1,6 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.2.24**
+Aktuelle Version: **v0.2.25**
 
 Lokale Webanwendung zur Erstellung, Bearbeitung, Validierung und zum Export mehrtaegiger Schulungsplaene. Die Anwendung laeuft vollstaendig in Docker und verwendet PostgreSQL fuer den strukturierten Schulungsinhalte-Katalog.
 
@@ -83,7 +83,7 @@ docker-compose.images.yml
 Verwendet standardmaessig:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.24
+ghcr.io/syschelle/schulungsplantool:0.2.25
 ```
 
 Das Release-Image enthaelt `linux/amd64` und `linux/arm64`; Docker waehlt automatisch die passende Architektur.
@@ -174,12 +174,12 @@ curl http://127.0.0.1:18083/api/health
 Erwartet:
 
 ```json
-{"status":"ok","version":"0.2.24"}
+{"status":"ok","version":"0.2.25"}
 ```
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.2.24` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.2.25` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -187,7 +187,7 @@ Bei einem Release-Tag wie `v0.2.24` baut `.github/workflows/release-image.yml` n
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.24
+ghcr.io/syschelle/schulungsplantool:0.2.25
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -209,7 +209,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.2.24` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.2.25` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -217,7 +217,7 @@ Bei einem Release-Tag wie `v0.2.24` baut der Workflow `.github/workflows/release
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.24
+ghcr.io/syschelle/schulungsplantool:0.2.25
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -253,3 +253,9 @@ schulungsplantool_pgdata
 ```
 
 Es enthaelt ausschliesslich die PostgreSQL-Datenbank. Originale Upload-Dateien werden dort nicht gespeichert.
+
+## Traefik / Betrieb unter einem URL-Unterpfad
+
+Ab v0.2.25 kann die Weboberflaeche sowohl direkt unter `/` als auch hinter einem Reverse Proxy unter einem Unterpfad wie `/trainingschedule/` betrieben werden. Frontend-Assets und Browser-API-Aufrufe verwenden relative URLs. Bei Traefik kann der Prefix daher mit `StripPrefix` entfernt werden, bevor die Anfrage an den Container-Port `8000` weitergeleitet wird.
+
+Das Produktions-Compose verwendet standardmaessig `ghcr.io/syschelle/schulungsplantool:latest`. Mit `APP_IMAGE` in `.env` kann bei Bedarf weiterhin gezielt eine feste Image-Version gesetzt werden.

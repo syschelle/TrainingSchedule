@@ -339,7 +339,7 @@ function renderTopics() {
 
 async function loadTrainingContents() {
   try {
-    const response = await fetch("/api/training-contents");
+    const response = await fetch("api/training-contents");
     if (!response.ok) throw new Error("catalog");
     trainingContents = (await response.json()).items || [];
     syncTopicsFromCatalog();
@@ -382,7 +382,7 @@ function normalizeKey(value) {
 
 async function loadProducts() {
   try {
-    const response = await fetch("/api/products");
+    const response = await fetch("api/products");
     if (!response.ok) throw new Error("products");
     catalogProducts = (await response.json()).items || [];
     mergeCatalogProducts();
@@ -444,7 +444,7 @@ async function createProductLine() {
   button.disabled = true;
   button.textContent = "Anlegen...";
   try {
-    const response = await fetch("/api/products", {
+    const response = await fetch("api/products", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, description: descriptionInput.value.trim() })
@@ -497,7 +497,7 @@ async function addTrainingContent() {
   button.disabled = true;
   button.textContent = "Anlegen...";
   try {
-    const response = await fetch("/api/training-contents", {
+    const response = await fetch("api/training-contents", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ product_id: product.id, title: title.trim() })
@@ -617,7 +617,7 @@ async function saveTrainingContent(event) {
   event.target.disabled = true;
   event.target.textContent = "Speichern...";
   try {
-    const response = await fetch(`/api/training-contents/${encodeURIComponent(item.id)}`, {
+    const response = await fetch(`api/training-contents/${encodeURIComponent(item.id)}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
@@ -661,7 +661,7 @@ function deleteTopic(id) {
 
 async function createPlan() {
   setStatus("Planung wird berechnet...");
-  const response = await fetch("/api/plan", {
+  const response = await fetch("api/plan", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(project)
@@ -950,7 +950,7 @@ function removeBlock(id) {
 }
 
 async function validateAndRender() {
-  const response = await fetch("/api/validate", {
+  const response = await fetch("api/validate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(project)
@@ -983,7 +983,7 @@ function renderWarnings() {
 
 async function downloadExport(format) {
   setStatus(`${format.toUpperCase()} wird erstellt...`);
-  const response = await fetch("/api/export", {
+  const response = await fetch("api/export", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ project, format })

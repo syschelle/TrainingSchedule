@@ -1,4 +1,4 @@
-# Produktionsinstallation v0.2.24
+# Produktionsinstallation v0.2.25
 
 ## 1. Repository klonen
 
@@ -53,10 +53,10 @@ docker compose -f docker-compose.images.yml pull
 docker compose -f docker-compose.images.yml up -d --remove-orphans
 ```
 
-Standard-Image fuer v0.2.24:
+Standard-Image fuer v0.2.25:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.24
+ghcr.io/syschelle/schulungsplantool:0.2.25
 ```
 
 Unterstuetzte Architekturen: `linux/amd64` und `linux/arm64`.

@@ -1078,3 +1078,16 @@ Die Version wurde auf `v0.2.24` erhoeht.
 - Anwendung und PostgreSQL kommunizieren ueber das dedizierte Compose-Netz `schulungsplantool_backend`.
 - CI und Release-Workflow validieren beide Compose-Dateien.
 
+
+---
+
+# 57. Anpassungsnotiz 2026-09-02
+
+Die Version wurde auf `v0.2.25` erhoeht.
+
+- Die Weboberflaeche ist nun fuer den Betrieb hinter einem Reverse Proxy unter einem URL-Unterpfad wie `/trainingschedule/` ausgelegt.
+- CSS und JavaScript werden mit relativen Pfaden geladen, damit Traefik `StripPrefix` korrekt verwendet werden kann.
+- Browserseitige API-Aufrufe verwenden relative `api/...`-Pfade statt absoluter `/api/...`-Pfade.
+- Der direkte Betrieb am Webroot bleibt weiterhin moeglich.
+- Regressionstests verhindern, dass absolute Frontend-/API-Pfade versehentlich wieder eingefuehrt werden.
+- `docker-compose.images.yml` verwendet standardmaessig `ghcr.io/syschelle/schulungsplantool:latest`.
