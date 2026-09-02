@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Schulungsplantool</title>
+  <link rel="stylesheet" href="/styles.css?v=0.2.22">
+  <script defer src="/app.js?v=0.2.22"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="header-main">
+      <button type="button" id="openMenu" class="menu-toggle" aria-label="Navigation umschalten">☰</button>
+      <div class="topbar-title">
+        <p id="headerProduct" class="eyebrow">Aktives Produkt: DeepUnity PACS</p>
+        <h1>Schulungsplantool</h1>
+        <p id="headerContext" class="subtitle">DeepUnity Schulungsplan - Mehrtaegige Trainings planen, pruefen und exportieren.</p>
+      </div>
+    </div>
+    <button type="button" id="autoPlan" class="feedback-link header-button">Plan erstellen</button>
+    <div class="topbar-actions">
+      <button type="button" id="resetDemo" class="feedback-link header-button">Standarddaten</button>
+      <span class="version">v0.2.22</span>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside id="sideMenu" class="side-menu" aria-label="Seitennavigation">
+      <p class="eyebrow">Navigation</p>
+      <nav class="menu-nav">
+        <button type="button" data-page="input" class="menu-nav-button active">Eingabe</button>
+        <button type="button" data-page="products" class="menu-nav-button">Produktdaten</button>
+        <button type="button" data-page="contents" class="menu-nav-button">Schulungsinhalte</button>
+        <button type="button" data-page="plan" class="menu-nav-button">Schulungsplan</button>
+      </nav>
+    </aside>
+
+    <div class="main-content">
+      <section id="input-page" class="workspace app-page active">
+        <form id="planner-form" autocomplete="off" novalidate>
+        <div class="card">
+          <div class="card-heading">
+            <div>
+              <p class="step">1</p>
+              <h2>Grunddaten</h2>
+            </div>
+          </div>
+          <div id="base-fields" class="field-grid"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-heading">
+            <div>
+              <p class="step">2</p>
+              <h2>Planungsregeln</h2>
+            </div>
+          </div>
+          <div id="settings-fields" class="field-grid"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-heading">
+            <div>
+              <p class="step">3</p>
+              <h2>Teilnehmergruppen</h2>
+            </div>
+            <button type="button" id="addGroup" class="button button-ghost">Gruppe</button>
+          </div>
+          <div id="participant-group-panel" class="participant-groups"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-heading">
+            <div>
+              <p class="step">4</p>
+              <h2>Schulungsthemen</h2>
+            </div>
+            <button type="button" id="addTopic" class="button button-ghost">Thema</button>
+          </div>
+          <div id="topic-list" class="topic-list"></div>
+        </div>
+        </form>
+
+      </section>
+
+      <section id="products-page" class="workspace app-page">
+        <div class="card">
+          <div class="card-heading">
+            <div>
+              <h2>Produktdaten</h2>
+            </div>
+          </div>
+          <div id="product-menu-panel" class="input-product-panel"></div>
+        </div>
+      </section>
+
+      <section id="contents-page" class="workspace app-page">
+        <div class="card">
+          <div class="card-heading">
+          <div>
+            <h2>Hinterlegte Schulungsinhalte</h2>
+          </div>
+          <div class="card-heading-actions">
+            <button type="button" id="addTrainingContent" class="button button-secondary">Inhalt anlegen</button>
+            <span id="catalog-status" class="muted">Katalog wird geladen.</span>
+          </div>
+          </div>
+          <div class="content-manager">
+            <nav id="content-link-list" class="content-link-list" aria-label="Schulungsinhalte"></nav>
+            <div id="content-detail" class="content-detail"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="plan-page" class="workspace app-page">
+        <aside class="card output-card plan-card" aria-live="polite">
+        <div class="card-heading">
+          <div>
+            <p class="step">5</p>
+            <h2>Schulungsplan</h2>
+          </div>
+          <div class="card-heading-actions">
+            <button type="button" id="backToInput" class="button button-ghost">Eingabe</button>
+            <button type="button" id="exportPdf" class="button button-primary">PDF</button>
+            <button type="button" id="exportXlsx" class="button button-primary">XLSX</button>
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button type="button" data-tab="overview" class="button button-secondary active">Uebersicht</button>
+          <button type="button" data-tab="week" class="button button-secondary">Woche</button>
+          <button type="button" data-tab="preview" class="button button-secondary">Vorschau</button>
+        </div>
+
+        <div id="status-line" class="status">Bereit.</div>
+        <div id="warnings" class="warnings"></div>
+        <div id="tab-overview" class="tab-panel active"></div>
+        <div id="tab-week" class="tab-panel"></div>
+        <div id="tab-preview" class="tab-panel"></div>
+        </aside>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <span>Schulungsplantool v0.2.22</span>
+  </footer>
+</body>
+</html>

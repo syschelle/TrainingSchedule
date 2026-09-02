@@ -1,0 +1,141 @@
+from __future__ import annotations
+
+from datetime import date
+from enum import Enum
+from typing import Literal
+
+from pydantic import BaseModel, Field
+
+
+class BlockType(str, Enum):
+    training = "training"
+    break_block = "break"
+    lunch = "lunch"
+    arrival = "arrival"
+    departure = "departure"
+
+
+class PlanningSettings(BaseModel):
+    day_start: str = "08:30"
+    day_end: str = "17:00"
+    break_min_minutes: int = 20
+    break_max_minutes: int = 30
+    break_preferred_minutes: int = 25
+    lunch_minutes: int = 45
+    lunch_window_start: str = "12:00"
+    lunch_window_end: str = "14:00"
+    monday_arrival_enabled: bool = True
+    monday_arrival_start: str = "08:30"
+    monday_arrival_end: str = "10:00"
+    monday_arrival_label: str = "Anreise / Eintreffen der Teilnehmer"
+    thursday_departure_enabled: bool = True
+    thursday_departure_start: str = "15:00"
+    thursday_departure_end: str = "17:00"
+    thursday_departure_label: str = "Abreise"
+    friday_training_enabled: bool = False
+
+
+class TrainingTopic(BaseModel):
+    id: str
+    product_id: str = "deepunity-pacs"
+    participant_group_id: str | None = None
+    participant_group_ids: list[str] = Field(default_factory=list)
+    title: str
+    description: str = ""
+    duration_minutes: int = Field(gt=0)
+    priority: int = 3
+    preferred_day: str | None = None
+    preferred_order: int | None = None
+    depends_on: str | None = None
+    trainer: str = ""
+    room: str = ""
+    notes: str = ""
+    participants_per_session: int | None = None
+    sessions_required: float | None = None
+    background_color: str = "#eaf8f2"
+
+
+class ScheduleBlock(BaseModel):
+    id: str
+    type: BlockType
+    week: int = 1
+    day: str
+    title: str
+    start: str
+    end: str
+    topic_id: str | None = None
+    description: str = ""
+    trainer: str = ""
+    room: str = ""
+    notes: str = ""
+    background_color: str = "#ffffff"
+
+
+class ParticipantGroup(BaseModel):
+    id: str
+    product_id: str = "deepunity-pacs"
+    name: str
+    participant_count: int = 0
+    notes: str = ""
+
+
+class ProductLine(BaseModel):
+    id: str
+    name: str
+    description: str = ""
+    participant_groups: list[ParticipantGroup] = Field(default_factory=list)
+
+
+class TrainingProject(BaseModel):
+    title: str = "DeepUnity Schulungsplan"
+    project_mode: Literal["training_plan", "service_calculation"] = "training_plan"
+    customer_data_required: bool = True
+    customer_name: str = ""
+    location: str = ""
+    product_id: str = "deepunity-pacs"
+    trainer: str = ""
+    participant_group: str = ""
+    product_lines: list[ProductLine] = Field(default_factory=list)
+    start_date: date | None = None
+    end_date: date | None = None
+    settings: PlanningSettings = Field(default_factory=PlanningSettings)
+    topics: list[TrainingTopic] = Field(default_factory=list)
+    blocks: list[ScheduleBlock] = Field(default_factory=list)
+    manual_weeks: list[int] = Field(default_factory=list)
+    unscheduled_topics: list[TrainingTopic] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+
+
+class ImportSummary(BaseModel):
+    excel: dict
+    pdfs: list[dict]
+    project: TrainingProject
+
+
+class TrainingContentUpdate(BaseModel):
+    title: str
+    target_group: str = ""
+    duration_minutes: int = Field(gt=0)
+    max_participants: int | None = Field(default=None, gt=0)
+    dependency_content_id: str | None = None
+    participant_group_ids: list[str] = Field(default_factory=list)
+    background_color: str = "#eaf8f2"
+    goals: str = ""
+    requirements: str = ""
+    preparation: str = ""
+    special_notes: str = ""
+
+
+class TrainingContentCreate(BaseModel):
+    product_id: str
+    title: str
+
+
+class ProductCreate(BaseModel):
+    name: str
+    description: str = ""
+
+
+class ExportRequest(BaseModel):
+    project: TrainingProject
+    format: Literal["pdf", "xlsx"]

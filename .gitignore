@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Node / frontend tooling
+node_modules/
+dist/
+
+# Runtime / local configuration
+.env
+.env.*.local
+tmp/
+backups/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Historical source-material directory must never be part of deployment
+Aufgabe/

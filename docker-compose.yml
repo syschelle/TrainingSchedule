@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: schulungsplantool-postgres
+    environment:
+      TZ: ${TZ:-Europe/Berlin}
+      POSTGRES_DB: ${POSTGRES_DB:-schulungsplantool}
+      POSTGRES_USER: ${POSTGRES_USER:-schulungsplantool}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
+    volumes:
+      - schulungsplantool_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-schulungsplantool} -d ${POSTGRES_DB:-schulungsplantool}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  schulungsplantool:
+    image: ${APP_IMAGE:-schulungsplantool:0.2.22}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: schulungsplantool
+    init: true
+    ports:
+      - "${APP_BIND:-0.0.0.0}:${APP_PORT:-18083}:8000"
+    environment:
+      TZ: ${TZ:-Europe/Berlin}
+      APP_VERSION: 0.2.22
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-25}
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set in .env}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=4).read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+volumes:
+  schulungsplantool_pgdata:
+    name: schulungsplantool_pgdata
