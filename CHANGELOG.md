@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.2.32 - 2026-09-02
+
+### Security
+
+- `python-multipart` von 0.0.21 auf 0.0.32 aktualisiert.
+- `pypdf` von 6.4.1 auf 6.16.2 aktualisiert.
+- `requirements-dev.txt` enthaelt Runtime-Abhaengigkeiten nicht mehr indirekt; CI installiert Runtime- und Dev-Abhaengigkeiten getrennt, damit Dependabot-Funde nicht doppelt aus beiden Dateien entstehen.
+- Drei CodeQL-High-Funde (`Polynomial regular expression used on uncontrolled data`) im DOCX-Export behoben. Die Erkennung von Markdown-Ueberschriften, Aufzaehlungen und nummerierten Listen verwendet nun deterministische Zeichenanalyse statt regulaerer Ausdruecke.
+- Weitere regulaere Ausdruecke im DOCX-Roundtrip wurden aus dem unkontrollierten Markdown-Pfad entfernt, um neue ReDoS-Funde vorzubeugen.
+- Regressionstests fuer sehr lange, unkontrollierte Markdown-Zeilen und fehlerhafte Markdown-Marker ergaenzt.
+
 ## v0.2.31 - 2026-09-02
 
 ### Mehrtrainer-Kalender, Kalender-PDF und Planungsdatei

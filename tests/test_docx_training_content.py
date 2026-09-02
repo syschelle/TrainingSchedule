@@ -83,3 +83,27 @@ def test_docx_import_accepts_supported_word_content():
     assert "**Fett** und *kursiv*" in imported
     assert "- Erster Punkt" in imported
     assert "1. Erster Schritt" in imported
+
+
+def test_docx_export_parser_handles_long_untrusted_markdown_without_regex_backtracking():
+    # Regression for CodeQL alerts #1-#3: heading/list classification must be
+    # deterministic on attacker-controlled Markdown lines and not use regexes.
+    long_text = "x" * 100_000
+    markdown = "\n".join(
+        [
+            f"### {long_text}",
+            f"- {long_text}",
+            f"1234567890. {long_text}",
+        ]
+    )
+    result = export_training_content_docx("Security regression", markdown)
+    assert result.startswith(b"PK")
+
+
+def test_docx_export_leaves_malformed_markdown_markers_as_plain_text():
+    markdown = "#### not-supported\n-\n42.no-space\n*unterminated **bold**"
+    result = export_training_content_docx("Malformed", markdown)
+    imported = import_training_content_docx(result)
+    assert "#### not-supported" in imported
+    assert "42.no-space" in imported
+    assert "unterminated" in imported

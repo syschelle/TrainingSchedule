@@ -1182,3 +1182,18 @@ Die Version wurde auf `v0.2.31` erhoeht.
 - Ueber `Planung exportieren` kann der komplette aktuelle Projekt-/Planungsstand als lokale JSON-Projektdatei heruntergeladen werden.
 - Ueber `Planung importieren` kann eine zuvor exportierte Projektdatei validiert und wiederhergestellt werden, sodass Trainer, Themen, Wochen, Bloecke, Zeiten, Farben, Teilnehmerdaten und weitere Projekteinstellungen erneut angezeigt werden.
 - Die Projektdatei wird beim Import nur im Request verarbeitet und nicht dauerhaft serverseitig gespeichert.
+
+---
+
+# 64. Anpassungsnotiz 2026-09-02
+
+Die Version wurde auf `v0.2.32` erhoeht.
+
+- Security-Maintenance-Release fuer Dependabot- und CodeQL-Funde.
+- `python-multipart` wurde auf `0.0.32` aktualisiert.
+- `pypdf` wurde auf `6.16.2` aktualisiert.
+- Runtime-Abhaengigkeiten werden nicht mehr ueber `requirements-dev.txt` gespiegelt, damit Dependabot-Funde nicht doppelt fuer beide Requirements-Dateien entstehen.
+- Die drei CodeQL-High-Funde zu polynomialen regulaeren Ausdruecken in `app/server/docx_content.py` wurden ohne Suppression behoben.
+- Markdown-Ueberschriften, Aufzaehlungen und Nummerierungen werden beim DOCX-Export nun mit deterministischer Zeichenanalyse statt regulaeren Ausdruecken erkannt.
+- Auch die Inline-Markdown-Verarbeitung und die Erkennung von Word-Ueberschriftenstilen im DOCX-Pfad wurden ohne regulaere Ausdruecke umgesetzt.
+- Regressionstests decken sehr lange unkontrollierte Markdown-Zeilen und fehlerhafte Markdown-Marker ab.

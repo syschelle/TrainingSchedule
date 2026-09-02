@@ -41,7 +41,7 @@ def sample_project() -> TrainingProject:
 
 def test_project_file_roundtrip_preserves_planning_state():
     project = sample_project()
-    payload = ProjectFile(app_version="0.2.31", exported_at="2026-09-02T12:00:00+00:00", project=project)
+    payload = ProjectFile(app_version="0.2.32", exported_at="2026-09-02T12:00:00+00:00", project=project)
     restored = ProjectFile.model_validate(payload.model_dump(mode="json"))
     assert restored.project.model_dump(mode="json") == project.model_dump(mode="json")
     assert restored.project.trainers == ["Trainer A", "Trainer B"]

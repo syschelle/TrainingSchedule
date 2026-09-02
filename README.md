@@ -1,6 +1,10 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.2.31**
+Aktuelle Version: **v0.2.32**
+
+## Security-Hinweis v0.2.32
+
+Dieser Stand aktualisiert die direkt verwendeten Pakete `python-multipart` auf `0.0.32` und `pypdf` auf `6.16.2`. Die von CodeQL gemeldeten polynomialen regulaeren Ausdruecke im DOCX-Export wurden durch deterministische Parser fuer Markdown-Ueberschriften, Listen und Inline-Formatierung ersetzt. `requirements-dev.txt` referenziert die Runtime-Abhaengigkeiten nicht mehr; CI installiert `requirements.txt` und `requirements-dev.txt` separat.
 
 Lokale Webanwendung zur Erstellung, Bearbeitung, Validierung und zum Export mehrtaegiger Schulungsplaene. Die Anwendung laeuft vollstaendig in Docker und verwendet PostgreSQL fuer den strukturierten Schulungsinhalte-Katalog.
 
@@ -179,12 +183,12 @@ curl http://127.0.0.1:18083/api/health
 Erwartet:
 
 ```json
-{"status":"ok","version":"0.2.31"}
+{"status":"ok","version":"0.2.32"}
 ```
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.2.31` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.2.32` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -192,7 +196,7 @@ Bei einem Release-Tag wie `v0.2.31` baut `.github/workflows/release-image.yml` n
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.31
+ghcr.io/syschelle/schulungsplantool:0.2.32
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -214,7 +218,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.2.31` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.2.32` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -222,7 +226,7 @@ Bei einem Release-Tag wie `v0.2.31` baut der Workflow `.github/workflows/release
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.31
+ghcr.io/syschelle/schulungsplantool:0.2.32
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -325,6 +329,6 @@ Ueber `Planung exportieren` wird der komplette aktuelle Projektzustand als lokal
 
 ## PDF-Kalenderexport
 
-Der PDF-Export wird ab v0.2.31 als A4-Querformat erzeugt. Die Seiten folgen derselben chronologischen Struktur wie die Kalender-/Druckvorschau: zuerst Kalenderwoche, darin je Trainer eine eigene Wochenansicht. Bei mehreren Trainern und mehreren Wochen entstehen die PDF-Seiten in der Reihenfolge `Woche 1 / Trainer 1`, `Woche 1 / Trainer 2`, danach `Woche 2 / Trainer 1` usw.
+Der PDF-Export wird ab v0.2.32 als A4-Querformat erzeugt. Die Seiten folgen derselben chronologischen Struktur wie die Kalender-/Druckvorschau: zuerst Kalenderwoche, darin je Trainer eine eigene Wochenansicht. Bei mehreren Trainern und mehreren Wochen entstehen die PDF-Seiten in der Reihenfolge `Woche 1 / Trainer 1`, `Woche 1 / Trainer 2`, danach `Woche 2 / Trainer 1` usw.
 
 Der PDF-Kalender zeigt dieselbe Montag-bis-Freitag-Zeitachse, Datumswerte, DACH-Feiertagshinweise sowie die farbigen sichtbaren Schulungs-, Anreise- und Abreisebloecke. Normale Pausen und Mittagspausen bleiben wie in der Browser-Kalenderansicht ausgeblendet.

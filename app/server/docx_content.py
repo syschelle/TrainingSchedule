@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from io import BytesIO
 from pathlib import PurePosixPath
-import re
 from zipfile import BadZipFile, ZipFile, is_zipfile
 from xml.etree import ElementTree as ET
 
@@ -113,9 +112,7 @@ def import_training_content_docx(data: bytes) -> str:
         else:
             lines.append(text)
 
-    markdown = "\n".join(lines).strip()
-    markdown = re.sub(r"\n{3,}", "\n\n", markdown)
-    return markdown
+    return _collapse_blank_lines("\n".join(lines).strip())
 
 
 def export_training_content_docx(title: str, markdown_content: str) -> bytes:
@@ -135,22 +132,23 @@ def export_training_content_docx(title: str, markdown_content: str) -> bytes:
             document.add_paragraph("")
             continue
 
-        heading = re.match(r"^(#{1,3})\s+(.+)$", line)
-        if heading:
-            paragraph = document.add_heading(level=len(heading.group(1)))
-            _add_markdown_inline_runs(paragraph, heading.group(2))
+        heading = _parse_heading_line(line)
+        if heading is not None:
+            level, content = heading
+            paragraph = document.add_heading(level=level)
+            _add_markdown_inline_runs(paragraph, content)
             continue
 
-        bullet = re.match(r"^[-*]\s+(.+)$", line)
-        if bullet:
+        bullet = _parse_bullet_line(line)
+        if bullet is not None:
             paragraph = document.add_paragraph(style="List Bullet")
-            _add_markdown_inline_runs(paragraph, bullet.group(1))
+            _add_markdown_inline_runs(paragraph, bullet)
             continue
 
-        numbered = re.match(r"^\d+\.\s+(.+)$", line)
-        if numbered:
+        numbered = _parse_numbered_line(line)
+        if numbered is not None:
             paragraph = document.add_paragraph(style="List Number")
-            _add_markdown_inline_runs(paragraph, numbered.group(1))
+            _add_markdown_inline_runs(paragraph, numbered)
             continue
 
         paragraph = document.add_paragraph()
@@ -185,29 +183,110 @@ def _add_usage_notice_to_header(document: Document) -> None:
     run.font.size = Pt(8)
 
 
-def _add_markdown_inline_runs(paragraph, value: str) -> None:
-    token_re = re.compile(r"(\*\*\*.+?\*\*\*|\*\*.+?\*\*|\*.+?\*|`.+?`)")
+def _collapse_blank_lines(value: str) -> str:
+    if not value:
+        return value
+    output: list[str] = []
+    newline_run = 0
+    for char in value:
+        if char == "\n":
+            newline_run += 1
+            if newline_run <= 2:
+                output.append(char)
+        else:
+            newline_run = 0
+            output.append(char)
+    return "".join(output)
+
+
+def _skip_whitespace(value: str, position: int) -> int:
+    while position < len(value) and value[position].isspace():
+        position += 1
+    return position
+
+
+def _parse_heading_line(line: str) -> tuple[int, str] | None:
+    level = 0
+    while level < len(line) and level < 4 and line[level] == "#":
+        level += 1
+    if level not in {1, 2, 3} or level >= len(line) or not line[level].isspace():
+        return None
+    content_start = _skip_whitespace(line, level)
+    if content_start >= len(line):
+        return None
+    return level, line[content_start:]
+
+
+def _parse_bullet_line(line: str) -> str | None:
+    if len(line) < 2 or line[0] not in {"-", "*"} or not line[1].isspace():
+        return None
+    content_start = _skip_whitespace(line, 1)
+    if content_start >= len(line):
+        return None
+    return line[content_start:]
+
+
+def _parse_numbered_line(line: str) -> str | None:
     position = 0
-    for match in token_re.finditer(value):
-        if match.start() > position:
-            paragraph.add_run(value[position:match.start()])
-        token = match.group(0)
-        if token.startswith("***") and token.endswith("***"):
-            run = paragraph.add_run(token[3:-3])
+    while position < len(line) and line[position].isdigit():
+        position += 1
+    if position == 0 or position >= len(line) or line[position] != ".":
+        return None
+    position += 1
+    if position >= len(line) or not line[position].isspace():
+        return None
+    content_start = _skip_whitespace(line, position)
+    if content_start >= len(line):
+        return None
+    return line[content_start:]
+
+
+def _next_inline_marker(value: str, position: int) -> int:
+    star = value.find("*", position)
+    code = value.find("`", position)
+    if star == -1:
+        return code
+    if code == -1:
+        return star
+    return min(star, code)
+
+
+def _add_markdown_inline_runs(paragraph, value: str) -> None:
+    position = 0
+    while position < len(value):
+        marker_start = _next_inline_marker(value, position)
+        if marker_start == -1:
+            paragraph.add_run(value[position:])
+            return
+        if marker_start > position:
+            paragraph.add_run(value[position:marker_start])
+
+        if value[marker_start] == "`":
+            delimiter = "`"
+        elif value.startswith("***", marker_start):
+            delimiter = "***"
+        elif value.startswith("**", marker_start):
+            delimiter = "**"
+        else:
+            delimiter = "*"
+
+        content_start = marker_start + len(delimiter)
+        marker_end = value.find(delimiter, content_start)
+        if marker_end <= content_start:
+            paragraph.add_run(value[marker_start:])
+            return
+
+        run = paragraph.add_run(value[content_start:marker_end])
+        if delimiter == "***":
             run.bold = True
             run.italic = True
-        elif token.startswith("**") and token.endswith("**"):
-            run = paragraph.add_run(token[2:-2])
+        elif delimiter == "**":
             run.bold = True
-        elif token.startswith("*") and token.endswith("*"):
-            run = paragraph.add_run(token[1:-1])
+        elif delimiter == "*":
             run.italic = True
         else:
-            run = paragraph.add_run(token[1:-1])
             run.font.name = "Consolas"
-        position = match.end()
-    if position < len(value):
-        paragraph.add_run(value[position:])
+        position = marker_end + len(delimiter)
 
 
 def _paragraph_to_markdown(paragraph) -> str:
@@ -239,8 +318,11 @@ def _heading_level(paragraph) -> int | None:
     for level in (1, 2, 3):
         if style_id in {f"heading{level}", f"berschrift{level}"}:
             return level
-        if re.search(rf"(?:heading|ueberschrift|überschrift)\s*{level}$", style_name):
-            return level
+        compact_name = style_name.rstrip()
+        if compact_name.endswith(str(level)):
+            prefix = compact_name[:-1].rstrip()
+            if prefix in {"heading", "ueberschrift", "überschrift"}:
+                return level
     return None
 
 
