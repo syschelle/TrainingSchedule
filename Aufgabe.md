@@ -1136,3 +1136,18 @@ Die Version wurde auf `v0.2.28` erhoeht.
 - Die Historienanzeige weist auf die maximale Anzahl von 5 gespeicherten Staenden hin.
 - In der Markdown-Live-Vorschau werden Ueberschriften der Ebene 2 und Ebene 3 mit unterschiedlichen Farben dargestellt, damit die Gliederung schneller erkennbar ist.
 
+---
+
+# 61. Anpassungsnotiz 2026-09-02
+
+Die Version wurde auf `v0.2.29` erhoeht.
+
+- Die Vorbelegung fuer Kunde und Standort wurde entfernt.
+- Der vorbelegte Trainer wurde entfernt.
+- Bei gesetztem Startdatum zeigt die Kalenderansicht pro Wochentag das konkrete Datum an.
+- Mehrwoechige Plaene berechnen den Datumsbereich jeder weiteren Woche automatisch.
+- Direkt am Kalendertag werden lokale DACH-Feiertagshinweise angezeigt.
+- Beruecksichtigt werden landesweite Feiertage fuer Deutschland und Oesterreich sowie die Schweizer Bundesfeier.
+- Regionale Feiertage werden ohne Bundesland-/Kantonsauswahl nicht als sicher geltend dargestellt.
+- Die Feiertagsberechnung benoetigt keine externe API oder Cloud-Verbindung.
+

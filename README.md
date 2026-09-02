@@ -1,6 +1,6 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.2.28**
+Aktuelle Version: **v0.2.29**
 
 Lokale Webanwendung zur Erstellung, Bearbeitung, Validierung und zum Export mehrtaegiger Schulungsplaene. Die Anwendung laeuft vollstaendig in Docker und verwendet PostgreSQL fuer den strukturierten Schulungsinhalte-Katalog.
 
@@ -12,7 +12,8 @@ Lokale Webanwendung zur Erstellung, Bearbeitung, Validierung und zum Export mehr
 - automatische Planung fuer Montag bis Donnerstag, optional Freitag
 - mehrere Schulungswochen
 - Kernarbeitszeiten, Anreise-, Abreise-, Pausen- und Mittagspausenregeln
-- Kalenderansicht mit Viertelstundenraster
+- Kalenderansicht mit Viertelstundenraster und konkreten Datumswerten aus dem Startdatum
+- lokale DACH-Feiertagshinweise direkt am Kalendertag (DE/AT landesweit, CH Bundesfeier)
 - Drag-and-Drop von Schulungsbloecken zwischen Zeiten, Tagen und Wochen
 - Ausschneiden und Einfuegen von Bloecken
 - Live-Validierung
@@ -177,12 +178,12 @@ curl http://127.0.0.1:18083/api/health
 Erwartet:
 
 ```json
-{"status":"ok","version":"0.2.28"}
+{"status":"ok","version":"0.2.29"}
 ```
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.2.28` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.2.29` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -190,7 +191,7 @@ Bei einem Release-Tag wie `v0.2.28` baut `.github/workflows/release-image.yml` n
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.28
+ghcr.io/syschelle/schulungsplantool:0.2.29
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -212,7 +213,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.2.28` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.2.29` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -220,7 +221,7 @@ Bei einem Release-Tag wie `v0.2.28` baut der Workflow `.github/workflows/release
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.28
+ghcr.io/syschelle/schulungsplantool:0.2.29
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -263,6 +264,12 @@ Ab v0.2.25 kann die Weboberflaeche sowohl direkt unter `/` als auch hinter einem
 
 Das Produktions-Compose verwendet standardmaessig `ghcr.io/syschelle/schulungsplantool:latest`. Mit `APP_IMAGE` in `.env` kann bei Bedarf weiterhin gezielt eine feste Image-Version gesetzt werden.
 
+
+## Kalenderdatum und DACH-Feiertagshinweise
+
+Sobald ein Startdatum gesetzt ist, zeigt die Kalenderansicht neben jedem Wochentag das konkrete Datum an. Weitere manuell oder automatisch angelegte Wochen werden jeweils um sieben Tage fortgeschrieben. Das Startdatum wird wie im Export der zugehoerigen Kalenderwoche zugeordnet; die Kalenderansicht beginnt dabei am Montag dieser Woche.
+
+Direkt am betroffenen Kalendertag koennen Feiertagshinweise erscheinen. Die Berechnung erfolgt vollstaendig lokal im Browser und benoetigt keine externe Feiertags-API. Beruecksichtigt werden die landesweit geltenden Feiertage fuer Deutschland und Oesterreich sowie die Schweizer Bundesfeier. Regionale Feiertage sind ohne Auswahl von Bundesland bzw. Kanton nicht eindeutig und werden deshalb derzeit bewusst nicht als sicher geltender Feiertag angezeigt.
 
 ## Markdown-Schulungspunkte
 

@@ -1,4 +1,4 @@
-# Produktionsinstallation v0.2.28
+# Produktionsinstallation v0.2.29
 
 ## 1. Repository klonen
 
@@ -38,7 +38,7 @@ curl http://127.0.0.1:18083/api/health
 ./update.sh
 ```
 
-Das PostgreSQL-Volume `schulungsplantool_pgdata` bleibt erhalten. Falls eine Installation noch von einem Stand vor v0.2.26 kommt, werden das Markdown-Feld und die Historientabelle beim Start automatisch angelegt. v0.2.28 benoetigt keine manuelle Datenbankmigration. Beim Start werden bestehende Markdown-Historien automatisch auf maximal 5 Eintraege pro Schulungsinhalt begrenzt.
+Das PostgreSQL-Volume `schulungsplantool_pgdata` bleibt erhalten. Falls eine Installation noch von einem Stand vor v0.2.26 kommt, werden das Markdown-Feld und die Historientabelle beim Start automatisch angelegt. v0.2.29 benoetigt keine manuelle Datenbankmigration. Beim Start werden bestehende Markdown-Historien automatisch auf maximal 5 Eintraege pro Schulungsinhalt begrenzt.
 
 ## 6. Backup
 
@@ -59,7 +59,7 @@ Standard-Image fuer die Produktion:
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
-Fuer reproduzierbare Rollbacks steht zusaetzlich der Versions-Tag `ghcr.io/syschelle/schulungsplantool:0.2.28` zur Verfuegung.
+Fuer reproduzierbare Rollbacks steht zusaetzlich der Versions-Tag `ghcr.io/syschelle/schulungsplantool:0.2.29` zur Verfuegung.
 
 Unterstuetzte Architekturen: `linux/amd64` und `linux/arm64`.
 

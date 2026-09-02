@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.2.29 - 2026-09-02
+
+### Leere Kundendaten, Kalenderdatum und DACH-Feiertagshinweise
+
+- die Demo-Vorbelegung fuer Kunde und Standort wurde entfernt
+- der vorbelegte Trainer wurde entfernt
+- Kundendaten und Trainer starten bei neuen bzw. zurueckgesetzten Projekten leer
+- bei gesetztem Startdatum zeigt jeder Kalendertag sein konkretes Datum an
+- mehrere Kalenderwochen berechnen ihre Datumswerte automatisch aus dem Startdatum
+- die Wochenueberschrift zeigt den Datumsbereich Montag bis Freitag
+- landesweite Feiertage fuer Deutschland und Oesterreich werden direkt am betreffenden Kalendertag angezeigt
+- fuer die Schweiz wird die bundesweit einheitliche Bundesfeier angezeigt
+- regionale Feiertage werden bewusst nicht ohne Bundesland-/Kantonsauswahl als sicherer Feiertag markiert
+- die Feiertagsberechnung erfolgt vollstaendig lokal im Browser und benoetigt keine externe API
+- Version auf v0.2.29 angehoben
+
 ## v0.2.28 - 2026-09-02
 
 ### Begrenzte Markdown-Historie und verbesserte Vorschau

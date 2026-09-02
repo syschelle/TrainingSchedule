@@ -38,10 +38,10 @@ function makeDefaultProject() {
     title: "DeepUnity Schulungsplan",
     project_mode: "training_plan",
     customer_data_required: true,
-    customer_name: "MHG Gelsenkirchen",
-    location: "MHG Gelsenkirchen",
+    customer_name: "",
+    location: "",
     product_id: "deepunity-pacs",
-    trainer: "S. Schelle",
+    trainer: "",
     participant_group: "Radiologen, Radiologen Keyuser, MFA, Kliniker, Webviewer und Administratoren",
     start_date: "2026-09-07",
     end_date: null,
@@ -1036,13 +1036,21 @@ function renderWeek() {
     <div class="calendar-weeks">
       ${weeks.map((week) => `
       <div class="calendar-week-wrap">
-        <h3>Woche ${week}</h3>
+        <h3>${weekHeading(week)}</h3>
         <div class="calendar-week" style="--calendar-height:${height}px">
           ${days.map((day) => dayHtml(day, start, height, week)).join("")}
         </div>
       </div>
       `).join("")}
     </div>`;
+}
+
+
+function weekHeading(week) {
+  const first = TrainingCalendar.dateForCalendarDay(project.start_date, week, "Montag");
+  const last = TrainingCalendar.dateForCalendarDay(project.start_date, week, "Freitag");
+  if (!first || !last) return `Woche ${week}`;
+  return `Woche ${week} · ${TrainingCalendar.formatGermanDate(first)}–${TrainingCalendar.formatGermanDate(last)}`;
 }
 
 function plannedWeeks() {
@@ -1054,9 +1062,16 @@ function plannedWeeks() {
 function dayHtml(day, dayStart, calendarHeight, week) {
   const blocks = project.blocks.filter((block) => Number(block.week || 1) === week && block.day === day).sort((a, b) => a.start.localeCompare(b.start));
   const visibleBlocks = blocks.filter((block) => !["break", "lunch"].includes(block.type));
+  const calendarDate = TrainingCalendar.dateForCalendarDay(project.start_date, week, day);
+  const dateLabel = TrainingCalendar.formatGermanDate(calendarDate);
+  const holidayHints = TrainingCalendar.holidayHints(calendarDate);
   return `<section class="calendar-day">
     <div class="calendar-day-title">
-      <h3>${day}</h3>
+      <div class="calendar-day-heading">
+        <h3>${day}</h3>
+        ${dateLabel ? `<span class="calendar-date">${dateLabel}</span>` : ""}
+        ${holidayHints.length ? `<span class="calendar-holiday" title="Landesweiter Feiertag in Deutschland/Oesterreich bzw. Schweizer Bundesfeier. Regionale Feiertage sind ohne Bundesland/Kanton nicht beruecksichtigt.">${holidayHints.map((item) => escapeHtml(item)).join(" · ")}</span>` : ""}
+      </div>
       <div class="calendar-day-actions">
         ${cutBlockId ? `<button type="button" class="button button-secondary" onclick="pasteCutBlock('${day}', ${week})">Einfuegen</button>` : ""}
         <button type="button" class="button button-ghost" onclick="addBlock('${day}', ${week})">Block</button>
