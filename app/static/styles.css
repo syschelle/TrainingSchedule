@@ -1424,3 +1424,79 @@ body.modal-open {
   font-size: 0.84rem;
 }
 
+
+
+/* v0.2.36 embedded calendar block editor */
+.block-editor-modal {
+  display: grid;
+  width: min(920px, 96vw);
+  max-height: 92vh;
+  gap: 14px;
+  overflow: auto;
+  padding: 18px;
+  border-radius: 12px;
+  background: var(--panel);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.32);
+}
+
+.block-editor-header,
+.block-editor-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.block-editor-header h2,
+.block-editor-header p {
+  margin: 0;
+}
+
+.block-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fbfcfe;
+}
+
+.block-editor-grid .field {
+  margin: 0;
+}
+
+.block-editor-grid textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.block-editor-actions {
+  min-height: 40px;
+}
+
+.block-editor-actions > div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+#blockEditorStatus {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .block-editor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .block-editor-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .block-editor-actions > div {
+    width: 100%;
+  }
+}

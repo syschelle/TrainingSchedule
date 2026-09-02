@@ -31,6 +31,7 @@ let catalogProducts = [];
 let selectedContentId = null;
 let markdownEditorContentId = null;
 let markdownPendingChangeType = "saved";
+let blockEditorBlockId = null;
 let project = makeDefaultProject();
 
 function makeDefaultProject() {
@@ -114,6 +115,19 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("[data-md-action]").forEach((button) => button.addEventListener("click", applyMarkdownAction));
   $("#markdownEditorModal").addEventListener("click", (event) => {
     if (event.target === $("#markdownEditorModal")) closeMarkdownEditor();
+  });
+  $("#closeBlockEditor").addEventListener("click", closeBlockEditor);
+  $("#cancelBlockEditor").addEventListener("click", closeBlockEditor);
+  $("#saveBlockEditor").addEventListener("click", saveBlockEditor);
+  $("#blockEditorTopic").addEventListener("change", applyBlockEditorTopic);
+  $("#blockEditorStart").addEventListener("change", syncBlockEditorEndFromDuration);
+  $("#blockEditorDuration").addEventListener("change", syncBlockEditorEndFromDuration);
+  $("#blockEditorEnd").addEventListener("change", syncBlockEditorDurationFromEnd);
+  $("#blockEditorModal").addEventListener("click", (event) => {
+    if (event.target === $("#blockEditorModal")) closeBlockEditor();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !$("#blockEditorModal").hidden) closeBlockEditor();
   });
   $("#exportProject").addEventListener("click", exportProjectState);
   $("#importProject").addEventListener("click", () => $("#projectImportInput").click());
@@ -1350,22 +1364,130 @@ function findAvailableStart(day, week, blockDuration, movingBlockId, trainer = "
 }
 
 function editBlock(id) {
+  openBlockEditor(id);
+}
+
+function openBlockEditor(id) {
   const block = project.blocks.find((item) => item.id === id);
   if (!block) return;
-  const title = prompt("Titel", block.title);
-  const start = prompt("Start", block.start);
-  const end = prompt("Ende", block.end);
-  const trainer = prompt(`Trainer (${calendarTrainers().map(trainerLabel).join(", ")})`, block.trainer || "");
-  if (title) block.title = title;
-  if (start) block.start = snapTimeValue(start);
-  if (end) block.end = end;
-  if (trainer !== null) {
-    const cleaned = trainer.trim();
-    block.trainer = cleaned;
-    if (cleaned && !(project.trainers || []).includes(cleaned)) project.trainers = [...(project.trainers || []), cleaned];
-    syncTrainerLegacy();
+  blockEditorBlockId = id;
+  const modal = $("#blockEditorModal");
+  const topicSelect = $("#blockEditorTopic");
+  const topicOptions = (project.topics || []).map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.title)}</option>`).join("");
+  topicSelect.innerHTML = `<option value="">Freier Kalenderblock</option>${topicOptions}`;
+  topicSelect.value = block.topic_id || "";
+
+  $("#blockEditorBlockTitle").value = block.title || "";
+  $("#blockEditorType").value = block.type || "training";
+  $("#blockEditorWeek").value = Number(block.week || 1);
+  $("#blockEditorDay").innerHTML = days.map((day) => `<option value="${escapeHtml(day)}">${escapeHtml(day)}</option>`).join("");
+  $("#blockEditorDay").value = block.day || days[0];
+
+  const trainers = calendarTrainers();
+  const currentTrainer = String(block.trainer || "");
+  const trainerValues = currentTrainer && !trainers.includes(currentTrainer) ? [...trainers, currentTrainer] : trainers;
+  $("#blockEditorTrainer").innerHTML = trainerValues.length
+    ? trainerValues.map((trainer) => `<option value="${escapeHtml(trainer)}">${escapeHtml(trainerLabel(trainer))}</option>`).join("")
+    : '<option value="">Kein Trainer</option>';
+  $("#blockEditorTrainer").value = currentTrainer;
+
+  $("#blockEditorStart").value = snapTimeValue(block.start || project.settings.day_start);
+  $("#blockEditorEnd").value = block.end || "";
+  $("#blockEditorDuration").value = Math.max(calendarSnapMinutes, duration(block.start, block.end));
+  $("#blockEditorColor").value = /^#[0-9a-fA-F]{6}$/.test(block.background_color || "") ? block.background_color : "#ffffff";
+  $("#blockEditorRoom").value = block.room || "";
+  $("#blockEditorDescription").value = block.description || "";
+  $("#blockEditorNotes").value = block.notes || "";
+  $("#blockEditorStatus").textContent = "";
+  modal.hidden = false;
+  document.body.classList.add("modal-open");
+  $("#blockEditorBlockTitle").focus();
+}
+
+function closeBlockEditor() {
+  $("#blockEditorModal").hidden = true;
+  blockEditorBlockId = null;
+  document.body.classList.remove("modal-open");
+  $("#blockEditorStatus").textContent = "";
+}
+
+function applyBlockEditorTopic() {
+  const topicId = $("#blockEditorTopic").value;
+  if (!topicId) return;
+  const item = (project.topics || []).find((topic) => topic.id === topicId);
+  if (!item) return;
+  $("#blockEditorBlockTitle").value = item.title || "";
+  $("#blockEditorDescription").value = item.description || "";
+  $("#blockEditorRoom").value = item.room || "";
+  $("#blockEditorNotes").value = item.notes || "";
+  $("#blockEditorColor").value = /^#[0-9a-fA-F]{6}$/.test(item.background_color || "") ? item.background_color : "#ffffff";
+  $("#blockEditorType").value = "training";
+  if (Number(item.duration_minutes) > 0) {
+    $("#blockEditorDuration").value = Number(item.duration_minutes);
+    syncBlockEditorEndFromDuration();
   }
-  validateAndRender();
+}
+
+function syncBlockEditorEndFromDuration() {
+  const startValue = snapTimeValue($("#blockEditorStart").value);
+  const durationMinutes = Number($("#blockEditorDuration").value);
+  if (!/^\d{2}:\d{2}$/.test(startValue) || !Number.isFinite(durationMinutes) || durationMinutes <= 0) return;
+  $("#blockEditorStart").value = startValue;
+  $("#blockEditorEnd").value = formatTime(toMinutes(startValue) + durationMinutes);
+}
+
+function syncBlockEditorDurationFromEnd() {
+  const startValue = snapTimeValue($("#blockEditorStart").value);
+  const endValue = $("#blockEditorEnd").value;
+  if (!/^\d{2}:\d{2}$/.test(startValue) || !/^\d{2}:\d{2}$/.test(endValue)) return;
+  const minutes = toMinutes(endValue) - toMinutes(startValue);
+  if (minutes > 0) $("#blockEditorDuration").value = minutes;
+}
+
+async function saveBlockEditor() {
+  const block = project.blocks.find((item) => item.id === blockEditorBlockId);
+  if (!block) return;
+  const status = $("#blockEditorStatus");
+  const title = $("#blockEditorBlockTitle").value.trim();
+  const startValue = snapTimeValue($("#blockEditorStart").value);
+  const endValue = $("#blockEditorEnd").value;
+  const week = Math.max(1, Number.parseInt($("#blockEditorWeek").value, 10) || 1);
+
+  if (!title) {
+    status.textContent = "Bitte einen Titel eingeben.";
+    return;
+  }
+  if (!/^\d{2}:\d{2}$/.test(startValue) || !/^\d{2}:\d{2}$/.test(endValue)) {
+    status.textContent = "Bitte gueltige Start- und Endzeiten eingeben.";
+    return;
+  }
+  if (toMinutes(endValue) <= toMinutes(startValue)) {
+    status.textContent = "Die Endzeit muss nach der Startzeit liegen.";
+    return;
+  }
+
+  block.topic_id = $("#blockEditorTopic").value || null;
+  block.title = title;
+  block.type = $("#blockEditorType").value;
+  block.week = week;
+  block.day = $("#blockEditorDay").value;
+  block.trainer = $("#blockEditorTrainer").value || "";
+  block.start = startValue;
+  block.end = endValue;
+  block.room = $("#blockEditorRoom").value.trim();
+  block.description = $("#blockEditorDescription").value.trim();
+  block.notes = $("#blockEditorNotes").value.trim();
+  block.background_color = $("#blockEditorColor").value || "#ffffff";
+
+  if (block.trainer && !(project.trainers || []).includes(block.trainer)) project.trainers = [...(project.trainers || []), block.trainer];
+  if (!(project.manual_weeks || []).includes(week) && !project.blocks.some((item) => item !== block && Number(item.week || 1) === week)) {
+    project.manual_weeks = [...(project.manual_weeks || []), week].sort((a, b) => a - b);
+  }
+  syncTrainerLegacy();
+  $("#blockEditorModal").hidden = true;
+  blockEditorBlockId = null;
+  document.body.classList.remove("modal-open");
+  await validateAndRender();
 }
 
 function copyBlock(id) {

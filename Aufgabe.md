@@ -1235,3 +1235,18 @@ Die Version wurde auf `v0.2.35` erhoeht.
 - Die Live-Validierung bleibt nach Drag-and-Drop, manuellen Aenderungen und anderen Planungsaktionen aktiv.
 - Durch die getrennte Darstellung veraendert die Warnliste nicht mehr die Hoehe der Kalenderseite; Scroll- und Kalenderposition bleiben beim Verschieben von Bloecken stabil.
 - Bei einer konfliktfreien Planung zeigt die Pruefungsseite einen kompakten Status ohne Warnliste.
+
+
+---
+
+# 68. Anpassungsnotiz 2026-09-02
+
+Die Version wurde auf `v0.2.36` erhoeht.
+
+- Das Bearbeiten von Schulungs- und Kalenderbloecken erfolgt nicht mehr ueber mehrere Browser-`prompt`-Fenster.
+- Ein eingebetteter Blockeditor innerhalb der Anwendung zeigt alle relevanten Eigenschaften gemeinsam an.
+- Bearbeitbar sind Schulungsinhalt, Titel, Blocktyp, Kalenderwoche, Wochentag, Trainer, Start, Ende, Dauer, Farbe, Raum, Beschreibung und Hinweise.
+- Die Auswahl eines hinterlegten Schulungsinhalts kann dessen Stammdaten in den Blockeditor uebernehmen.
+- Startzeiten bleiben auf dem 15-Minuten-Raster und werden beim Speichern normalisiert.
+- Eingabefehler erscheinen direkt im Blockeditor; der Kalender wird nicht durch Browser-Dialoge unterbrochen.
+- Abbrechen verwirft die Editor-Eingaben. Nach erfolgreichem Speichern laeuft die bestehende Live-Validierung weiter.

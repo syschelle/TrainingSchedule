@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.2.36 - 2026-09-02
+
+### Eingebetteter Kalenderblock-Editor
+
+- Die Bearbeitung von Kalenderbloecken verwendet keine Browser-`prompt`-Fenster mehr.
+- Ein eigener eingebetteter Blockeditor oeffnet sich innerhalb der Webanwendung.
+- In einem Fenster koennen Schulungsinhalt, Titel, Blocktyp, Kalenderwoche, Wochentag, Trainer, Startzeit, Endzeit, Dauer, Farbe, Raum, Beschreibung und Hinweise bearbeitet werden.
+- Bei Auswahl eines hinterlegten Schulungsinhalts koennen dessen Titel, Beschreibung, Standarddauer, Raum, Hinweise und Farbe direkt in den Editor uebernommen werden.
+- Startzeiten werden weiterhin auf das verbindliche 15-Minuten-Raster normalisiert.
+- Ungueltige Eingaben werden innerhalb des Editors angezeigt und loesen keine Browser-Dialoge aus.
+- Abbrechen schliesst den Editor ohne Aenderung des Kalenderblocks.
+- Nach dem Speichern wird die bestehende Live-Validierung ausgefuehrt und die getrennte Planungspruefung aktualisiert.
+
 ## v0.2.35 - 2026-09-02
 
 ### Separate Planungspruefung

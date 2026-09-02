@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.2.35"' in html
+    assert 'src="calendar.js?v=0.2.36"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -111,7 +111,8 @@ def test_frontend_normalizes_manual_and_imported_block_starts_to_quarter_hours()
     assert "const calendarSnapMinutes = 15;" in javascript
     assert "function snapTimeValue(value)" in javascript
     assert "function normalizeBlockStart(block)" in javascript
-    assert "if (start) block.start = snapTimeValue(start);" in javascript
+    assert "const startValue = snapTimeValue($(\"#blockEditorStart\").value);" in javascript
+    assert "block.start = startValue;" in javascript
     assert "normalizeBlockStart(block);" in javascript
 
 
@@ -126,3 +127,26 @@ def test_validation_warnings_are_separate_from_calendar_page() -> None:
     assert 'id="validationCount"' in validation_page
     assert 'Planungspruefung' in html
     assert 'nav.textContent = warnings.length ? `Planungspruefung (${warnings.length})`' in javascript
+
+
+def test_calendar_block_editor_is_embedded_and_replaces_prompt_editing() -> None:
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    css = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
+    assert 'id="blockEditorModal"' in html
+    assert 'id="blockEditorTopic"' in html
+    assert 'id="blockEditorBlockTitle"' in html
+    assert 'id="blockEditorTrainer"' in html
+    assert 'id="blockEditorStart"' in html
+    assert 'id="blockEditorEnd"' in html
+    assert 'id="blockEditorDuration"' in html
+    assert 'id="blockEditorRoom"' in html
+    assert 'id="blockEditorDescription"' in html
+    assert 'id="blockEditorNotes"' in html
+    edit_section = javascript.split("function editBlock(id)", 1)[1].split("function copyBlock(id)", 1)[0]
+    assert "openBlockEditor(id);" in edit_section
+    assert "prompt(" not in edit_section
+    assert "function saveBlockEditor()" in javascript
+    assert "block.start = startValue;" in javascript
+    assert 'class="block-editor-modal"' in html
+    assert ".block-editor-modal {" in css
