@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.2.31 - 2026-09-02
+
+### Mehrtrainer-Kalender, Kalender-PDF und Planungsdatei
+
+- mehrere gleichberechtigte Trainer koennen pro Projekt gepflegt werden
+- automatische Planung verteilt Schulungen auf verfuegbare Trainer und kann parallele Schulungen einplanen
+- jeder Trainer erhaelt pro Kalenderwoche eine eigene Wochenansicht
+- Kalenderwochen bleiben chronologisch gruppiert; innerhalb jeder Woche werden die Traineransichten zusammen dargestellt
+- Schulungsbloecke koennen per Drag-and-Drop zwischen Trainern, Tagen und Wochen verschoben werden
+- Ueberlappungsvalidierung erfolgt trainerbezogen, sodass parallele Schulungen verschiedener Trainer zulaessig sind
+- PDF-Export auf A4-Querformat umgestellt
+- PDF bildet die Kalenderstruktur mit Zeitachse, Datumswerten, Feiertagshinweisen und farbigen sichtbaren Bloecken ab
+- PDF-Seiten werden chronologisch nach Kalenderwoche und Trainer erzeugt
+- neue lokale Projektdatei exportiert den vollstaendigen aktuellen Planungsstand als JSON
+- Projektdateien koennen wieder importiert werden und stellen den gespeicherten Planungsstand wieder her
+- Projektdateien werden nicht dauerhaft serverseitig gespeichert
+- bestehendes Feld `trainer` bleibt fuer Abwaertskompatibilitaet erhalten; neue Projekte verwenden zusaetzlich `trainers`
+- Version auf v0.2.31 angehoben
+
+---
+
 ## v0.2.30 - 2026-09-02
 
 ### Dienstleistungstage in der Planuebersicht

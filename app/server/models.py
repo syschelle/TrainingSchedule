@@ -4,7 +4,7 @@ from datetime import date
 from enum import Enum
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class BlockType(str, Enum):
@@ -94,6 +94,7 @@ class TrainingProject(BaseModel):
     location: str = ""
     product_id: str = "deepunity-pacs"
     trainer: str = ""
+    trainers: list[str] = Field(default_factory=list)
     participant_group: str = ""
     product_lines: list[ProductLine] = Field(default_factory=list)
     start_date: date | None = None
@@ -104,6 +105,24 @@ class TrainingProject(BaseModel):
     manual_weeks: list[int] = Field(default_factory=list)
     unscheduled_topics: list[TrainingTopic] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def normalize_trainers(self) -> "TrainingProject":
+        cleaned: list[str] = []
+        for value in self.trainers:
+            name = str(value).strip()
+            if name and name not in cleaned:
+                cleaned.append(name)
+        legacy = self.trainer.strip()
+        if not cleaned and legacy:
+            cleaned.append(legacy)
+        self.trainers = cleaned
+        self.trainer = cleaned[0] if cleaned else ""
+        if cleaned:
+            for block in self.blocks:
+                if not block.trainer.strip():
+                    block.trainer = cleaned[0]
+        return self
 
 
 class ImportSummary(BaseModel):
@@ -139,6 +158,14 @@ class TrainingContentCreate(BaseModel):
 class ProductCreate(BaseModel):
     name: str
     description: str = ""
+
+
+class ProjectFile(BaseModel):
+    format: Literal["schulungsplantool-project"] = "schulungsplantool-project"
+    schema_version: int = 1
+    app_version: str = ""
+    exported_at: str = ""
+    project: TrainingProject
 
 
 class ExportRequest(BaseModel):

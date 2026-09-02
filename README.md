@@ -1,26 +1,26 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.2.30**
+Aktuelle Version: **v0.2.31**
 
 Lokale Webanwendung zur Erstellung, Bearbeitung, Validierung und zum Export mehrtaegiger Schulungsplaene. Die Anwendung laeuft vollstaendig in Docker und verwendet PostgreSQL fuer den strukturierten Schulungsinhalte-Katalog.
 
 ## Funktionen
 
-- Projektdaten, Planungsregeln und konkrete Schulungsthemen
+- Projektdaten, Planungsregeln, mehrere gleichberechtigte Trainer und konkrete Schulungsthemen
 - Produktverwaltung und produktbezogener Schulungsinhalte-Katalog
 - Teilnehmergruppen, maximale Teilnehmerzahl und Abhaengigkeiten zwischen Schulungen
 - automatische Planung fuer Montag bis Donnerstag, optional Freitag
 - mehrere Schulungswochen
 - Kernarbeitszeiten, Anreise-, Abreise-, Pausen- und Mittagspausenregeln
-- Kalenderansicht mit Viertelstundenraster und konkreten Datumswerten aus dem Startdatum
+- Kalenderansicht mit Viertelstundenraster, konkreten Datumswerten und eigener Wochenansicht je Trainer
 - lokale DACH-Feiertagshinweise direkt am Kalendertag (DE/AT landesweit, CH Bundesfeier)
-- Drag-and-Drop von Schulungsbloecken zwischen Zeiten, Tagen und Wochen
+- Drag-and-Drop von Schulungsbloecken zwischen Zeiten, Tagen, Wochen und Trainern
 - Ausschneiden und Einfuegen von Bloecken
 - Live-Validierung
 - Planuebersicht mit Schulungszeit, nicht eingeplanter Zeit und Dienstleistungstagen
-- Druckvorschau
-- Export als PDF und XLSX
-- lokale Projektdatei fuer den Benutzer
+- Kalender-Druckvorschau
+- PDF-Export im A4-Querformat als Kalenderansicht sowie XLSX-Export
+- exportier- und wieder importierbare Projektdatei fuer einen exakten Planungsstand
 - PostgreSQL-Katalog fuer dauerhaft gepflegte Schulungsinhalte
 - Markdown-Editor fuer detaillierte Schulungspunkte je Schulungsinhalt
 - persistente Aenderungshistorie mit Wiederherstellung gespeicherter Markdown-Staende
@@ -179,12 +179,12 @@ curl http://127.0.0.1:18083/api/health
 Erwartet:
 
 ```json
-{"status":"ok","version":"0.2.30"}
+{"status":"ok","version":"0.2.31"}
 ```
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.2.30` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.2.31` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -192,7 +192,7 @@ Bei einem Release-Tag wie `v0.2.30` baut `.github/workflows/release-image.yml` n
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.30
+ghcr.io/syschelle/schulungsplantool:0.2.31
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -214,7 +214,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.2.30` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.2.31` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -222,7 +222,7 @@ Bei einem Release-Tag wie `v0.2.30` baut der Workflow `.github/workflows/release
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.30
+ghcr.io/syschelle/schulungsplantool:0.2.31
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -309,3 +309,22 @@ Ein erfolgreicher DOCX-Import wird zuerst nur in den Markdown-Editor geladen. Er
 
 Die Planuebersicht zeigt keine separaten Summen mehr fuer normale Pausen, Mittagspause, Anreise oder Abreise. Stattdessen wird die Anzahl der `Dienstleistungstage` ausgewiesen. Gezaehlt wird jeder Tag einer Schulungswoche genau einmal, an dem mindestens ein Block vom Typ `training` geplant ist. Mehrere Schulungsbloecke am selben Tag erhoehen die Anzahl der Dienstleistungstage daher nicht. Tage, die ausschliesslich Anreise, Abreise oder Pausen enthalten, werden nicht als Dienstleistungstag gezaehlt.
 
+
+
+## Mehrere Trainer
+
+Ein Projekt kann mehrere Trainer enthalten. Alle Trainer gelten fachlich als gleichberechtigt und koennen deshalb jeden Schulungsinhalt uebernehmen. Die automatische Planung verteilt Schulungsbloecke auf die verfuegbaren Trainer und kann Schulungen parallel auf demselben Kalendertag einplanen.
+
+In der Kalenderansicht wird jede Kalenderwoche chronologisch gruppiert. Innerhalb einer Kalenderwoche besitzt jeder Trainer eine eigene Montag-bis-Freitag-Wochenansicht mit denselben Datumswerten. Schulungsbloecke koennen per Drag-and-Drop zwischen den Traineransichten verschoben werden; beim Ablegen wird die Trainerzuordnung des Blocks aktualisiert.
+
+## Planungsstand exportieren und importieren
+
+Ueber `Planung exportieren` wird der komplette aktuelle Projektzustand als lokale `*.schulungsplan.json`-Datei ausgegeben. Enthalten sind unter anderem Projektdaten, Trainer, Teilnehmergruppen, Planungsregeln, Themen, manuelle Wochen, alle Kalenderbloecke, Trainerzuordnungen, nicht eingeplante Themen und Warnungen.
+
+`Planung importieren` validiert eine zuvor exportierte Projektdatei und stellt diesen Planungsstand wieder her. Die Datei wird nur fuer den Request verarbeitet und nicht dauerhaft auf dem Server gespeichert. Der PostgreSQL-Schulungsinhalte-Katalog ist davon unabhaengig und wird nicht in die Projektdatei kopiert.
+
+## PDF-Kalenderexport
+
+Der PDF-Export wird ab v0.2.31 als A4-Querformat erzeugt. Die Seiten folgen derselben chronologischen Struktur wie die Kalender-/Druckvorschau: zuerst Kalenderwoche, darin je Trainer eine eigene Wochenansicht. Bei mehreren Trainern und mehreren Wochen entstehen die PDF-Seiten in der Reihenfolge `Woche 1 / Trainer 1`, `Woche 1 / Trainer 2`, danach `Woche 2 / Trainer 1` usw.
+
+Der PDF-Kalender zeigt dieselbe Montag-bis-Freitag-Zeitachse, Datumswerte, DACH-Feiertagshinweise sowie die farbigen sichtbaren Schulungs-, Anreise- und Abreisebloecke. Normale Pausen und Mittagspausen bleiben wie in der Browser-Kalenderansicht ausgeblendet.

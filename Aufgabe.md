@@ -1164,3 +1164,21 @@ Die Version wurde auf `v0.2.30` erhoeht.
 - Tage mit ausschliesslich Anreise, Abreise oder Pausen werden nicht als Dienstleistungstage gezaehlt.
 - Die Kennzahlen fuer gesamte Schulungszeit und nicht eingeplante Schulungszeit bleiben erhalten.
 
+
+---
+
+# 63. Anpassungsnotiz 2026-09-02
+
+Die Version wurde auf `v0.2.31` erhoeht.
+
+- Ein Projekt kann nun mehrere gleichberechtigte Trainer enthalten; alle Trainer koennen alle Schulungsinhalte uebernehmen.
+- Die automatische Planung verteilt Schulungsbloecke auf die verfuegbaren Trainer und kann dadurch Schulungen parallel am selben Kalendertag planen.
+- Fuer jede Kalenderwoche wird pro Trainer eine eigene Wochenansicht angezeigt.
+- Die Trainerwochen werden innerhalb der jeweiligen Kalenderwoche zusammengefasst, damit Woche 1 aller Trainer vor Woche 2 aller Trainer erscheint.
+- Schulungsbloecke koennen per Drag-and-Drop zwischen den Trainerwochen verschoben werden; dabei wird die Trainerzuordnung des Blocks geaendert.
+- Die Ueberlappungsvalidierung erfolgt je Trainer, sodass parallele Schulungsbloecke unterschiedlicher Trainer keine falsche Ueberlappungswarnung erzeugen.
+- Der PDF-Export wird als A4-Querformat ausgegeben und bildet die Kalenderansicht mit Zeitachse, Wochentagen, Datumswerten, Feiertagshinweisen und farbigen sichtbaren Bloecken ab.
+- Pro Trainer und Kalenderwoche wird eine PDF-Kalenderseite erzeugt; die Seiten werden chronologisch nach Woche und danach Trainer angeordnet.
+- Ueber `Planung exportieren` kann der komplette aktuelle Projekt-/Planungsstand als lokale JSON-Projektdatei heruntergeladen werden.
+- Ueber `Planung importieren` kann eine zuvor exportierte Projektdatei validiert und wiederhergestellt werden, sodass Trainer, Themen, Wochen, Bloecke, Zeiten, Farben, Teilnehmerdaten und weitere Projekteinstellungen erneut angezeigt werden.
+- Die Projektdatei wird beim Import nur im Request verarbeitet und nicht dauerhaft serverseitig gespeichert.

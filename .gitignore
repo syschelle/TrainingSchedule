@@ -23,3 +23,6 @@ Thumbs.db
 
 # Historical source-material directory must never be part of deployment
 Aufgabe/
+
+# Local exported planning snapshots
+*.schulungsplan.json

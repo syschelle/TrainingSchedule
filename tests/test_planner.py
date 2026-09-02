@@ -161,3 +161,39 @@ def test_service_calculation_can_skip_customer_data():
     project = TrainingProject(project_mode="service_calculation", customer_data_required=False)
     assert project.customer_data_required is False
     assert project.project_mode == "service_calculation"
+
+
+def test_multiple_trainers_can_run_training_in_parallel():
+    project = TrainingProject(
+        trainers=["Trainer A", "Trainer B"],
+        topics=[topic("Parallel A", 180), topic("Parallel B", 180)],
+    )
+    planned = plan_project(project)
+    training_blocks = [block for block in planned.blocks if block.type == "training"]
+    assert len(training_blocks) == 2
+    assert {block.trainer for block in training_blocks} == {"Trainer A", "Trainer B"}
+    assert {block.day for block in training_blocks} == {"Montag"}
+    assert {block.start for block in training_blocks} == {"10:00"}
+
+
+def test_overlaps_are_checked_per_trainer_lane():
+    project = TrainingProject(trainers=["Trainer A", "Trainer B"])
+    project.blocks = [
+        ScheduleBlock(id="a", type="training", day="Dienstag", title="A", start="10:00", end="11:00", trainer="Trainer A"),
+        ScheduleBlock(id="b", type="training", day="Dienstag", title="B", start="10:00", end="11:00", trainer="Trainer B"),
+    ]
+    warnings = validate_project(project)
+    assert not any("ueberlappt" in warning for warning in warnings)
+
+
+def test_topic_trainer_legacy_value_does_not_restrict_equal_trainers():
+    project = TrainingProject(
+        trainers=["Trainer A", "Trainer B"],
+        topics=[
+            TrainingTopic(id="legacy-a", title="Legacy A", duration_minutes=180, trainer="Trainer A"),
+            TrainingTopic(id="legacy-b", title="Legacy B", duration_minutes=180, trainer="Trainer A"),
+        ],
+    )
+    planned = plan_project(project)
+    training_blocks = [block for block in planned.blocks if block.type == "training"]
+    assert {block.trainer for block in training_blocks} == {"Trainer A", "Trainer B"}

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
@@ -24,13 +26,13 @@ from .content_db import (
 from .docx_content import DOCX_MIME, DocxContentError, export_training_content_docx, import_training_content_docx
 from .exporter import export_pdf, export_xlsx
 from .importer import build_project_from_uploads
-from .models import ExportRequest, ProductCreate, TrainingContentCreate, TrainingContentMarkdownUpdate, TrainingContentUpdate, TrainingProject
+from .models import ExportRequest, ProductCreate, ProjectFile, TrainingContentCreate, TrainingContentMarkdownUpdate, TrainingContentUpdate, TrainingProject
 from .planner import plan_project, validate_project
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 STATIC_DIR = BASE_DIR / "static"
 MAX_UPLOAD_MB = int(os.environ.get("MAX_UPLOAD_MB", "25"))
-APP_VERSION = os.environ.get("APP_VERSION", "0.2.30")
+APP_VERSION = os.environ.get("APP_VERSION", "0.2.31")
 MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
 
 app = FastAPI(title="Schulungsplantool", version=APP_VERSION)
@@ -190,6 +192,39 @@ def plan(project: TrainingProject) -> dict:
 @app.post("/api/validate")
 def validate(project: TrainingProject) -> dict:
     return {"warnings": validate_project(project)}
+
+
+@app.post("/api/project/export")
+def export_project_file(project: TrainingProject) -> Response:
+    payload = ProjectFile(
+        app_version=APP_VERSION,
+        exported_at=datetime.now(timezone.utc).isoformat(),
+        project=project,
+    )
+    data = json.dumps(payload.model_dump(mode="json"), ensure_ascii=False, indent=2).encode("utf-8")
+    return Response(
+        data,
+        media_type="application/json",
+        headers={"Content-Disposition": 'attachment; filename="schulungsplanung.schulungsplan.json"'},
+    )
+
+
+@app.post("/api/project/import")
+async def import_project_file(file: UploadFile = File(...)) -> dict:
+    filename, data = await _read_upload(file)
+    if not filename.lower().endswith(".json"):
+        raise HTTPException(status_code=400, detail="Fuer den Planungsimport sind nur .json-Projektdateien erlaubt.")
+    try:
+        raw = json.loads(data.decode("utf-8"))
+        payload = ProjectFile.model_validate(raw)
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
+        raise HTTPException(status_code=400, detail="Die Projektdatei ist ungueltig oder nicht kompatibel.") from error
+    return {
+        "filename": filename,
+        "schema_version": payload.schema_version,
+        "app_version": payload.app_version,
+        "project": payload.project.model_dump(mode="json"),
+    }
 
 
 @app.post("/api/export")

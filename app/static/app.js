@@ -42,6 +42,7 @@ function makeDefaultProject() {
     location: "",
     product_id: "deepunity-pacs",
     trainer: "",
+    trainers: [],
     participant_group: "Radiologen, Radiologen Keyuser, MFA, Kliniker, Webviewer und Administratoren",
     start_date: "2026-09-07",
     end_date: null,
@@ -114,6 +115,9 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#markdownEditorModal").addEventListener("click", (event) => {
     if (event.target === $("#markdownEditorModal")) closeMarkdownEditor();
   });
+  $("#exportProject").addEventListener("click", exportProjectState);
+  $("#importProject").addEventListener("click", () => $("#projectImportInput").click());
+  $("#projectImportInput").addEventListener("change", importProjectState);
   $("#exportPdf").addEventListener("click", () => downloadExport("pdf"));
   $("#exportXlsx").addEventListener("click", () => downloadExport("xlsx"));
   document.querySelectorAll("[data-tab]").forEach((button) => {
@@ -163,11 +167,69 @@ function renderBaseFields() {
     field("title", "Schulungsbezeichnung", project.title, "text", true),
     customerDisabled ? "" : field("customer_name", "Kunde", project.customer_name),
     customerDisabled ? "" : field("location", "Standort", project.location),
-    field("trainer", "Trainer", project.trainer),
+    trainerEditor(),
     field("start_date", "Startdatum", project.start_date || "", "date")
   ].join("");
   $("#projectMode").addEventListener("change", updateProjectMode);
   $("#base-fields").querySelectorAll("input[data-field-name]").forEach((input) => input.addEventListener("input", updateProjectField));
+  $("#base-fields").querySelectorAll("input[data-trainer-index]").forEach((input) => input.addEventListener("change", updateTrainerField));
+  const addTrainerButton = $("#addTrainer");
+  if (addTrainerButton) addTrainerButton.addEventListener("click", addTrainer);
+}
+
+function trainerEditor() {
+  const values = Array.isArray(project.trainers) && project.trainers.length ? project.trainers : [""];
+  return `<div class="field field-wide trainer-editor">
+    <div class="trainer-editor-heading"><span>Trainer</span><button type="button" id="addTrainer" class="button button-ghost">Trainer hinzufuegen</button></div>
+    <div class="trainer-list">
+      ${values.map((name, index) => `<div class="trainer-row">
+        <input data-trainer-index="${index}" data-original-trainer="${escapeHtml(name)}" value="${escapeHtml(name)}" placeholder="Trainername" autocomplete="off" spellcheck="false">
+        ${values.length > 1 || name ? `<button type="button" class="icon danger" onclick="deleteTrainer(${index})" title="Trainer entfernen">×</button>` : ""}
+      </div>`).join("")}
+    </div>
+  </div>`;
+}
+
+function syncTrainerLegacy() {
+  const cleaned = (project.trainers || []).map((name) => String(name || "").trim()).filter(Boolean);
+  project.trainer = cleaned[0] || "";
+}
+
+function updateTrainerField(event) {
+  const index = Number(event.target.dataset.trainerIndex);
+  const previous = event.target.dataset.originalTrainer || "";
+  project.trainers = Array.isArray(project.trainers) ? [...project.trainers] : [];
+  while (project.trainers.length <= index) project.trainers.push("");
+  const next = event.target.value.trim();
+  project.trainers[index] = next;
+  if (previous && previous !== next) {
+    project.blocks.forEach((block) => {
+      if (block.trainer === previous) block.trainer = next;
+    });
+  }
+  project.trainers = project.trainers.filter((name, position, all) => name || position === index).filter((name, position, all) => !name || all.indexOf(name) === position);
+  syncTrainerLegacy();
+  render();
+}
+
+function addTrainer() {
+  project.trainers = Array.isArray(project.trainers) ? [...project.trainers] : [];
+  if (!project.trainers.length || project.trainers[project.trainers.length - 1].trim()) project.trainers.push("");
+  renderBaseFields();
+}
+
+function deleteTrainer(index) {
+  project.trainers = Array.isArray(project.trainers) ? [...project.trainers] : [];
+  const removed = project.trainers[index] || "";
+  project.trainers.splice(index, 1);
+  const replacement = project.trainers.find((name) => String(name || "").trim()) || "";
+  if (removed) {
+    project.blocks.forEach((block) => {
+      if (block.trainer === removed) block.trainer = replacement;
+    });
+  }
+  syncTrainerLegacy();
+  validateAndRender();
 }
 
 function modeSelector() {
@@ -1035,30 +1097,55 @@ function productSummary() {
   `).join("");
 }
 
+function calendarTrainers() {
+  const values = [];
+  (project.trainers || []).forEach((name) => {
+    const cleaned = String(name || "").trim();
+    if (cleaned && !values.includes(cleaned)) values.push(cleaned);
+  });
+  if (!values.length && String(project.trainer || "").trim()) values.push(String(project.trainer).trim());
+  (project.blocks || []).forEach((block) => {
+    const cleaned = String(block.trainer || "").trim();
+    if (cleaned && !values.includes(cleaned)) values.push(cleaned);
+  });
+  return values.length ? values : [""];
+}
+
+function trainerLabel(trainer) {
+  return trainer || "Nicht zugewiesen";
+}
+
 function renderWeek() {
   const start = toMinutes(project.settings.day_start);
   const end = toMinutes(project.settings.day_end);
   const totalMinutes = Math.max(60, end - start);
   const height = (totalMinutes / 60) * calendarHourHeight;
   const weeks = plannedWeeks();
+  const trainers = calendarTrainers();
   $("#tab-week").innerHTML = `
     <div class="calendar-toolbar">
-      <div class="calendar-help">Bloecke greifen und in eine Tages-Zeitachse ziehen. Alternativ ausschneiden und in einer anderen Woche/einem anderen Tag einfuegen.</div>
+      <div class="calendar-help">Bloecke koennen zwischen Tagen, Wochen und Trainern verschoben werden. Jeder Trainer besitzt pro Kalenderwoche eine eigene Wochenansicht.</div>
       <button type="button" class="button button-secondary" onclick="addManualWeek()">Woche hinzufuegen</button>
     </div>
-    ${cutBlockId ? `<div class="cut-notice">Ausgeschnitten: ${escapeHtml(cutBlockTitle())}. Zieltag waehlen und Einfuegen klicken.</div>` : ""}
+    ${cutBlockId ? `<div class="cut-notice">Ausgeschnitten: ${escapeHtml(cutBlockTitle())}. Zieltag und Zieltrainer waehlen und Einfuegen klicken.</div>` : ""}
     <div class="calendar-weeks">
       ${weeks.map((week) => `
       <div class="calendar-week-wrap">
         <h3>${weekHeading(week)}</h3>
-        <div class="calendar-week" style="--calendar-height:${height}px">
-          ${days.map((day) => dayHtml(day, start, height, week)).join("")}
+        <div class="trainer-weeks">
+          ${trainers.map((trainer, trainerIndex) => `
+            <section class="trainer-week">
+              <div class="trainer-week-title"><span>Trainer</span><strong>${escapeHtml(trainerLabel(trainer))}</strong></div>
+              <div class="calendar-week" style="--calendar-height:${height}px">
+                ${days.map((day) => dayHtml(day, start, height, week, trainer, trainerIndex)).join("")}
+              </div>
+            </section>
+          `).join("")}
         </div>
       </div>
       `).join("")}
     </div>`;
 }
-
 
 function weekHeading(week) {
   const first = TrainingCalendar.dateForCalendarDay(project.start_date, week, "Montag");
@@ -1073,8 +1160,8 @@ function plannedWeeks() {
   return weeks.length ? weeks : [1];
 }
 
-function dayHtml(day, dayStart, calendarHeight, week) {
-  const blocks = project.blocks.filter((block) => Number(block.week || 1) === week && block.day === day).sort((a, b) => a.start.localeCompare(b.start));
+function dayHtml(day, dayStart, calendarHeight, week, trainer, trainerIndex, interactive = true) {
+  const blocks = project.blocks.filter((block) => Number(block.week || 1) === week && block.day === day && String(block.trainer || "") === String(trainer || "")).sort((a, b) => a.start.localeCompare(b.start));
   const visibleBlocks = blocks.filter((block) => !["break", "lunch"].includes(block.type));
   const calendarDate = TrainingCalendar.dateForCalendarDay(project.start_date, week, day);
   const dateLabel = TrainingCalendar.formatGermanDate(calendarDate);
@@ -1086,36 +1173,36 @@ function dayHtml(day, dayStart, calendarHeight, week) {
         ${dateLabel ? `<span class="calendar-date">${dateLabel}</span>` : ""}
         ${holidayHints.length ? `<span class="calendar-holiday" title="Landesweiter Feiertag in Deutschland/Oesterreich bzw. Schweizer Bundesfeier. Regionale Feiertage sind ohne Bundesland/Kanton nicht beruecksichtigt.">${holidayHints.map((item) => escapeHtml(item)).join(" · ")}</span>` : ""}
       </div>
-      <div class="calendar-day-actions">
-        ${cutBlockId ? `<button type="button" class="button button-secondary" onclick="pasteCutBlock('${day}', ${week})">Einfuegen</button>` : ""}
-        <button type="button" class="button button-ghost" onclick="addBlock('${day}', ${week})">Block</button>
-      </div>
+      ${interactive ? `<div class="calendar-day-actions">
+        ${cutBlockId ? `<button type="button" class="button button-secondary" onclick="pasteCutBlock('${day}', ${week}, ${trainerIndex})">Einfuegen</button>` : ""}
+        <button type="button" class="button button-ghost" onclick="addBlock('${day}', ${week}, ${trainerIndex})">Block</button>
+      </div>` : ""}
     </div>
-    <div class="calendar-day-body" ondragover="event.preventDefault()" ondrop="dropBlock(event, '${day}', ${week})">
+    <div class="calendar-day-body" ${interactive ? `ondragover="event.preventDefault()" ondrop="dropBlock(event, '${day}', ${week}, ${trainerIndex})"` : ""}>
       ${quarterGridLines(dayStart, project.settings.day_end).join("")}
       <div class="day-time-labels" aria-hidden="true">${timeAxisLabels(dayStart, toMinutes(project.settings.day_end)).join("")}</div>
-      ${visibleBlocks.map((block) => blockHtml(block, dayStart, calendarHeight)).join("")}
+      ${visibleBlocks.map((block) => blockHtml(block, dayStart, calendarHeight, interactive)).join("")}
     </div>
   </section>`;
 }
 
-function blockHtml(block, dayStart, calendarHeight) {
+function blockHtml(block, dayStart, calendarHeight, interactive = true) {
   const start = toMinutes(block.start);
   const blockDuration = Math.max(calendarSnapMinutes, duration(block.start, block.end));
   const top = Math.max(0, ((start - dayStart) / 60) * calendarHourHeight);
   const height = Math.max(44, (blockDuration / 60) * calendarHourHeight);
   const cappedHeight = Math.min(height, Math.max(44, calendarHeight - top));
-  return `<article class="block calendar-block ${block.type} ${block.id === cutBlockId ? "is-cut" : ""}" draggable="true" ondragstart="dragBlock(event, '${block.id}')" style="top:${top}px;height:${cappedHeight}px;--block-bg:${escapeHtml(block.background_color || "#ffffff")}">
+  return `<article class="block calendar-block ${block.type} ${block.id === cutBlockId ? "is-cut" : ""}" ${interactive ? `draggable="true" ondragstart="dragBlock(event, '${block.id}')"` : ""} style="top:${top}px;height:${cappedHeight}px;--block-bg:${escapeHtml(block.background_color || "#ffffff")}">
     <div>
       <strong>${escapeHtml(block.title)}</strong>
       <span>${block.start}-${block.end} · ${block.type}</span>
     </div>
-    <div class="block-actions">
+    ${interactive ? `<div class="block-actions">
       <button type="button" class="icon" onclick="cutBlock('${block.id}')" title="Ausschneiden">✂</button>
       <button type="button" class="icon" onclick="editBlock('${block.id}')" title="Bearbeiten">✎</button>
       <button type="button" class="icon" onclick="copyBlock('${block.id}')" title="Duplizieren">⧉</button>
       <button type="button" class="icon danger" onclick="removeBlock('${block.id}')" title="Loeschen">×</button>
-    </div>
+    </div>` : ""}
   </article>`;
 }
 
@@ -1159,7 +1246,7 @@ function dragBlock(event, id) {
   event.dataTransfer.setData("text/plain", id);
 }
 
-function dropBlock(event, day, week = 1) {
+function dropBlock(event, day, week = 1, trainerIndex = 0) {
   event.preventDefault();
   const id = draggedBlockId || event.dataTransfer.getData("text/plain");
   const block = project.blocks.find((item) => item.id === id);
@@ -1173,6 +1260,7 @@ function dropBlock(event, day, week = 1) {
     const start = clampToDay(snapMinutes(rawMinutes), blockDuration);
     block.day = day;
     block.week = week;
+    block.trainer = calendarTrainers()[trainerIndex] || "";
     block.start = formatTime(start);
     block.end = formatTime(start + blockDuration);
   }
@@ -1195,8 +1283,9 @@ function calendarOffset(minute, start) {
   return ((minute - start) / 60) * calendarHourHeight;
 }
 
-function addBlock(day, week = 1) {
-  project.blocks.push({ id: crypto.randomUUID(), type: "training", week, day, title: "Neuer Block", start: "10:00", end: "11:00", topic_id: null, description: "", trainer: project.trainer, room: "", notes: "" });
+function addBlock(day, week = 1, trainerIndex = 0) {
+  const trainer = calendarTrainers()[trainerIndex] || "";
+  project.blocks.push({ id: crypto.randomUUID(), type: "training", week, day, title: "Neuer Block", start: "10:00", end: "11:00", topic_id: null, description: "", trainer, room: "", notes: "", background_color: "#ffffff" });
   validateAndRender();
 }
 
@@ -1205,7 +1294,7 @@ function cutBlock(id) {
   renderWeek();
 }
 
-function pasteCutBlock(day, week = 1) {
+function pasteCutBlock(day, week = 1, trainerIndex = 0) {
   const block = project.blocks.find((item) => item.id === cutBlockId);
   if (!block) {
     cutBlockId = null;
@@ -1213,20 +1302,22 @@ function pasteCutBlock(day, week = 1) {
     return;
   }
   const blockDuration = Math.max(calendarSnapMinutes, duration(block.start, block.end));
-  const start = findAvailableStart(day, week, blockDuration, block.id);
+  const trainer = calendarTrainers()[trainerIndex] || "";
+  const start = findAvailableStart(day, week, blockDuration, block.id, trainer);
   block.day = day;
   block.week = week;
+  block.trainer = trainer;
   block.start = formatTime(start);
   block.end = formatTime(start + blockDuration);
   cutBlockId = null;
   validateAndRender();
 }
 
-function findAvailableStart(day, week, blockDuration, movingBlockId) {
+function findAvailableStart(day, week, blockDuration, movingBlockId, trainer = "") {
   const dayStart = toMinutes(project.settings.day_start);
   const dayEnd = toMinutes(project.settings.day_end);
   const occupied = project.blocks
-    .filter((block) => block.id !== movingBlockId && Number(block.week || 1) === Number(week) && block.day === day)
+    .filter((block) => block.id !== movingBlockId && Number(block.week || 1) === Number(week) && block.day === day && String(block.trainer || "") === String(trainer || ""))
     .map((block) => ({ start: toMinutes(block.start), end: toMinutes(block.end) }));
   for (let start = dayStart; start + blockDuration <= dayEnd; start += calendarSnapMinutes) {
     const end = start + blockDuration;
@@ -1243,9 +1334,16 @@ function editBlock(id) {
   const title = prompt("Titel", block.title);
   const start = prompt("Start", block.start);
   const end = prompt("Ende", block.end);
+  const trainer = prompt(`Trainer (${calendarTrainers().map(trainerLabel).join(", ")})`, block.trainer || "");
   if (title) block.title = title;
   if (start) block.start = start;
   if (end) block.end = end;
+  if (trainer !== null) {
+    const cleaned = trainer.trim();
+    block.trainer = cleaned;
+    if (cleaned && !(project.trainers || []).includes(cleaned)) project.trainers = [...(project.trainers || []), cleaned];
+    syncTrainerLegacy();
+  }
   validateAndRender();
 }
 
@@ -1275,19 +1373,96 @@ async function validateAndRender() {
 }
 
 function renderPreview() {
-  const customerRows = project.customer_data_required
-    ? `<p><strong>Kunde:</strong> ${escapeHtml(project.customer_name || "-")}</p><p><strong>Standort:</strong> ${escapeHtml(project.location || "-")}</p>`
+  const start = toMinutes(project.settings.day_start);
+  const end = toMinutes(project.settings.day_end);
+  const totalMinutes = Math.max(60, end - start);
+  const height = (totalMinutes / 60) * calendarHourHeight;
+  const trainers = calendarTrainers();
+  const productName = currentProduct().name;
+  const customer = project.customer_data_required
+    ? [project.customer_name, project.location].filter(Boolean).join(" · ")
     : "";
-  $("#tab-preview").innerHTML = `<div class="preview-page">
-    <h2>Schulungsplan</h2>
-    <p><strong>Schulung:</strong> ${escapeHtml(project.title)}</p>
-    <p><strong>Modus:</strong> ${project.project_mode === "service_calculation" ? "Dienstleistungskalkulation" : "Schulungsplanung"}</p>
-    ${customerRows}
-    <p><strong>Trainer:</strong> ${escapeHtml(project.trainer || "-")}</p>
-    <p><strong>Produkt:</strong> ${escapeHtml(currentProduct().name)}</p>
-    <p><strong>Teilnehmer:</strong> ${escapeHtml(project.participant_group || "-")}</p>
-    ${plannedWeeks().map((week) => `<h3>Woche ${week}</h3>${days.map((day) => `<h3>${day}</h3><table><tbody>${project.blocks.filter((block) => Number(block.week || 1) === week && block.day === day).sort((a, b) => a.start.localeCompare(b.start)).map((block) => `<tr><td>${block.start}-${block.end}</td><td>${escapeHtml(block.title)}</td></tr>`).join("")}</tbody></table>`).join("")}`).join("")}
+  $("#tab-preview").innerHTML = `<div class="calendar-preview">
+    <p class="muted">PDF-Vorschau: Jede Seite wird im A4-Querformat in genau dieser chronologischen Reihenfolge nach Kalenderwoche und Trainer erzeugt.</p>
+    <div class="pdf-preview-pages">
+      ${plannedWeeks().map((week) => trainers.map((trainer, trainerIndex) => `
+        <section class="pdf-preview-sheet">
+          <div class="pdf-preview-header">
+            <div>
+              <h2>${escapeHtml(project.title || "Schulungsplan")}</h2>
+              <p>Produkt: ${escapeHtml(productName)} &nbsp;|&nbsp; Trainer: ${escapeHtml(trainerLabel(trainer))} &nbsp;|&nbsp; Woche ${week}</p>
+            </div>
+            ${customer ? `<strong>${escapeHtml(customer)}</strong>` : ""}
+          </div>
+          <h3 class="pdf-preview-week-heading">${weekHeading(week)}</h3>
+          <div class="calendar-week" style="--calendar-height:${height}px">
+            ${days.map((day) => dayHtml(day, start, height, week, trainer, trainerIndex, false)).join("")}
+          </div>
+        </section>
+      `).join("")).join("")}
+    </div>
   </div>`;
+}
+
+function normalizeProjectState() {
+  project.blocks = Array.isArray(project.blocks) ? project.blocks : [];
+  project.manual_weeks = Array.isArray(project.manual_weeks) ? project.manual_weeks : [];
+  project.trainers = Array.isArray(project.trainers) ? project.trainers.map((name) => String(name || "").trim()).filter(Boolean) : [];
+  if (!project.trainers.length && String(project.trainer || "").trim()) project.trainers = [String(project.trainer).trim()];
+  project.blocks.forEach((block) => {
+    const name = String(block.trainer || "").trim();
+    if (name && !project.trainers.includes(name)) project.trainers.push(name);
+  });
+  if (project.trainers.length) {
+    project.blocks.forEach((block) => {
+      if (!String(block.trainer || "").trim()) block.trainer = project.trainers[0];
+    });
+  }
+  syncTrainerLegacy();
+}
+
+async function exportProjectState() {
+  setStatus("Planungsstand wird exportiert...");
+  const response = await fetch("api/project/export", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(project)
+  });
+  if (!response.ok) {
+    setStatus("Planungsstand konnte nicht exportiert werden.");
+    return;
+  }
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "schulungsplanung.schulungsplan.json";
+  link.click();
+  URL.revokeObjectURL(url);
+  setStatus("Planungsstand exportiert.");
+}
+
+async function importProjectState(event) {
+  const file = event.target.files?.[0];
+  event.target.value = "";
+  if (!file) return;
+  setStatus("Planungsstand wird importiert...");
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await fetch("api/project/import", { method: "POST", body: formData });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    setStatus(payload.detail || "Planungsstand konnte nicht importiert werden.");
+    return;
+  }
+  project = payload.project;
+  normalizeProjectState();
+  cutBlockId = null;
+  draggedBlockId = null;
+  currentPage = "plan";
+  activeTab = "week";
+  render();
+  setStatus(`Planungsstand geladen (${payload.app_version || "unbekannte Version"}).`);
 }
 
 function renderWarnings() {

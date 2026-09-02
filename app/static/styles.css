@@ -1230,3 +1230,141 @@ body.modal-open {
   line-height: 1.35;
   white-space: normal;
 }
+
+/* v0.2.31 multi-trainer planning */
+.trainer-editor {
+  display: grid;
+  gap: 8px;
+}
+
+.trainer-editor-heading,
+.trainer-week-title,
+.preview-calendar-header,
+.preview-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.trainer-editor-heading > span {
+  font-weight: 800;
+}
+
+.trainer-list {
+  display: grid;
+  gap: 7px;
+}
+
+.trainer-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+  align-items: center;
+}
+
+.trainer-weeks {
+  display: grid;
+  gap: 14px;
+}
+
+.trainer-week {
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.trainer-week-title {
+  justify-content: flex-start;
+  margin: 0 6px 2px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.trainer-week-title strong {
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.calendar-preview {
+  overflow-x: auto;
+}
+
+.preview-calendar-header {
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+
+.preview-calendar-header h2,
+.preview-calendar-header p {
+  margin: 0;
+}
+
+.preview-meta {
+  align-items: flex-end;
+  flex-direction: column;
+  font-size: 0.82rem;
+}
+
+.calendar-preview .calendar-block {
+  padding-right: 9px;
+  cursor: default;
+}
+
+.calendar-preview .trainer-week {
+  break-inside: avoid;
+}
+
+.pdf-preview-pages {
+  display: grid;
+  gap: 18px;
+}
+
+.pdf-preview-sheet {
+  min-width: 1080px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(15, 27, 45, 0.08);
+}
+
+.pdf-preview-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  background: #0f1b2d;
+  color: #fff;
+}
+
+.pdf-preview-header h2,
+.pdf-preview-header p {
+  margin: 0;
+  color: #fff;
+}
+
+.pdf-preview-header p {
+  margin-top: 5px;
+  font-size: 0.78rem;
+}
+
+.pdf-preview-header > strong {
+  font-size: 0.8rem;
+}
+
+.pdf-preview-week-heading {
+  margin: 10px 18px 0;
+}
+
+.pdf-preview-sheet .calendar-week {
+  padding: 10px 18px 18px;
+}
+
+.pdf-preview-sheet .calendar-block {
+  padding-right: 9px;
+  cursor: default;
+}
