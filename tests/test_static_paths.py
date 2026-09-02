@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.2.40"' in html
+    assert 'src="calendar.js?v=0.2.41"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -209,3 +209,18 @@ def test_arrival_calendar_tile_uses_compact_display_title_only() -> None:
     assert 'block.type === "arrival" ? "Anreise" : block.title' in javascript
     assert 'monday_arrival_label: "Anreise / Eintreffen der Teilnehmer"' in javascript
 
+
+
+def test_empty_training_weeks_are_hidden_from_calendar_and_preview() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    assert 'function scheduledWeeks()' in javascript
+    scheduled = javascript.split('function scheduledWeeks()', 1)[1].split('function plannedWeeks()', 1)[0]
+    assert '.filter((block) => block.type === "training")' in scheduled
+    planned = javascript.split('function plannedWeeks()', 1)[1].split('function hideEmptyTransientWeek', 1)[0]
+    assert '...scheduledWeeks()' in planned
+    assert '...transientManualWeeks' in planned
+    assert 'project.manual_weeks' not in planned
+    preview = javascript.split('function renderPreview()', 1)[1].split('function normalizeProjectState()', 1)[0]
+    assert '${scheduledWeeks().map((week)' in preview
+    assert 'Wochen ohne Schulungsblöcke werden automatisch ausgeblendet.' in javascript
+    assert 'hideEmptyTransientWeek(previousWeek);' in javascript

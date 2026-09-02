@@ -32,6 +32,7 @@ let selectedContentId = null;
 let markdownEditorContentId = null;
 let markdownPendingChangeType = "saved";
 let blockEditorBlockId = null;
+let transientManualWeeks = new Set();
 let project = makeDefaultProject();
 
 function makeDefaultProject() {
@@ -95,6 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#autoPlan").addEventListener("click", createPlan);
   $("#resetDemo").addEventListener("click", () => {
     project = makeDefaultProject();
+    transientManualWeeks = new Set();
     activeTab = "overview";
     currentPage = "input";
     render();
@@ -1051,8 +1053,14 @@ function duplicateTopic(id) {
 }
 
 function deleteTopic(id) {
+  const affectedWeeks = new Set(
+    project.blocks
+      .filter((block) => block.topic_id === id)
+      .map((block) => Number(block.week || 1))
+  );
   project.topics = project.topics.filter((item) => item.id !== id);
   project.blocks = project.blocks.filter((block) => block.topic_id !== id);
+  affectedWeeks.forEach((week) => hideEmptyTransientWeek(week));
   render();
 }
 
@@ -1068,6 +1076,8 @@ async function createPlan() {
     return;
   }
   project = await response.json();
+  normalizeProjectState();
+  transientManualWeeks = new Set();
   setStatus("Plan erstellt und validiert.");
   activeTab = "week";
   currentPage = "plan";
@@ -1200,7 +1210,7 @@ function renderWeek() {
     </div>
     ${cutBlockId ? `<div class="cut-notice">Ausgeschnitten: ${escapeHtml(cutBlockTitle())}. Zieltag und Zieltrainer waehlen und Einfuegen klicken.</div>` : ""}
     <div class="calendar-weeks">
-      ${weeks.map((week) => `
+      ${weeks.length ? weeks.map((week) => `
       <div class="calendar-week-wrap">
         <h3>${weekHeading(week)}</h3>
         <div class="trainer-weeks">
@@ -1214,7 +1224,7 @@ function renderWeek() {
           `).join("")}
         </div>
       </div>
-      `).join("")}
+      `).join("") : `<div class="calendar-empty-state"><strong>Keine Schulungswochen vorhanden.</strong><span>Wochen ohne Schulungsblöcke werden automatisch ausgeblendet. Bei Bedarf kann eine neue Woche manuell hinzugefügt werden.</span></div>`}
     </div>`;
 }
 
@@ -1225,10 +1235,30 @@ function weekHeading(week) {
   return `Woche ${week} · ${TrainingCalendar.formatGermanDate(first)}–${TrainingCalendar.formatGermanDate(last)}`;
 }
 
+function scheduledWeeks() {
+  return [...new Set(
+    (project.blocks || [])
+      .filter((block) => block.type === "training")
+      .map((block) => Number(block.week || 1))
+      .filter((week) => Number.isFinite(week) && week > 0)
+  )].sort((a, b) => a - b);
+}
+
 function plannedWeeks() {
-  const weekSet = new Set([...(project.manual_weeks || []), ...(project.blocks || []).map((block) => Number(block.week || 1))]);
-  const weeks = [...weekSet].filter((week) => week > 0).sort((a, b) => a - b);
-  return weeks.length ? weeks : [1];
+  const weekSet = new Set([
+    ...scheduledWeeks(),
+    ...transientManualWeeks
+  ]);
+  return [...weekSet].filter((week) => Number.isFinite(week) && week > 0).sort((a, b) => a - b);
+}
+
+function hideEmptyTransientWeek(week) {
+  const weekNumber = Number(week);
+  if (!Number.isFinite(weekNumber) || weekNumber <= 0) return;
+  const hasTraining = (project.blocks || []).some(
+    (block) => block.type === "training" && Number(block.week || 1) === weekNumber
+  );
+  if (!hasTraining) transientManualWeeks.delete(weekNumber);
 }
 
 function dayHtml(day, dayStart, calendarHeight, week, trainer, trainerIndex, interactive = true) {
@@ -1281,6 +1311,7 @@ function blockHtml(block, dayStart, calendarHeight, interactive = true) {
 function addManualWeek() {
   const nextWeek = Math.max(0, ...plannedWeeks()) + 1;
   project.manual_weeks = [...new Set([...(project.manual_weeks || []), nextWeek])].sort((a, b) => a - b);
+  transientManualWeeks.add(nextWeek);
   currentPage = "plan";
   activeTab = "week";
   render();
@@ -1323,6 +1354,7 @@ function dropBlock(event, day, week = 1, trainerIndex = 0) {
   const id = draggedBlockId || event.dataTransfer.getData("text/plain");
   const block = project.blocks.find((item) => item.id === id);
   if (block) {
+    const previousWeek = Number(block.week || 1);
     const blockDuration = Math.max(calendarSnapMinutes, duration(block.start, block.end));
     const dayBody = event.currentTarget;
     const rect = dayBody.getBoundingClientRect();
@@ -1335,6 +1367,7 @@ function dropBlock(event, day, week = 1, trainerIndex = 0) {
     block.trainer = calendarTrainers()[trainerIndex] || "";
     block.start = formatTime(start);
     block.end = formatTime(start + blockDuration);
+    hideEmptyTransientWeek(previousWeek);
   }
   draggedBlockId = null;
   draggedBlockOffsetMinutes = 0;
@@ -1389,6 +1422,7 @@ function pasteCutBlock(day, week = 1, trainerIndex = 0) {
     renderWeek();
     return;
   }
+  const previousWeek = Number(block.week || 1);
   const blockDuration = Math.max(calendarSnapMinutes, duration(block.start, block.end));
   const trainer = calendarTrainers()[trainerIndex] || "";
   const start = findAvailableStart(day, week, blockDuration, block.id, trainer);
@@ -1397,6 +1431,7 @@ function pasteCutBlock(day, week = 1, trainerIndex = 0) {
   block.trainer = trainer;
   block.start = formatTime(start);
   block.end = formatTime(start + blockDuration);
+  hideEmptyTransientWeek(previousWeek);
   cutBlockId = null;
   validateAndRender();
 }
@@ -1501,6 +1536,7 @@ async function saveBlockEditor() {
   const block = project.blocks.find((item) => item.id === blockEditorBlockId);
   if (!block) return;
   const status = $("#blockEditorStatus");
+  const previousWeek = Number(block.week || 1);
   const title = $("#blockEditorBlockTitle").value.trim();
   const startValue = snapTimeValue($("#blockEditorStart").value);
   const endValue = $("#blockEditorEnd").value;
@@ -1536,6 +1572,8 @@ async function saveBlockEditor() {
   if (!(project.manual_weeks || []).includes(week) && !project.blocks.some((item) => item !== block && Number(item.week || 1) === week)) {
     project.manual_weeks = [...(project.manual_weeks || []), week].sort((a, b) => a - b);
   }
+  hideEmptyTransientWeek(previousWeek);
+  hideEmptyTransientWeek(week);
   syncTrainerLegacy();
   $("#blockEditorModal").hidden = true;
   blockEditorBlockId = null;
@@ -1551,7 +1589,9 @@ function copyBlock(id) {
 }
 
 function removeBlock(id) {
+  const removed = project.blocks.find((block) => block.id === id);
   project.blocks = project.blocks.filter((block) => block.id !== id);
+  if (removed) hideEmptyTransientWeek(Number(removed.week || 1));
   if (cutBlockId === id) cutBlockId = null;
   validateAndRender();
 }
@@ -1602,7 +1642,7 @@ function renderPreview() {
           <div class="output-wrap"><div class="output-content">${topicSummary()}</div></div>
         </div>
       </section>
-      ${plannedWeeks().map((week) => trainers.map((trainer, trainerIndex) => `
+      ${scheduledWeeks().map((week) => trainers.map((trainer, trainerIndex) => `
         <section class="pdf-preview-sheet">
           <div class="pdf-preview-header">
             <div>
@@ -1709,6 +1749,7 @@ async function importProjectState(event) {
   }
   project = payload.project;
   normalizeProjectState();
+  transientManualWeeks = new Set();
   cutBlockId = null;
   draggedBlockId = null;
   currentPage = "plan";

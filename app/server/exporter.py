@@ -15,8 +15,8 @@ from .rules import DISPLAY_WEEKDAYS, german_date, minutes_between, parse_time, t
 
 
 def planned_weeks(project: TrainingProject) -> list[int]:
-    weeks = sorted({block.week for block in project.blocks} | set(project.manual_weeks))
-    return weeks or [1]
+    """Return only weeks that still contain actual training blocks."""
+    return sorted({block.week for block in project.blocks if block.type == BlockType.training})
 
 
 def _easter_sunday(year: int) -> date:

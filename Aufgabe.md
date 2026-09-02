@@ -1286,3 +1286,14 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Die Aenderung betrifft ausschliesslich die Darstellung der Kalenderkachel; Planung, Validierung, Blockeditor und Exportlogik bleiben unveraendert.
 - Version auf `v0.2.40` erhoeht.
 
+
+
+## Erweiterung v0.2.41 - Leere Schulungswochen ausblenden
+
+- Eine Woche gilt fuer Kalender, Vorschau und Exporte nur dann als belegte Schulungswoche, wenn mindestens ein Block vom Typ `training` vorhanden ist.
+- Werden durch manuelle Manipulation alle Schulungsbloecke aus einer Woche entfernt oder in andere Wochen verschoben, wird die leere Woche automatisch ausgeblendet.
+- Automatisch initialisierte Wochen ohne Schulungstermin duerfen nicht mehr dauerhaft ueber `manual_weeks` sichtbar gehalten werden.
+- Die PDF-Vorschau sowie PDF- und XLSX-Export duerfen keine Seiten/Zeilen fuer leere Schulungswochen erzeugen.
+- Eine ueber `Woche hinzufügen` neu angelegte leere Woche darf in der laufenden Bearbeitung temporaer sichtbar sein, damit dort der erste Block erstellt oder hineingezogen werden kann.
+- Vorhandene Projektdateien bleiben kompatibel; leere historische `manual_weeks` muessen fuer die Anzeige nicht geloescht werden.
+- Version auf `v0.2.41` erhoeht.

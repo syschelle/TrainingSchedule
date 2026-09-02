@@ -3,7 +3,7 @@ from io import BytesIO
 
 from pypdf import PdfReader
 
-from app.server.exporter import export_pdf
+from app.server.exporter import export_pdf, planned_weeks
 from app.server.main import _project_export_filename
 from app.server.models import ProjectFile, ScheduleBlock, TrainingProject
 
@@ -52,10 +52,11 @@ def test_project_file_roundtrip_preserves_planning_state():
     assert restored.project.manual_weeks == [1, 2]
 
 
-def test_pdf_starts_with_overview_then_has_one_page_per_trainer_and_week():
+def test_pdf_starts_with_overview_and_omits_weeks_without_training_blocks():
     project = sample_project()
     reader = PdfReader(BytesIO(export_pdf(project)))
-    assert len(reader.pages) == 5
+    assert planned_weeks(project) == [1]
+    assert len(reader.pages) == 3
     first = reader.pages[0]
     assert float(first.mediabox.width) > float(first.mediabox.height)
     first_text = first.extract_text() or ""

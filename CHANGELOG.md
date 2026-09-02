@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.2.41 - 2026-09-02
+
+### Leere Schulungswochen automatisch ausblenden
+
+- Kalenderwochen ohne einen Block vom Typ `training` werden nicht mehr als bestehende Schulungswochen dargestellt.
+- Werden alle Schulungsbloecke einer Woche durch Drag-and-Drop, Ausschneiden/Einfuegen, Bearbeiten oder Loeschen entfernt, verschwindet die Woche automatisch aus der Kalenderansicht.
+- Die PDF-Vorschau sowie PDF- und XLSX-Export erzeugen nur noch Wochen, in denen tatsaechlich Schulungen liegen.
+- Von der automatischen Planung initialisierte, aber nie mit Schulungen belegte Wochen werden nicht mehr als manuelle Wochen uebernommen.
+- `Woche hinzufügen` bleibt nutzbar: eine neu angelegte leere Woche wird waehrend der aktuellen Bearbeitung angezeigt, damit dort ein erster Schulungsblock angelegt werden kann.
+- Projektdateien bleiben kompatibel; vorhandene leere `manual_weeks` koennen im JSON erhalten bleiben, werden aber ohne Schulungsblock nicht als Kalender-/Exportwoche dargestellt.
+
 ## v0.2.40 - 2026-09-02
 
 ### Kompakter Anreise-Titel in Kalenderkacheln

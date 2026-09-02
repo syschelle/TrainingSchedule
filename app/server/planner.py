@@ -297,7 +297,8 @@ def plan_project(project: TrainingProject) -> TrainingProject:
                     used_lunch.add(key)
 
     trainer_order = {name: index for index, name in enumerate(trainers)}
-    project.manual_weeks = sorted({week for week in project.manual_weeks if week > 0} | initialized_weeks)
+    training_weeks = {block.week for block in scheduled if block.type == BlockType.training}
+    project.manual_weeks = sorted({week for week in project.manual_weeks if week > 0 and week in training_weeks})
     project.blocks = sorted(
         scheduled,
         key=lambda block: (

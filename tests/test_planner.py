@@ -31,10 +31,11 @@ def test_many_hours_continue_into_following_weeks():
     assert max(block.week for block in planned.blocks) > 1
 
 
-def test_manual_weeks_are_preserved_without_blocks():
+def test_empty_manual_weeks_are_removed_from_new_automatic_plan():
     project = TrainingProject(manual_weeks=[1, 3], topics=[topic("Start", 45)])
     planned = plan_project(project)
-    assert 3 in planned.manual_weeks
+    assert 1 in planned.manual_weeks
+    assert 3 not in planned.manual_weeks
 
 
 def test_overlap_validation():
