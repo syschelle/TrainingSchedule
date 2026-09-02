@@ -35,4 +35,4 @@ jobs:
         run: docker compose config >/dev/null
 
       - name: Build application image
-        run: docker build --build-arg APP_VERSION=0.2.22 -t schulungsplantool:ci .
+        run: docker build --build-arg APP_VERSION="$(cat VERSION)" -t schulungsplantool:ci .

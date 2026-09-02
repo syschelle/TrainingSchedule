@@ -1,6 +1,6 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.2.22**
+Aktuelle Version: **v0.2.23**
 
 Lokale Webanwendung zur Erstellung, Bearbeitung, Validierung und zum Export mehrtaegiger Schulungsplaene. Die Anwendung laeuft vollstaendig in Docker und verwendet PostgreSQL fuer den strukturierten Schulungsinhalte-Katalog.
 
@@ -50,8 +50,10 @@ Das Installationsskript:
 2. erzeugt bei der Erstinstallation automatisch eine lokale `.env`,
 3. erzeugt ein zufaelliges PostgreSQL-Passwort,
 4. validiert die Compose-Konfiguration,
-5. baut das Anwendungsimage,
+5. zieht die veroeffentlichten Container-Images,
 6. startet PostgreSQL und Schulungsplantool.
+
+Das Schulungsplantool-Image wird von GitHub Container Registry (GHCR) geladen. Das veroeffentlichte Image ist Multi-Arch und enthaelt `linux/amd64` sowie `linux/arm64`. Docker waehlt auf dem Zielsystem automatisch die passende Architektur.
 
 Standardmaessig ist die Anwendung erreichbar unter:
 
@@ -72,7 +74,8 @@ Vor dem Produktionsstart in `.env` mindestens `POSTGRES_PASSWORD` und den gleich
 Anschliessend:
 
 ```bash
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
 
 Status anzeigen:
@@ -90,7 +93,7 @@ curl http://127.0.0.1:18083/api/health
 Erwartete Antwort:
 
 ```json
-{"status":"ok","version":"0.2.22"}
+{"status":"ok","version":"0.2.23"}
 ```
 
 ## Konfiguration
@@ -99,6 +102,7 @@ Wichtige Werte in `.env`:
 
 | Variable | Standard | Bedeutung |
 |---|---|---|
+| `APP_IMAGE` | nicht gesetzt | optionaler Override fuer das Anwendungsimage; standardmaessig wird die zur Repository-Version passende GHCR-Version aus `docker-compose.yml` verwendet |
 | `APP_BIND` | `0.0.0.0` | Host-Adresse, an die der Webport gebunden wird |
 | `APP_PORT` | `18083` | Webport des Schulungsplantools |
 | `TZ` | `Europe/Berlin` | Zeitzone |
@@ -122,13 +126,13 @@ Wenn das Projekt aus Git installiert wurde:
 ./scripts/update.sh
 ```
 
-Das Skript fuehrt einen Fast-Forward-Pull aus, baut das Image mit aktuellen Basisimages neu und aktualisiert die laufenden Container ohne das PostgreSQL-Volume zu loeschen.
+Das Skript fuehrt einen Fast-Forward-Pull aus, zieht die zur neuen Repository-Version gehoerenden Images und aktualisiert die laufenden Container ohne das PostgreSQL-Volume zu loeschen.
 
 Manuell entspricht das im Wesentlichen:
 
 ```bash
 git pull --ff-only
-docker compose build --pull
+docker compose pull
 docker compose up -d --remove-orphans
 ```
 
@@ -152,7 +156,8 @@ docker compose start
 Komplett neu erzeugen, ohne die Datenbankdaten zu loeschen:
 
 ```bash
-docker compose up -d --build --force-recreate
+docker compose pull
+docker compose up -d --force-recreate
 ```
 
 ## Logs
@@ -182,6 +187,20 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Python-Tests
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
+
+Bei einem Release-Tag wie `v0.2.23` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+
+- `linux/amd64` (x86_64)
+- `linux/arm64` (z. B. Raspberry Pi 5)
+
+und veroeffentlicht es als:
+
+```text
+ghcr.io/syschelle/schulungsplantool:0.2.23
+ghcr.io/syschelle/schulungsplantool:latest
+```
+
+Damit das Image ohne `docker login` installiert werden kann, muss das GHCR-Package oeffentlich sein. Bei einem privaten Package ist vor `docker compose pull` eine Anmeldung an `ghcr.io` erforderlich.
 
 ## Repository-Struktur
 

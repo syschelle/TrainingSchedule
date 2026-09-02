@@ -13,7 +13,7 @@ if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
 fi
 
 docker compose config >/dev/null
-docker compose build --pull
+docker compose pull
 docker compose up -d --remove-orphans
 
 docker compose ps

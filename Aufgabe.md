@@ -1047,3 +1047,19 @@ Die Version wurde auf `v0.2.22` erhoeht.
 - GitHub Actions prueft Tests, Compose-Konfiguration und Docker-Build.
 - `Aufgabe/`, `Aufgabe.md`, Tests, Dokumentation und lokale Entwicklungsdateien werden nicht in das Produktionsimage kopiert.
 - Die Installations- und Produktionshinweise wurden in `README.md` und `docs/INSTALLATION.md` dokumentiert.
+
+---
+
+# 55. Anpassungsnotiz 2026-09-02
+
+Die Version wurde auf `v0.2.23` erhoeht.
+
+- Ein eigener GitHub-Actions-Workflow veroeffentlicht bei Release-Tags automatisch das Anwendungsimage in GitHub Container Registry.
+- Das Release-Image wird als Multi-Arch-Image fuer `linux/amd64` und `linux/arm64` gebaut.
+- Ziel-Repository fuer Container-Images ist `ghcr.io/syschelle/schulungsplantool`.
+- Der Workflow prueft vor dem Build, dass der Release-Tag zur Datei `VERSION` passt.
+- Docker Buildx/QEMU, Build-Cache, SBOM und Provenance werden fuer Release-Images verwendet.
+- `docker-compose.yml` verwendet standardmaessig das fertig veroeffentlichte GHCR-Image und baut auf Produktivsystemen nicht mehr lokal.
+- `scripts/install.sh` und `scripts/update.sh` verwenden `docker compose pull` vor dem Start der Container.
+- Docker waehlt aus demselben Multi-Arch-Image automatisch die passende Architektur fuer x86_64/amd64 oder arm64.
+

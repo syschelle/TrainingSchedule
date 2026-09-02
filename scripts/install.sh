@@ -29,7 +29,8 @@ else
 fi
 
 docker compose config >/dev/null
-docker compose up -d --build --remove-orphans
+docker compose pull
+docker compose up -d --remove-orphans
 
 echo
 docker compose ps
