@@ -1107,3 +1107,20 @@ Die Version wurde auf `v0.2.26` erhoeht.
 - Der Editor benoetigt keine externe CDN- oder Cloud-Verbindung.
 - Der Hinweis `Keine sichtbaren Bloecke.` wurde aus leeren Kalenderbereichen entfernt.
 
+---
+
+# 59. Anpassungsnotiz 2026-09-02
+
+Die Version wurde auf `v0.2.27` erhoeht.
+
+- Der Markdown-Editor fuer Schulungspunkte besitzt nun `DOCX exportieren` und `DOCX importieren`.
+- Der DOCX-Export erzeugt eine lokal erstellte Word-kompatible Datei mit dem aktuell im Editor angezeigten Inhalt.
+- Im exportierten DOCX steht ein sichtbarer Hinweis, welche Formatierungen fuer einen spaeteren Re-Import zulaessig bzw. nicht zulaessig sind.
+- Fuer den Re-Import zugelassen sind Ueberschriften Ebene 1-3, normaler Text, Fett/Kursiv, Aufzaehlungen und Nummerierungen.
+- Bilder und Screenshots duerfen ausdruecklich nicht importiert werden. Enthält das DOCX Medien/Grafiken, wird der gesamte Import abgelehnt und nichts gespeichert.
+- Ebenfalls abgelehnt werden Formen/Textfelder, Tabellen, Diagramme/SmartArt, eingebettete Dateien/Objekte, Hyperlinks, Fuss-/Endnoten und offene nachverfolgte Aenderungen.
+- Erfolgreiche DOCX-Importe werden zuerst nur in den Editor geladen und muessen vor dem Speichern kontrolliert werden.
+- Nach dem Speichern wird die Aenderungshistorie mit dem Typ `DOCX importiert` fortgeschrieben.
+- DOCX-Dateien werden nicht persistent gespeichert und nicht an externe Dienste uebertragen.
+- Die DOCX-Verarbeitung und OOXML-Sicherheitspruefung erfolgen vollstaendig lokal im Anwendungscontainer.
+

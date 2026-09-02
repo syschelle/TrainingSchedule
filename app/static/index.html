@@ -6,8 +6,8 @@
   <meta name="referrer" content="no-referrer">
   <meta name="robots" content="noindex, nofollow">
   <title>Schulungsplantool</title>
-  <link rel="stylesheet" href="styles.css?v=0.2.26">
-  <script defer src="app.js?v=0.2.26"></script>
+  <link rel="stylesheet" href="styles.css?v=0.2.27">
+  <script defer src="app.js?v=0.2.27"></script>
 </head>
 <body>
   <header class="topbar">
@@ -22,7 +22,7 @@
     <button type="button" id="autoPlan" class="feedback-link header-button">Plan erstellen</button>
     <div class="topbar-actions">
       <button type="button" id="resetDemo" class="feedback-link header-button">Standarddaten</button>
-      <span class="version">v0.2.26</span>
+      <span class="version">v0.2.27</span>
     </div>
   </header>
 
@@ -159,7 +159,12 @@
         <button type="button" data-md-action="italic" class="button button-ghost"><em>Kursiv</em></button>
         <button type="button" data-md-action="bullet" class="button button-ghost">Aufzaehlung</button>
         <button type="button" data-md-action="number" class="button button-ghost">Nummerierung</button>
+        <span class="markdown-toolbar-spacer"></span>
+        <button type="button" id="exportMarkdownDocx" class="button button-ghost">DOCX exportieren</button>
+        <button type="button" id="importMarkdownDocx" class="button button-ghost">DOCX importieren</button>
+        <input type="file" id="markdownDocxInput" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
       </div>
+      <p class="docx-guidance muted"><strong>Word-Re-Import:</strong> Erlaubt sind Ueberschriften Ebene 1-3, Text, Fett, Kursiv, Aufzaehlungen und Nummerierungen. Bilder/Screenshots, Grafiken, Formen, Tabellen, Diagramme, eingebettete Dateien, Hyperlinks, Fuss-/Endnoten und offene Aenderungsverfolgung werden abgelehnt.</p>
       <div class="markdown-editor-grid">
         <label class="markdown-source">
           <span>Markdown</span>
@@ -194,7 +199,7 @@
   </div>
 
   <footer>
-    <span>Schulungsplantool v0.2.26</span>
+    <span>Schulungsplantool v0.2.27</span>
   </footer>
 </body>
 </html>

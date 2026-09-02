@@ -128,6 +128,7 @@ class TrainingContentUpdate(BaseModel):
 
 class TrainingContentMarkdownUpdate(BaseModel):
     markdown_content: str = ""
+    change_type: Literal["saved", "docx_imported"] = "saved"
 
 
 class TrainingContentCreate(BaseModel):

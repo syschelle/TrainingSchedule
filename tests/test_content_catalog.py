@@ -179,3 +179,20 @@ def test_existing_training_contents_table_gets_markdown_column(monkeypatch):
     content_db.ensure_training_content_columns()
     columns = {column["name"] for column in inspect(legacy_engine).get_columns("training_contents")}
     assert "markdown_content" in columns
+
+
+def test_docx_import_save_is_marked_in_history():
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    with Session(engine) as session:
+        seed_database(session)
+        updated = update_training_content_markdown(
+            session,
+            "du-diagnost-basic",
+            "## Importiert\n\n- Punkt",
+            change_type="docx_imported",
+        )
+        assert updated is not None
+        history = list_training_content_history(session, "du-diagnost-basic")
+        assert history is not None
+        assert history[0]["change_type"] == "docx_imported"

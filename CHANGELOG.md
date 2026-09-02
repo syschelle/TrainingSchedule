@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.2.27 - 2026-09-02
+
+### DOCX Import/Export fuer Schulungspunkte
+
+- Markdown-Schulungspunkte koennen direkt aus dem Editor als Word-kompatible `.docx` exportiert werden
+- exportierte DOCX-Dateien enthalten einen sichtbaren Hinweis zu erlaubten und nicht erlaubten Inhalten fuer den Re-Import
+- DOCX-Import konvertiert Ueberschriften, normalen Text, Fett/Kursiv, Aufzaehlungen und Nummerierungen zurueck in Markdown
+- der DOCX-Import speichert nicht automatisch; der Inhalt wird zuerst zur Kontrolle in den Editor geladen
+- nach bestaetigtem Speichern wird der Historieneintrag als `DOCX importiert` gekennzeichnet
+- jedes eingebettete Bild bzw. jeder Screenshot fuehrt zur vollstaendigen Ablehnung des Imports
+- ebenfalls abgelehnt werden Grafiken/Formen/Textfelder, Tabellen, Diagramme/SmartArt, eingebettete Objekte, Hyperlinks, Fuss-/Endnoten und offene nachverfolgte Aenderungen
+- DOCX-Dateien werden ausschliesslich im Request-Speicher verarbeitet und nicht persistent gespeichert
+- ZIP-/OOXML-Paketpruefungen begrenzen interne Dateianzahl und entpackte Groesse und verhindern unzulaessige Pfade
+- `python-docx` wird lokal im Anwendungscontainer verwendet; es gibt keine Cloud- oder Office-365-Abhaengigkeit
+- automatisierte DOCX-Regressionstests hinzugefuegt
+- Version auf v0.2.27 angehoben
+
 ## v0.2.26 - 2026-09-02
 
 ### Markdown-Schulungspunkte und Aenderungshistorie

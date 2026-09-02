@@ -1182,3 +1182,16 @@ body.modal-open {
     flex-direction: column;
   }
 }
+
+.markdown-toolbar-spacer {
+  flex: 1 1 auto;
+}
+
+.docx-guidance {
+  margin: -2px 0 0;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #f8fafc;
+  line-height: 1.45;
+}

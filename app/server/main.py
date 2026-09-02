@@ -12,6 +12,7 @@ from .content_db import (
     create_product,
     create_training_content,
     db_session,
+    get_training_content,
     init_database,
     list_products,
     list_training_content_history,
@@ -20,6 +21,7 @@ from .content_db import (
     update_training_content,
     update_training_content_markdown,
 )
+from .docx_content import DOCX_MIME, DocxContentError, export_training_content_docx, import_training_content_docx
 from .exporter import export_pdf, export_xlsx
 from .importer import build_project_from_uploads
 from .models import ExportRequest, ProductCreate, TrainingContentCreate, TrainingContentMarkdownUpdate, TrainingContentUpdate, TrainingProject
@@ -28,7 +30,7 @@ from .planner import plan_project, validate_project
 BASE_DIR = Path(__file__).resolve().parents[1]
 STATIC_DIR = BASE_DIR / "static"
 MAX_UPLOAD_MB = int(os.environ.get("MAX_UPLOAD_MB", "25"))
-APP_VERSION = os.environ.get("APP_VERSION", "0.2.26")
+APP_VERSION = os.environ.get("APP_VERSION", "0.2.27")
 MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
 
 app = FastAPI(title="Schulungsplantool", version=APP_VERSION)
@@ -91,10 +93,51 @@ def save_training_content(content_id: str, payload: TrainingContentUpdate, sessi
 
 @app.put("/api/training-contents/{content_id}/markdown")
 def save_training_content_markdown(content_id: str, payload: TrainingContentMarkdownUpdate, session: Session = Depends(db_session)) -> dict:
-    updated = update_training_content_markdown(session, content_id, payload.markdown_content)
+    updated = update_training_content_markdown(session, content_id, payload.markdown_content, payload.change_type)
     if updated is None:
         raise HTTPException(status_code=404, detail="Schulungsinhalt wurde nicht gefunden.")
     return updated
+
+
+@app.post("/api/training-contents/{content_id}/docx/export")
+def export_training_content_word(
+    content_id: str,
+    payload: TrainingContentMarkdownUpdate,
+    session: Session = Depends(db_session),
+) -> Response:
+    content = get_training_content(session, content_id)
+    if content is None:
+        raise HTTPException(status_code=404, detail="Schulungsinhalt wurde nicht gefunden.")
+    data = export_training_content_docx(content["title"], payload.markdown_content)
+    filename = f"schulungsinhalt-{content_id}.docx"
+    return Response(
+        data,
+        media_type=DOCX_MIME,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.post("/api/training-contents/{content_id}/docx/import")
+async def import_training_content_word(
+    content_id: str,
+    file: UploadFile = File(...),
+    session: Session = Depends(db_session),
+) -> dict:
+    if get_training_content(session, content_id) is None:
+        raise HTTPException(status_code=404, detail="Schulungsinhalt wurde nicht gefunden.")
+    filename, data = await _read_upload(file)
+    if not filename.lower().endswith(".docx"):
+        raise HTTPException(status_code=400, detail="Fuer den Schulungsinhalte-Import sind nur .docx-Dateien erlaubt.")
+    try:
+        markdown_content = import_training_content_docx(data)
+    except DocxContentError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    return {
+        "filename": filename,
+        "markdown_content": markdown_content,
+        "saved": False,
+        "message": "DOCX wurde geprueft und in den Editor geladen. Erst 'Schulungspunkte speichern' uebernimmt den Inhalt in PostgreSQL.",
+    }
 
 
 @app.get("/api/training-contents/{content_id}/history")

@@ -30,6 +30,7 @@ let trainingContents = [];
 let catalogProducts = [];
 let selectedContentId = null;
 let markdownEditorContentId = null;
+let markdownPendingChangeType = "saved";
 let project = makeDefaultProject();
 
 function makeDefaultProject() {
@@ -105,6 +106,9 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#closeMarkdownEditor").addEventListener("click", closeMarkdownEditor);
   $("#cancelMarkdownEditor").addEventListener("click", closeMarkdownEditor);
   $("#saveMarkdownEditor").addEventListener("click", saveMarkdownEditor);
+  $("#exportMarkdownDocx").addEventListener("click", exportMarkdownDocx);
+  $("#importMarkdownDocx").addEventListener("click", () => $("#markdownDocxInput").click());
+  $("#markdownDocxInput").addEventListener("change", importMarkdownDocx);
   $("#markdownEditorInput").addEventListener("input", updateMarkdownPreview);
   document.querySelectorAll("[data-md-action]").forEach((button) => button.addEventListener("click", applyMarkdownAction));
   $("#markdownEditorModal").addEventListener("click", (event) => {
@@ -649,6 +653,7 @@ function openMarkdownEditor(event) {
   const item = trainingContents.find((candidate) => candidate.id === event.currentTarget.dataset.openMarkdown);
   if (!item) return;
   markdownEditorContentId = item.id;
+  markdownPendingChangeType = "saved";
   $("#markdownEditorTitle").textContent = `Schulungspunkte: ${item.title}`;
   $("#markdownEditorInput").value = item.markdown_content || "";
   $("#markdownEditorStatus").textContent = "";
@@ -663,6 +668,8 @@ function closeMarkdownEditor() {
   $("#markdownEditorModal").hidden = true;
   document.body.classList.remove("modal-open");
   markdownEditorContentId = null;
+  markdownPendingChangeType = "saved";
+  $("#markdownDocxInput").value = "";
 }
 
 function updateMarkdownPreview() {
@@ -763,12 +770,13 @@ async function saveMarkdownEditor() {
     const response = await fetch(`api/training-contents/${encodeURIComponent(item.id)}/markdown`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ markdown_content: $("#markdownEditorInput").value })
+      body: JSON.stringify({ markdown_content: $("#markdownEditorInput").value, change_type: markdownPendingChangeType })
     });
     if (!response.ok) throw new Error("save-markdown");
     const updated = await response.json();
     trainingContents = trainingContents.map((candidate) => candidate.id === updated.id ? updated : candidate);
-    $("#markdownEditorStatus").textContent = "Gespeichert.";
+    $("#markdownEditorStatus").textContent = markdownPendingChangeType === "docx_imported" ? "DOCX-Inhalt gespeichert." : "Gespeichert.";
+    markdownPendingChangeType = "saved";
     await loadMarkdownHistory(item.id);
   } catch (error) {
     $("#markdownEditorStatus").textContent = "Speichern fehlgeschlagen.";
@@ -776,6 +784,86 @@ async function saveMarkdownEditor() {
     button.disabled = false;
     button.textContent = "Schulungspunkte speichern";
   }
+}
+
+async function exportMarkdownDocx() {
+  const item = trainingContents.find((candidate) => candidate.id === markdownEditorContentId);
+  if (!item) return;
+  const button = $("#exportMarkdownDocx");
+  button.disabled = true;
+  $("#markdownEditorStatus").textContent = "DOCX wird erstellt...";
+  try {
+    const response = await fetch(`api/training-contents/${encodeURIComponent(item.id)}/docx/export`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ markdown_content: $("#markdownEditorInput").value, change_type: "saved" })
+    });
+    if (!response.ok) throw new Error(await apiErrorMessage(response, "DOCX-Export fehlgeschlagen."));
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `schulungsinhalt-${safeFilenamePart(item.title)}.docx`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    $("#markdownEditorStatus").textContent = "DOCX exportiert.";
+  } catch (error) {
+    $("#markdownEditorStatus").textContent = error.message || "DOCX-Export fehlgeschlagen.";
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function importMarkdownDocx(event) {
+  const item = trainingContents.find((candidate) => candidate.id === markdownEditorContentId);
+  const file = event.target.files?.[0];
+  event.target.value = "";
+  if (!item || !file) return;
+  if (!file.name.toLowerCase().endsWith(".docx")) {
+    $("#markdownEditorStatus").textContent = "Bitte eine DOCX-Datei auswaehlen.";
+    return;
+  }
+
+  const button = $("#importMarkdownDocx");
+  button.disabled = true;
+  $("#markdownEditorStatus").textContent = "DOCX wird geprueft...";
+  const formData = new FormData();
+  formData.append("file", file);
+  try {
+    const response = await fetch(`api/training-contents/${encodeURIComponent(item.id)}/docx/import`, {
+      method: "POST",
+      body: formData
+    });
+    if (!response.ok) throw new Error(await apiErrorMessage(response, "DOCX-Import fehlgeschlagen."));
+    const imported = await response.json();
+    $("#markdownEditorInput").value = imported.markdown_content || "";
+    markdownPendingChangeType = "docx_imported";
+    updateMarkdownPreview();
+    $("#markdownEditorStatus").textContent = "DOCX geprueft und geladen. Bitte Inhalt pruefen und anschliessend speichern.";
+  } catch (error) {
+    $("#markdownEditorStatus").textContent = error.message || "DOCX-Import fehlgeschlagen.";
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function apiErrorMessage(response, fallback) {
+  try {
+    const payload = await response.json();
+    return payload.detail || fallback;
+  } catch (error) {
+    return fallback;
+  }
+}
+
+function safeFilenamePart(value) {
+  return String(value || "schulungsinhalt")
+    .normalize("NFKD")
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80) || "schulungsinhalt";
 }
 
 async function loadMarkdownHistory(contentId) {
@@ -797,7 +885,7 @@ async function loadMarkdownHistory(contentId) {
 
 function markdownHistoryItem(item) {
   const timestamp = new Date(item.created_at).toLocaleString("de-DE");
-  const label = item.change_type === "restored" ? "Wiederhergestellt" : "Gespeichert";
+  const label = item.change_type === "restored" ? "Wiederhergestellt" : item.change_type === "docx_imported" ? "DOCX importiert" : "Gespeichert";
   const preview = String(item.markdown_content || "").replace(/\s+/g, " ").trim().slice(0, 140) || "Leerer Inhalt";
   return `<article class="markdown-history-item">
     <div>

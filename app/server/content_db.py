@@ -310,6 +310,11 @@ def create_training_content(session: Session, product_id: str, title: str) -> di
     return training_content_to_dict(record)
 
 
+def get_training_content(session: Session, content_id: str) -> dict | None:
+    record = session.get(TrainingContentRecord, content_id)
+    return training_content_to_dict(record) if record else None
+
+
 def list_training_contents(session: Session, product_id: str | None = None) -> list[dict]:
     statement = select(TrainingContentRecord).order_by(TrainingContentRecord.product_id, TrainingContentRecord.title)
     if product_id:

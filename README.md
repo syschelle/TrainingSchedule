@@ -1,6 +1,6 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.2.26**
+Aktuelle Version: **v0.2.27**
 
 Lokale Webanwendung zur Erstellung, Bearbeitung, Validierung und zum Export mehrtaegiger Schulungsplaene. Die Anwendung laeuft vollstaendig in Docker und verwendet PostgreSQL fuer den strukturierten Schulungsinhalte-Katalog.
 
@@ -22,10 +22,11 @@ Lokale Webanwendung zur Erstellung, Bearbeitung, Validierung und zum Export mehr
 - PostgreSQL-Katalog fuer dauerhaft gepflegte Schulungsinhalte
 - Markdown-Editor fuer detaillierte Schulungspunkte je Schulungsinhalt
 - persistente Aenderungshistorie mit Wiederherstellung gespeicherter Markdown-Staende
+- DOCX-Export und -Import fuer Schulungspunkte mit strengem Inhaltsfilter
 
 ## Datenschutz
 
-Hochgeladene Excel- oder PDF-Dateien werden nicht in PostgreSQL oder Docker-Volumes abgelegt. Die vorhandene Import-API verarbeitet Uploads nur im Request-Speicher. Der Quellordner `Aufgabe/`, lokale Quelldokumente sowie `Aufgabe.md` werden durch `.dockerignore` nicht in das Anwendungsimage uebernommen.
+Hochgeladene Excel-, PDF- oder DOCX-Dateien werden nicht in PostgreSQL oder Docker-Volumes abgelegt. Die Import-APIs verarbeiten Uploads nur im Request-Speicher. Der Quellordner `Aufgabe/`, lokale Quelldokumente sowie `Aufgabe.md` werden durch `.dockerignore` nicht in das Anwendungsimage uebernommen.
 
 Persistiert wird ausschliesslich das PostgreSQL-Volume fuer strukturierte Produkt- und Schulungsinhalte. Dazu gehoeren auch die Markdown-Schulungspunkte und deren Aenderungshistorie.
 
@@ -176,12 +177,12 @@ curl http://127.0.0.1:18083/api/health
 Erwartet:
 
 ```json
-{"status":"ok","version":"0.2.26"}
+{"status":"ok","version":"0.2.27"}
 ```
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.2.26` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.2.27` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -189,7 +190,7 @@ Bei einem Release-Tag wie `v0.2.26` baut `.github/workflows/release-image.yml` n
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.26
+ghcr.io/syschelle/schulungsplantool:0.2.27
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -211,7 +212,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.2.26` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.2.27` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -219,7 +220,7 @@ Bei einem Release-Tag wie `v0.2.26` baut der Workflow `.github/workflows/release
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.26
+ghcr.io/syschelle/schulungsplantool:0.2.27
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -268,3 +269,31 @@ Das Produktions-Compose verwendet standardmaessig `ghcr.io/syschelle/schulungspl
 Unter `Schulungsinhalte` kann beim ausgewaehlten Inhalt ueber `Schulungspunkte bearbeiten` ein lokaler Markdown-Editor geoeffnet werden. Der Editor zeigt den aktuell gespeicherten Inhalt, bietet eine Live-Vorschau und speichert den Markdown-Quelltext direkt in PostgreSQL.
 
 Bei jeder inhaltlichen Aenderung wird ein neuer Historienstand gespeichert. Die letzten Versionen werden im Editor angezeigt und koennen dort wiederhergestellt werden. Wiederherstellungen werden ebenfalls als neuer Historieneintrag protokolliert. Der Editor verwendet keine externe CDN- oder Cloud-Verbindung.
+
+
+### DOCX Import und Export fuer Schulungspunkte
+
+Im Markdown-Editor kann der aktuell angezeigte Schulungsinhalt als `.docx` exportiert und spaeter wieder importiert werden. Der Export enthaelt einen sichtbaren Bearbeitungshinweis mit den fuer den Re-Import erlaubten und nicht erlaubten Word-Inhalten.
+
+Zulaessig fuer den Re-Import sind:
+
+- Ueberschriften Ebene 1-3
+- normaler Text
+- Fett und Kursiv
+- Aufzaehlungen
+- Nummerierungen
+
+Nicht zulaessig sind insbesondere:
+
+- Bilder und Screenshots
+- Grafiken, Formen und Textfelder
+- Tabellen
+- Diagramme und SmartArt
+- eingebettete Dateien/Objekte
+- Hyperlinks
+- Fuss- und Endnoten
+- nicht angenommene nachverfolgte Aenderungen
+
+**Bilder und Screenshots werden nicht stillschweigend entfernt.** Enthält das DOCX ein Bild bzw. eine Grafik, wird der gesamte Import mit einer klaren Fehlermeldung abgelehnt und der vorhandene Schulungsinhalt bleibt unveraendert.
+
+Ein erfolgreicher DOCX-Import wird zuerst nur in den Markdown-Editor geladen. Erst nach Sichtpruefung und Klick auf `Schulungspunkte speichern` wird der Inhalt in PostgreSQL uebernommen. Dieser Speichervorgang erscheint in der Aenderungshistorie als `DOCX importiert`. Die hochgeladene DOCX-Datei selbst wird nicht gespeichert.
