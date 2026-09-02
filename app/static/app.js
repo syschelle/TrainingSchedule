@@ -299,7 +299,7 @@ function field(name, label, value, type = "text", wide = false) {
 function setting(name, label, value, type = "text") {
   return `<label class="field" data-field="${name}">
     <span>${label}</span>
-    <input data-setting-name="${name}" type="${type}" value="${escapeHtml(value || "")}">
+    <input data-setting-name="${name}" type="${type}" ${type === "time" ? 'step="900"' : ""} value="${escapeHtml(value || "")}">
   </label>`;
 }
 
@@ -391,7 +391,12 @@ function deleteParticipantGroup(id) {
 
 function updateSettingField(event) {
   const key = event.target.dataset.settingName;
-  project.settings[key] = event.target.type === "number" ? Number(event.target.value) : event.target.type === "checkbox" ? event.target.checked : event.target.value;
+  let value = event.target.type === "number" ? Number(event.target.value) : event.target.type === "checkbox" ? event.target.checked : event.target.value;
+  if (event.target.type === "time" && (key === "day_start" || key.endsWith("_start"))) {
+    value = snapTimeValue(value);
+    event.target.value = value;
+  }
+  project.settings[key] = value;
   renderTabs();
 }
 
@@ -1273,6 +1278,22 @@ function snapMinutes(value) {
   return Math.round(value / calendarSnapMinutes) * calendarSnapMinutes;
 }
 
+function snapTimeValue(value) {
+  if (!/^\d{1,2}:\d{2}$/.test(String(value || ""))) return value;
+  const minutes = toMinutes(value);
+  if (!Number.isFinite(minutes)) return value;
+  return formatTime(snapMinutes(minutes));
+}
+
+function normalizeBlockStart(block) {
+  if (!block || !block.start || !block.end) return;
+  const originalDuration = duration(block.start, block.end);
+  const snapped = snapTimeValue(block.start);
+  if (snapped === block.start || !/^\d{2}:\d{2}$/.test(snapped)) return;
+  block.start = snapped;
+  block.end = formatTime(toMinutes(snapped) + Math.max(0, originalDuration));
+}
+
 function clampToDay(start, blockDuration) {
   const dayStart = toMinutes(project.settings.day_start);
   const dayEnd = toMinutes(project.settings.day_end);
@@ -1336,7 +1357,7 @@ function editBlock(id) {
   const end = prompt("Ende", block.end);
   const trainer = prompt(`Trainer (${calendarTrainers().map(trainerLabel).join(", ")})`, block.trainer || "");
   if (title) block.title = title;
-  if (start) block.start = start;
+  if (start) block.start = snapTimeValue(start);
   if (end) block.end = end;
   if (trainer !== null) {
     const cleaned = trainer.trim();
@@ -1407,11 +1428,16 @@ function renderPreview() {
 function normalizeProjectState() {
   project.blocks = Array.isArray(project.blocks) ? project.blocks : [];
   project.manual_weeks = Array.isArray(project.manual_weeks) ? project.manual_weeks : [];
+  project.settings = project.settings || { ...defaultSettings };
+  ["day_start", "lunch_window_start", "monday_arrival_start", "thursday_departure_start"].forEach((key) => {
+    if (project.settings[key]) project.settings[key] = snapTimeValue(project.settings[key]);
+  });
   project.trainers = Array.isArray(project.trainers) ? project.trainers.map((name) => String(name || "").trim()).filter(Boolean) : [];
   if (!project.trainers.length && String(project.trainer || "").trim()) project.trainers = [String(project.trainer).trim()];
   project.blocks.forEach((block) => {
     const name = String(block.trainer || "").trim();
     if (name && !project.trainers.includes(name)) project.trainers.push(name);
+    normalizeBlockStart(block);
   });
   if (project.trainers.length) {
     project.blocks.forEach((block) => {
@@ -1466,7 +1492,20 @@ async function importProjectState(event) {
 }
 
 function renderWarnings() {
-  $("#warnings").innerHTML = (project.warnings || []).map((warning) => `<p>${escapeHtml(warning)}</p>`).join("");
+  const warnings = project.warnings || [];
+  const warningContainer = $("#warnings");
+  if (warningContainer) {
+    warningContainer.innerHTML = warnings.length
+      ? warnings.map((warning) => `<p>${escapeHtml(warning)}</p>`).join("")
+      : `<div class="validation-empty"><strong>Keine Konflikte.</strong><span>Die aktuelle Planung enthaelt keine Validierungshinweise.</span></div>`;
+  }
+  const count = $("#validationCount");
+  if (count) count.textContent = `${warnings.length} ${warnings.length === 1 ? "Hinweis" : "Hinweise"}`;
+  const nav = $("#validationNavButton");
+  if (nav) {
+    nav.textContent = warnings.length ? `Planungspruefung (${warnings.length})` : "Planungspruefung";
+    nav.classList.toggle("has-warnings", warnings.length > 0);
+  }
 }
 
 async function downloadExport(format) {

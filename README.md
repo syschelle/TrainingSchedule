@@ -1,6 +1,17 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.2.33**
+Aktuelle Version: **v0.2.35**
+
+
+## Aenderungen v0.2.35
+
+Validierungshinweise befinden sich jetzt auf der eigenen Seite `Planungspruefung` und nicht mehr oberhalb der Kalenderansicht. Dadurch veraendert eine wachsende Konfliktliste beim Drag-and-Drop nicht mehr die Hoehe der Planungsseite und die Kalenderposition bleibt stabil. Die Navigation zeigt die aktuelle Anzahl der Hinweise an.
+
+### Enthaltene Aenderungen aus v0.2.34
+
+`Planung importieren` befindet sich bei `Eingabe` / `Grunddaten`. Die Planungsansicht enthaelt weiterhin den Export des aktuellen Standes, aber keinen Import-Button mehr.
+
+Alle Kalenderblock-Startzeiten werden auf ein festes 15-Minuten-Raster normalisiert (`:00`, `:15`, `:30`, `:45`). Das gilt fuer die automatische Planung, Drag-and-Drop, manuelle Blockbearbeitung sowie fuer wieder eingelesene Projektdateien. Beim Import wird die vorhandene Blockdauer beibehalten.
 
 ## Security-Hinweis v0.2.33
 
@@ -187,12 +198,12 @@ curl http://127.0.0.1:18083/api/health
 Erwartet:
 
 ```json
-{"status":"ok","version":"0.2.33"}
+{"status":"ok","version":"0.2.35"}
 ```
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.2.33` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.2.35` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -200,7 +211,7 @@ Bei einem Release-Tag wie `v0.2.33` baut `.github/workflows/release-image.yml` n
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.33
+ghcr.io/syschelle/schulungsplantool:0.2.35
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -211,7 +222,7 @@ Damit eine Installation ohne `docker login ghcr.io` moeglich ist, muss das GHCR-
 ```bash
 python -m venv .venv
 . .venv/bin/activate
-pip install -r requirements-dev.txt
+pip install -r requirements.txt -r requirements-dev.txt
 pytest -q
 uvicorn app.server.main:app --reload
 ```
@@ -222,7 +233,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.2.33` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.2.35` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -230,7 +241,7 @@ Bei einem Release-Tag wie `v0.2.33` baut der Workflow `.github/workflows/release
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.33
+ghcr.io/syschelle/schulungsplantool:0.2.35
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -329,7 +340,7 @@ In der Kalenderansicht wird jede Kalenderwoche chronologisch gruppiert. Innerhal
 
 Ueber `Planung exportieren` wird der komplette aktuelle Projektzustand als lokale `*.schulungsplan.json`-Datei ausgegeben. Enthalten sind unter anderem Projektdaten, Trainer, Teilnehmergruppen, Planungsregeln, Themen, manuelle Wochen, alle Kalenderbloecke, Trainerzuordnungen, nicht eingeplante Themen und Warnungen.
 
-`Planung importieren` validiert eine zuvor exportierte Projektdatei und stellt diesen Planungsstand wieder her. Die Datei wird nur fuer den Request verarbeitet und nicht dauerhaft auf dem Server gespeichert. Der PostgreSQL-Schulungsinhalte-Katalog ist davon unabhaengig und wird nicht in die Projektdatei kopiert.
+`Planung importieren` steht auf der Seite `Eingabe` im Bereich `Grunddaten`, validiert eine zuvor exportierte Projektdatei und stellt diesen Planungsstand wieder her. Die Datei wird nur fuer den Request verarbeitet und nicht dauerhaft auf dem Server gespeichert. Der PostgreSQL-Schulungsinhalte-Katalog ist davon unabhaengig und wird nicht in die Projektdatei kopiert.
 
 ## PDF-Kalenderexport
 

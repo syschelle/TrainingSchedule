@@ -1,5 +1,29 @@
 # Changelog
 
+## v0.2.35 - 2026-09-02
+
+### Separate Planungspruefung
+
+- Validierungshinweise werden nicht mehr oberhalb der Kalenderansicht dargestellt.
+- Neue eigene Seite `Planungspruefung` in der Navigation zeigt alle aktuellen Konflikte und Hinweise.
+- Die Navigation zeigt bei vorhandenen Hinweisen deren Anzahl an, ohne die Kalenderflaeche zu veraendern.
+- Bei Drag-and-Drop und anderen Kalenderaenderungen bleibt die Kalenderposition stabil, weil wachsende Warnlisten nicht mehr Bestandteil der Planungsseite sind.
+- Die bestehende Live-Validierung bleibt unveraendert aktiv; nur die Darstellung wurde getrennt.
+- Eine konfliktfreie Planung zeigt auf der Pruefungsseite einen kompakten `Keine Konflikte`-Status.
+
+## v0.2.34 - 2026-09-02
+
+### Planungsimport und Viertelstundenraster
+
+- `Planung importieren` wurde aus der Schulungsplan-Anzeige in den Bereich `Eingabe` / `Grunddaten` verschoben.
+- `Planung exportieren` bleibt beim Schulungsplan, da dort der aktuell bearbeitete Stand ausgegeben wird.
+- automatisch erzeugte Block-Startzeiten werden konsequent auf das 15-Minuten-Raster ausgerichtet.
+- nach Schulungen oder 20-30-Minuten-Pausen wird der naechste Block bei Bedarf auf den naechsten Viertelstunden-Slot verschoben.
+- Drag-and-Drop und Ausschneiden/Einfuegen bleiben auf dem bestehenden 15-Minuten-Raster.
+- manuell eingegebene Block-Startzeiten werden auf die naechste Viertelstunde normalisiert.
+- importierte Projektdateien mit aelteren Startzeiten wie `15:05` werden beim Laden auf das Viertelstundenraster normalisiert; die Blockdauer bleibt dabei erhalten.
+- die Validierung meldet verbleibende Startzeiten ausserhalb des 15-Minuten-Rasters.
+
 ## v0.2.33 - 2026-09-02
 
 ### Security

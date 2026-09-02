@@ -15,6 +15,23 @@ def format_time(minutes: int) -> str:
     return f"{minutes // 60:02d}:{minutes % 60:02d}"
 
 
+
+
+def snap_minutes_to_quarter(minutes: int, mode: str = "nearest") -> int:
+    """Snap a minute value to a 15-minute boundary.
+
+    ``ceil`` is used by the planner so a new block never starts before a
+    previous block has ended. ``nearest`` is used for user-entered values.
+    """
+    step = 15
+    if mode == "ceil":
+        return ((minutes + step - 1) // step) * step
+    return ((minutes + step // 2) // step) * step
+
+
+def snap_time_to_quarter(value: str, mode: str = "nearest") -> str:
+    return format_time(snap_minutes_to_quarter(parse_time(value), mode))
+
 def minutes_between(start: str, end: str) -> int:
     return parse_time(end) - parse_time(start)
 

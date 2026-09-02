@@ -1207,3 +1207,31 @@ Die Version wurde auf `v0.2.32` erhoeht.
 - Damit wird der Dependabot-Hinweis `pytest has vulnerable tmpdir handling` (CVE-2025-71176 / GHSA-6w46-j5rx-g56g) behoben; betroffen sind pytest-Versionen kleiner `9.0.3`.
 - Ein Regressionstest prueft den sicheren pytest-Pin in `requirements-dev.txt`.
 - Runtime-Abhaengigkeiten, Datenbankschema und Anwendungsfunktionen bleiben unveraendert.
+
+
+---
+
+# 66. Anpassungsnotiz 2026-09-02
+
+Die Version wurde auf `v0.2.34` erhoeht.
+
+- Der Button `Planung importieren` befindet sich nun auf der Seite `Eingabe` im Bereich `Grunddaten` und nicht mehr in der Schulungsplan-Anzeige.
+- `Planung exportieren` bleibt in der Schulungsplan-Anzeige.
+- Startzeiten von Kalenderbloecken muessen immer auf einem 15-Minuten-Raster liegen (`:00`, `:15`, `:30`, `:45`).
+- Die automatische Planung richtet jeden neuen Schulungs-, Pausen- und Mittagspausenstart auf einen Viertelstunden-Slot aus.
+- Bei Pausen mit z. B. 25 Minuten wird der folgende Schulungsstart bei Bedarf auf den naechsten freien Viertelstunden-Slot geschoben.
+- Manuell bearbeitete Startzeiten werden auf das Viertelstundenraster normalisiert.
+- Beim Import aelterer Planungsdateien werden nicht passende Block-Startzeiten auf das Viertelstundenraster normalisiert, ohne die gespeicherte Blockdauer zu veraendern.
+
+---
+
+# 67. Anpassungsnotiz 2026-09-02
+
+Die Version wurde auf `v0.2.35` erhoeht.
+
+- Die Validierungs- und Konfliktmeldungen werden nicht mehr direkt in der Schulungsplan-Seite oberhalb der Kalenderansicht angezeigt.
+- Es gibt eine eigene Navigationsseite `Planungspruefung` fuer alle aktuellen Warnungen und Konflikte.
+- Die Navigation zeigt die Anzahl der vorhandenen Validierungshinweise an.
+- Die Live-Validierung bleibt nach Drag-and-Drop, manuellen Aenderungen und anderen Planungsaktionen aktiv.
+- Durch die getrennte Darstellung veraendert die Warnliste nicht mehr die Hoehe der Kalenderseite; Scroll- und Kalenderposition bleiben beim Verschieben von Bloecken stabil.
+- Bei einer konfliktfreien Planung zeigt die Pruefungsseite einen kompakten Status ohne Warnliste.

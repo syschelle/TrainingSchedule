@@ -5,7 +5,7 @@ from math import ceil
 from uuid import uuid4
 
 from .models import BlockType, ScheduleBlock, TrainingProject, TrainingTopic
-from .rules import DISPLAY_WEEKDAYS, WEEKDAYS, format_time, is_overlap, minutes_between, parse_time
+from .rules import DISPLAY_WEEKDAYS, WEEKDAYS, format_time, is_overlap, minutes_between, parse_time, snap_minutes_to_quarter, snap_time_to_quarter
 
 
 def sort_topics(topics: list[TrainingTopic]) -> list[TrainingTopic]:
@@ -103,7 +103,7 @@ def _add_fixed_blocks(project: TrainingProject, day: str, week: int, trainer: st
             week=week,
             day=day,
             title=settings.monday_arrival_label,
-            start=settings.monday_arrival_start,
+            start=snap_time_to_quarter(settings.monday_arrival_start),
             end=settings.monday_arrival_end,
             trainer=trainer,
         ))
@@ -114,7 +114,7 @@ def _add_fixed_blocks(project: TrainingProject, day: str, week: int, trainer: st
             week=week,
             day=day,
             title=settings.thursday_departure_label,
-            start=settings.thursday_departure_start,
+            start=snap_time_to_quarter(settings.thursday_departure_start),
             end=settings.thursday_departure_end,
             trainer=trainer,
         ))
@@ -146,9 +146,9 @@ def plan_project(project: TrainingProject) -> TrainingProject:
         for day in available_days:
             for trainer in trainers:
                 scheduled.extend(_add_fixed_blocks(project, day, week, trainer))
-                cursor = parse_time(settings.day_start)
+                cursor = snap_minutes_to_quarter(parse_time(settings.day_start), "ceil")
                 if day == "Montag" and settings.monday_arrival_enabled:
-                    cursor = max(cursor, parse_time(settings.monday_arrival_end))
+                    cursor = snap_minutes_to_quarter(max(cursor, parse_time(settings.monday_arrival_end)), "ceil")
                 cursor_by_lane[(week, day, trainer)] = cursor
         initialized_weeks.add(week)
 
@@ -159,7 +159,7 @@ def plan_project(project: TrainingProject) -> TrainingProject:
         lunch: tuple[int, int] | None = None
 
         if cursor >= parse_time(settings.lunch_window_start) and key not in used_lunch:
-            lunch_start = max(cursor, parse_time(settings.lunch_window_start))
+            lunch_start = snap_minutes_to_quarter(max(cursor, parse_time(settings.lunch_window_start)), "ceil")
             lunch_end = lunch_start + settings.lunch_minutes
             if lunch_end > day_end:
                 return None
@@ -168,11 +168,12 @@ def plan_project(project: TrainingProject) -> TrainingProject:
 
         break_slot: tuple[int, int] | None = None
         if key in lane_has_training:
-            break_end = cursor + settings.break_preferred_minutes
-            break_slot = (cursor, break_end)
-            cursor = break_end
+            break_start = snap_minutes_to_quarter(cursor, "ceil")
+            break_end = break_start + settings.break_preferred_minutes
+            break_slot = (break_start, break_end)
+            cursor = snap_minutes_to_quarter(break_end, "ceil")
 
-        start = cursor
+        start = snap_minutes_to_quarter(cursor, "ceil")
         end = start + topic.duration_minutes
         if end > day_end:
             return None
@@ -280,7 +281,7 @@ def plan_project(project: TrainingProject) -> TrainingProject:
                 if key not in lane_has_training or key in used_lunch:
                     continue
                 cursor = cursor_by_lane[key]
-                lunch_start = max(parse_time(settings.lunch_window_start), min(cursor, parse_time(settings.lunch_window_end)))
+                lunch_start = snap_minutes_to_quarter(max(parse_time(settings.lunch_window_start), min(cursor, parse_time(settings.lunch_window_end))), "ceil")
                 lunch_end = lunch_start + settings.lunch_minutes
                 if lunch_end <= _latest_training_end(project, day):
                     scheduled.append(ScheduleBlock(
@@ -319,6 +320,8 @@ def validate_project(project: TrainingProject) -> list[str]:
     for block in project.blocks:
         by_lane[(block.week, block.day, block.trainer)].append(block)
         trainer_suffix = f", Trainer {block.trainer}" if block.trainer else ""
+        if parse_time(block.start) % 15 != 0:
+            warnings.append(f"Woche {block.week}, {block.day}{trainer_suffix}: Startzeit von '{block.title}' liegt nicht im 15-Minuten-Raster.")
         if parse_time(block.start) < parse_time(settings.day_start) or parse_time(block.end) > parse_time(settings.day_end):
             warnings.append(f"Woche {block.week}, {block.day}{trainer_suffix}: '{block.title}' liegt ausserhalb der Kernzeit.")
         if block.type == BlockType.break_block:

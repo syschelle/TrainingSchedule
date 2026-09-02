@@ -28,11 +28,12 @@ from .exporter import export_pdf, export_xlsx
 from .importer import build_project_from_uploads
 from .models import ExportRequest, ProductCreate, ProjectFile, TrainingContentCreate, TrainingContentMarkdownUpdate, TrainingContentUpdate, TrainingProject
 from .planner import plan_project, validate_project
+from .rules import format_time, minutes_between, parse_time, snap_minutes_to_quarter
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 STATIC_DIR = BASE_DIR / "static"
 MAX_UPLOAD_MB = int(os.environ.get("MAX_UPLOAD_MB", "25"))
-APP_VERSION = os.environ.get("APP_VERSION", "0.2.33")
+APP_VERSION = os.environ.get("APP_VERSION", "0.2.35")
 MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
 
 app = FastAPI(title="Schulungsplantool", version=APP_VERSION)
@@ -217,6 +218,16 @@ async def import_project_file(file: UploadFile = File(...)) -> dict:
     try:
         raw = json.loads(data.decode("utf-8"))
         payload = ProjectFile.model_validate(raw)
+        # Older project snapshots may contain manually entered starts such as
+        # 15:05. Normalize them on import while preserving each block duration.
+        for key in ("day_start", "lunch_window_start", "monday_arrival_start", "thursday_departure_start"):
+            value = getattr(payload.project.settings, key)
+            setattr(payload.project.settings, key, format_time(snap_minutes_to_quarter(parse_time(value))))
+        for block in payload.project.blocks:
+            duration = max(0, minutes_between(block.start, block.end))
+            snapped_start = snap_minutes_to_quarter(parse_time(block.start))
+            block.start = format_time(snapped_start)
+            block.end = format_time(snapped_start + duration)
     except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
         raise HTTPException(status_code=400, detail="Die Projektdatei ist ungueltig oder nicht kompatibel.") from error
     return {

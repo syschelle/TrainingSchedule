@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.2.33"' in html
+    assert 'src="calendar.js?v=0.2.35"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -94,3 +94,35 @@ def test_preview_documents_landscape_calendar_export() -> None:
     assert "PDF-Vorschau" in javascript
     assert "Querformat" in javascript
     assert "dayHtml(day, start, height, week, trainer, trainerIndex, false)" in javascript
+
+
+def test_project_import_is_on_input_page_not_plan_header() -> None:
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    input_page = html.split('id="input-page"', 1)[1].split('id="products-page"', 1)[0]
+    plan_page = html.split('id="plan-page"', 1)[1].split('id="markdownEditorModal"', 1)[0]
+    assert 'id="importProject"' in input_page
+    assert 'id="projectImportInput"' in input_page
+    assert 'id="importProject"' not in plan_page
+    assert 'id="exportProject"' in plan_page
+
+
+def test_frontend_normalizes_manual_and_imported_block_starts_to_quarter_hours() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    assert "const calendarSnapMinutes = 15;" in javascript
+    assert "function snapTimeValue(value)" in javascript
+    assert "function normalizeBlockStart(block)" in javascript
+    assert "if (start) block.start = snapTimeValue(start);" in javascript
+    assert "normalizeBlockStart(block);" in javascript
+
+
+def test_validation_warnings_are_separate_from_calendar_page() -> None:
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    plan_page = html.split('id="plan-page"', 1)[1].split('id="validation-page"', 1)[0]
+    validation_page = html.split('id="validation-page"', 1)[1].split('id="markdownEditorModal"', 1)[0]
+    assert 'id="warnings"' not in plan_page
+    assert 'id="warnings"' in validation_page
+    assert 'id="validationNavButton"' in html
+    assert 'id="validationCount"' in validation_page
+    assert 'Planungspruefung' in html
+    assert 'nav.textContent = warnings.length ? `Planungspruefung (${warnings.length})`' in javascript

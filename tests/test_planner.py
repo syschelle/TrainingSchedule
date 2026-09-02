@@ -197,3 +197,27 @@ def test_topic_trainer_legacy_value_does_not_restrict_equal_trainers():
     planned = plan_project(project)
     training_blocks = [block for block in planned.blocks if block.type == "training"]
     assert {block.trainer for block in training_blocks} == {"Trainer A", "Trainer B"}
+
+
+def test_automatic_training_starts_are_always_on_quarter_hours():
+    project = TrainingProject(
+        topics=[
+            topic("A", 95),
+            topic("B", 65),
+            topic("C", 50),
+            topic("D", 80),
+        ]
+    )
+    planned = plan_project(project)
+    starts = [block.start for block in planned.blocks]
+    assert starts
+    assert all(int(value.split(":")[1]) % 15 == 0 for value in starts)
+
+
+def test_validation_flags_non_quarter_hour_start():
+    project = TrainingProject()
+    project.blocks = [
+        ScheduleBlock(id="odd", type="training", day="Dienstag", title="Odd", start="15:05", end="16:05")
+    ]
+    warnings = validate_project(project)
+    assert any("15-Minuten-Raster" in warning for warning in warnings)
