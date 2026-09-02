@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.2.37 - 2026-09-02
+
+### Uebersichtsseite, eindeutige Projektdateien und zustandsbehaftete Navigation
+
+- Die PDF-Vorschau beginnt jetzt mit einer eigenen Uebersichtsseite vor den Kalenderseiten.
+- Der PDF-Export erzeugt dieselbe Uebersicht als erste A4-Querformat-Seite.
+- Kunde und Standort werden in der Planuebersicht, auf der Vorschau-Uebersicht und auf den Kalender-Vorschauseiten explizit angezeigt.
+- Auch die Kalenderseiten im PDF weisen Kunde und Standort getrennt aus.
+- `Planung exportieren` verwendet einen Dateinamen nach dem Schema `kunde_standort_produkt_datum_uhrzeit.json`.
+- Dateinamensbestandteile werden fuer plattformuebergreifende Verwendung bereinigt; Datum und Uhrzeit werden beim Browserdownload lokal erzeugt.
+- In `Eingabe` gibt es einen direkten Wechsel zum vorhandenen `Schulungsplan`.
+- Der Wechsel zwischen `Eingabe` und `Schulungsplan` ruft die automatische Planung nicht auf und veraendert bestehende Kalenderbloecke nicht.
+- Ein neuer Plan wird weiterhin ausschliesslich ueber `Plan erstellen` berechnet.
+
 ## v0.2.36 - 2026-09-02
 
 ### Eingebetteter Kalenderblock-Editor

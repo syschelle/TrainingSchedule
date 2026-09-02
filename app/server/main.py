@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -33,7 +34,7 @@ from .rules import format_time, minutes_between, parse_time, snap_minutes_to_qua
 BASE_DIR = Path(__file__).resolve().parents[1]
 STATIC_DIR = BASE_DIR / "static"
 MAX_UPLOAD_MB = int(os.environ.get("MAX_UPLOAD_MB", "25"))
-APP_VERSION = os.environ.get("APP_VERSION", "0.2.36")
+APP_VERSION = os.environ.get("APP_VERSION", "0.2.37")
 MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
 
 app = FastAPI(title="Schulungsplantool", version=APP_VERSION)
@@ -195,18 +196,49 @@ def validate(project: TrainingProject) -> dict:
     return {"warnings": validate_project(project)}
 
 
+def _safe_export_filename_part(value: str, fallback: str) -> str:
+    normalized = unicodedata.normalize("NFKD", str(value or fallback).strip())
+    output: list[str] = []
+    separator_pending = False
+    for char in normalized:
+        if char.isascii() and char.isalnum():
+            if separator_pending and output:
+                output.append("-")
+            output.append(char)
+            separator_pending = False
+        elif not unicodedata.combining(char):
+            separator_pending = bool(output)
+    return "".join(output) or fallback
+
+
+def _project_export_filename(project: TrainingProject, exported_at: datetime) -> str:
+    product = next((item for item in project.product_lines if item.id == project.product_id), None)
+    product_name = product.name if product else project.product_id or "produkt"
+    customer = project.customer_name if project.customer_data_required else "ohne-kunde"
+    location = project.location if project.customer_data_required else "ohne-standort"
+    timestamp = exported_at.strftime("%Y-%m-%d_%H%M")
+    return "_".join([
+        _safe_export_filename_part(customer, "kunde"),
+        _safe_export_filename_part(location, "standort"),
+        _safe_export_filename_part(product_name, "produkt"),
+        timestamp,
+    ]) + ".json"
+
+
 @app.post("/api/project/export")
 def export_project_file(project: TrainingProject) -> Response:
+    exported_at = datetime.now(timezone.utc)
     payload = ProjectFile(
         app_version=APP_VERSION,
-        exported_at=datetime.now(timezone.utc).isoformat(),
+        exported_at=exported_at.isoformat(),
         project=project,
     )
     data = json.dumps(payload.model_dump(mode="json"), ensure_ascii=False, indent=2).encode("utf-8")
+    filename = _project_export_filename(project, exported_at)
     return Response(
         data,
         media_type="application/json",
-        headers={"Content-Disposition": 'attachment; filename="schulungsplanung.schulungsplan.json"'},
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 

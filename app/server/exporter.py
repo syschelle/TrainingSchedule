@@ -11,7 +11,7 @@ from reportlab.pdfgen import canvas
 
 from .models import BlockType, TrainingProject
 from .planner import project_trainers
-from .rules import DISPLAY_WEEKDAYS, german_date, parse_time, training_dates
+from .rules import DISPLAY_WEEKDAYS, german_date, minutes_between, parse_time, training_dates
 
 
 def planned_weeks(project: TrainingProject) -> list[int]:
@@ -121,12 +121,145 @@ def _draw_wrapped_text(pdf: canvas.Canvas, text: str, x: float, y: float, max_wi
         pdf.drawString(x, y - line_index * (size + 2), line)
 
 
+def _format_duration(minutes: int) -> str:
+    hours, rest = divmod(max(0, minutes), 60)
+    return f"{hours} h {rest} min" if hours else f"{rest} min"
+
+
+def _service_day_count(project: TrainingProject) -> int:
+    return len({(block.week, block.day) for block in project.blocks if block.type == BlockType.training})
+
+
+def _training_minutes(project: TrainingProject) -> int:
+    return sum(max(0, minutes_between(block.start, block.end)) for block in project.blocks if block.type == BlockType.training)
+
+
+def _unscheduled_minutes(project: TrainingProject) -> int:
+    return sum(max(0, item.duration_minutes) for item in project.unscheduled_topics)
+
+
+def _draw_overview_page(pdf: canvas.Canvas, project: TrainingProject, page_width: float, page_height: float, margin: float) -> None:
+    product = next((item for item in project.product_lines if item.id == project.product_id), None)
+    trainers = project_trainers(project)
+    product_name = product.name if product else project.product_id or "—"
+    customer = project.customer_name or "—" if project.customer_data_required else "Nicht erforderlich"
+    location = project.location or "—" if project.customer_data_required else "Nicht erforderlich"
+
+    pdf.setFillColor(colors.HexColor("#0f1b2d"))
+    pdf.rect(0, page_height - 72, page_width, 72, fill=1, stroke=0)
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica-Bold", 18)
+    pdf.drawString(margin, page_height - 29, project.title or "Schulungsplan")
+    pdf.setFont("Helvetica", 9)
+    pdf.drawString(margin, page_height - 47, "Planuebersicht")
+    pdf.setFont("Helvetica-Bold", 8)
+    pdf.drawRightString(page_width - margin, page_height - 40, "Seite 1 · Uebersicht")
+
+    top = page_height - 96
+    left = margin
+    gap = 14
+    column_width = (page_width - 2 * margin - gap) / 2
+    meta = [
+        ("Kunde", customer),
+        ("Standort", location),
+        ("Produkt", product_name),
+        ("Startdatum", german_date(project.start_date) or "—"),
+        ("Trainer", ", ".join(value or "Nicht zugewiesen" for value in trainers) or "—"),
+    ]
+    for index, (label, value) in enumerate(meta):
+        row = index // 2
+        column = index % 2
+        if index == 4:
+            x = left
+            width = page_width - 2 * margin
+        else:
+            x = left + column * (column_width + gap)
+            width = column_width
+        y = top - row * 52
+        pdf.setFillColor(colors.HexColor("#f8fafc"))
+        pdf.setStrokeColor(colors.HexColor("#dbe3ee"))
+        pdf.roundRect(x, y - 39, width, 42, 5, fill=1, stroke=1)
+        pdf.setFillColor(colors.HexColor("#64748b"))
+        pdf.setFont("Helvetica-Bold", 7.2)
+        pdf.drawString(x + 9, y - 10, label)
+        pdf.setFillColor(colors.HexColor("#0f172a"))
+        _draw_wrapped_text(pdf, value, x + 9, y - 23, width - 18, "Helvetica-Bold", 8.4, 2)
+
+    metric_top = top - 160
+    metrics = [
+        ("Schulung", _format_duration(_training_minutes(project))),
+        ("Dienstleistungstage", f"{_service_day_count(project)} {'Tag' if _service_day_count(project) == 1 else 'Tage'}"),
+        ("Nicht eingeplant", _format_duration(_unscheduled_minutes(project))),
+    ]
+    metric_width = (page_width - 2 * margin - 2 * gap) / 3
+    for index, (label, value) in enumerate(metrics):
+        x = margin + index * (metric_width + gap)
+        pdf.setFillColor(colors.HexColor("#f8fafc"))
+        pdf.setStrokeColor(colors.HexColor("#dbe3ee"))
+        pdf.roundRect(x, metric_top - 44, metric_width, 46, 5, fill=1, stroke=1)
+        pdf.setFillColor(colors.HexColor("#64748b"))
+        pdf.setFont("Helvetica-Bold", 7.2)
+        pdf.drawString(x + 9, metric_top - 13, label)
+        pdf.setFillColor(colors.HexColor("#0f172a"))
+        pdf.setFont("Helvetica-Bold", 11)
+        pdf.drawString(x + 9, metric_top - 31, value)
+
+    section_top = metric_top - 70
+    pdf.setFillColor(colors.HexColor("#0f172a"))
+    pdf.setFont("Helvetica-Bold", 10)
+    pdf.drawString(margin, section_top, "Produkt und Teilnehmergruppen")
+    y = section_top - 17
+    if product:
+        pdf.setFont("Helvetica-Bold", 8.5)
+        pdf.drawString(margin, y, product.name)
+        y -= 13
+        if product.description:
+            pdf.setFillColor(colors.HexColor("#475569"))
+            _draw_wrapped_text(pdf, product.description, margin, y, page_width - 2 * margin, "Helvetica", 7, 2)
+            y -= 24
+        group_text = " · ".join(f"{group.name}: {group.participant_count}" for group in product.participant_groups)
+        if group_text:
+            pdf.setFillColor(colors.HexColor("#3157d5"))
+            _draw_wrapped_text(pdf, group_text, margin, y, page_width - 2 * margin, "Helvetica-Bold", 7, 2)
+            y -= 24
+    else:
+        pdf.setFillColor(colors.HexColor("#64748b"))
+        pdf.setFont("Helvetica", 7.5)
+        pdf.drawString(margin, y, "Keine Produktdaten hinterlegt.")
+        y -= 18
+
+    pdf.setFillColor(colors.HexColor("#0f172a"))
+    pdf.setFont("Helvetica-Bold", 10)
+    pdf.drawString(margin, y, "Schulungsthemen")
+    y -= 16
+    pdf.setFont("Helvetica", 7.2)
+    for index, topic in enumerate(project.topics):
+        if y < 32:
+            remaining = len(project.topics) - index
+            pdf.setFillColor(colors.HexColor("#64748b"))
+            pdf.drawString(margin, y, f"... {remaining} weitere Themen")
+            break
+        planned = any(block.topic_id == topic.id for block in project.blocks)
+        planned_minutes = topic.duration_minutes if planned else 0
+        pdf.setFillColor(colors.HexColor("#0f172a"))
+        pdf.drawString(margin, y, topic.title)
+        pdf.setFillColor(colors.HexColor("#475569"))
+        pdf.drawRightString(page_width - margin, y, f"{planned_minutes} / {topic.duration_minutes} min")
+        y -= 13
+
+    pdf.setFillColor(colors.HexColor("#64748b"))
+    pdf.setFont("Helvetica", 6)
+    pdf.drawRightString(page_width - margin, 14, "Schulungsplantool · Planuebersicht")
+    pdf.showPage()
+
+
 def export_pdf(project: TrainingProject) -> bytes:
     """Export the same trainer/week calendar concept as the browser preview.
 
-    The PDF is landscape A4. Each trainer gets one full calendar week page,
-    ordered chronologically by week and then by trainer. Break and lunch blocks
-    stay hidden, exactly like in the browser calendar.
+    The PDF is landscape A4. Page 1 is the project overview. Each trainer then
+    gets one full calendar week page, ordered chronologically by week and then
+    by trainer. Break and lunch blocks stay hidden, exactly like in the browser
+    calendar.
     """
     buffer = BytesIO()
     page_size = landscape(A4)
@@ -147,6 +280,8 @@ def export_pdf(project: TrainingProject) -> bytes:
     trainers = project_trainers(project)
     product = next((item for item in project.product_lines if item.id == project.product_id), None)
 
+    _draw_overview_page(pdf, project, page_width, page_height, margin)
+
     for week in planned_weeks(project):
         for trainer in trainers:
             pdf.setFillColor(colors.HexColor("#0f1b2d"))
@@ -158,10 +293,11 @@ def export_pdf(project: TrainingProject) -> bytes:
             product_name = product.name if product else project.product_id
             info = f"Produkt: {product_name}  |  Trainer: {trainer or 'Nicht zugewiesen'}  |  Woche {week}"
             pdf.drawString(margin, page_height - 42, info)
-            if project.customer_data_required:
-                customer = " · ".join(value for value in [project.customer_name, project.location] if value)
-                if customer:
-                    pdf.drawRightString(page_width - margin, page_height - 42, customer)
+            customer = project.customer_name or "—" if project.customer_data_required else "Nicht erforderlich"
+            location = project.location or "—" if project.customer_data_required else "Nicht erforderlich"
+            pdf.setFont("Helvetica-Bold", 7.2)
+            pdf.drawRightString(page_width - margin, page_height - 34, f"Kunde: {customer}")
+            pdf.drawRightString(page_width - margin, page_height - 47, f"Standort: {location}")
 
             first = _week_date(project, week, 0)
             last = _week_date(project, week, 4)

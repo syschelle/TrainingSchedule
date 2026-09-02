@@ -1250,3 +1250,13 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Startzeiten bleiben auf dem 15-Minuten-Raster und werden beim Speichern normalisiert.
 - Eingabefehler erscheinen direkt im Blockeditor; der Kalender wird nicht durch Browser-Dialoge unterbrochen.
 - Abbrechen verwirft die Editor-Eingaben. Nach erfolgreichem Speichern laeuft die bestehende Live-Validierung weiter.
+
+
+## Erweiterung v0.2.37 - Uebersicht, Exportname und Navigation
+
+- Vorschau und PDF beginnen mit einer Planuebersicht als erster Seite.
+- Kunde und Standort werden in Uebersicht und Vorschau explizit ausgegeben.
+- Planungsdateien werden als `kunde_standort_produkt_datum_uhrzeit.json` heruntergeladen.
+- Eingabe und bestehender Schulungsplan koennen direkt gewechselt werden, ohne eine Neuberechnung zu starten.
+- Nur der explizite Button `Plan erstellen` darf `/api/plan` aufrufen und einen neuen automatischen Plan erzeugen.
+- Version auf `v0.2.37` erhoeht.

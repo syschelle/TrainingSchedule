@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.2.36"' in html
+    assert 'src="calendar.js?v=0.2.37"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -150,3 +150,35 @@ def test_calendar_block_editor_is_embedded_and_replaces_prompt_editing() -> None
     assert "block.start = startValue;" in javascript
     assert 'class="block-editor-modal"' in html
     assert ".block-editor-modal {" in css
+
+
+def test_overview_and_preview_show_customer_location_and_overview_first_page() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    assert 'overviewMeta("Kunde", customer)' in javascript
+    assert 'overviewMeta("Standort", location)' in javascript
+    assert 'pdf-preview-overview-sheet' in javascript
+    assert 'Seite 1 · Uebersicht' in javascript
+    assert 'Kunde: ${escapeHtml(customer)}' in javascript
+    assert 'Standort: ${escapeHtml(location)}' in javascript
+
+
+def test_project_export_filename_contains_customer_location_product_date_and_time() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    assert "function projectExportFilename(now = new Date())" in javascript
+    assert 'safeFilenamePart(customer, "kunde")' in javascript
+    assert 'safeFilenamePart(location, "standort")' in javascript
+    assert 'safeFilenamePart(productName, "produkt")' in javascript
+    assert '${date}_${time}.json' in javascript
+    assert 'link.download = projectExportFilename();' in javascript
+
+
+def test_input_and_plan_can_switch_without_creating_a_new_plan() -> None:
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    assert 'id="showExistingPlan"' in html
+    assert 'data-page="plan"' in html
+    assert 'id="backToInput"' in html
+    navigation = javascript.split("function navigatePage(page)", 1)[1].split("function contentCard", 1)[0]
+    assert "createPlan(" not in navigation
+    assert javascript.count('fetch("api/plan"') == 1
+    assert 'fetch("api/plan"' in javascript.split("async function createPlan()", 1)[1].split("function renderPages()", 1)[0]

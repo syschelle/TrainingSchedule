@@ -1067,6 +1067,7 @@ function renderOverview() {
   const totals = totalMinutesByType();
   const serviceDays = serviceDayCount();
   $("#tab-overview").innerHTML = `
+    ${projectOverviewMeta()}
     <div class="metric-grid">
       ${metric("Schulung", totals.training || 0)}
       ${metricValue("Dienstleistungstage", formatServiceDays(serviceDays))}
@@ -1076,6 +1077,25 @@ function renderOverview() {
     <div class="output-wrap">
       <div class="output-content">${topicSummary()}</div>
     </div>`;
+}
+
+function projectOverviewMeta() {
+  const product = currentProduct();
+  const startDate = TrainingCalendar.formatGermanDate(TrainingCalendar.parseIsoDate(project.start_date));
+  const trainers = calendarTrainers().map((trainer) => trainerLabel(trainer)).join(", ");
+  const customer = project.customer_data_required ? (project.customer_name || "—") : "Nicht erforderlich";
+  const location = project.customer_data_required ? (project.location || "—") : "Nicht erforderlich";
+  return `<div class="overview-meta-grid">
+    ${overviewMeta("Kunde", customer)}
+    ${overviewMeta("Standort", location)}
+    ${overviewMeta("Produkt", product.name || project.product_id || "—")}
+    ${overviewMeta("Startdatum", startDate || "—")}
+    ${overviewMeta("Trainer", trainers || "—", true)}
+  </div>`;
+}
+
+function overviewMeta(label, value, wide = false) {
+  return `<div class="overview-meta ${wide ? "overview-meta-wide" : ""}"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
 }
 
 function metric(label, minutes) {
@@ -1522,12 +1542,33 @@ function renderPreview() {
   const height = (totalMinutes / 60) * calendarHourHeight;
   const trainers = calendarTrainers();
   const productName = currentProduct().name;
-  const customer = project.customer_data_required
-    ? [project.customer_name, project.location].filter(Boolean).join(" · ")
-    : "";
+  const customer = project.customer_data_required ? (project.customer_name || "—") : "Nicht erforderlich";
+  const location = project.customer_data_required ? (project.location || "—") : "Nicht erforderlich";
+  const totals = totalMinutesByType();
+  const serviceDays = serviceDayCount();
+  const unscheduled = project.unscheduled_topics.reduce((sum, item) => sum + item.duration_minutes, 0);
   $("#tab-preview").innerHTML = `<div class="calendar-preview">
-    <p class="muted">PDF-Vorschau: Jede Seite wird im A4-Querformat in genau dieser chronologischen Reihenfolge nach Kalenderwoche und Trainer erzeugt.</p>
+    <p class="muted">PDF-Vorschau: Seite 1 ist die Uebersicht. Danach folgen die Kalenderseiten im A4-Querformat chronologisch nach Kalenderwoche und Trainer.</p>
     <div class="pdf-preview-pages">
+      <section class="pdf-preview-sheet pdf-preview-overview-sheet">
+        <div class="pdf-preview-header">
+          <div>
+            <h2>${escapeHtml(project.title || "Schulungsplan")}</h2>
+            <p>Planuebersicht</p>
+          </div>
+          <strong>Seite 1 · Uebersicht</strong>
+        </div>
+        <div class="pdf-preview-overview-body">
+          ${projectOverviewMeta()}
+          <div class="metric-grid">
+            ${metric("Schulung", totals.training || 0)}
+            ${metricValue("Dienstleistungstage", formatServiceDays(serviceDays))}
+            ${metric("Nicht eingeplant", unscheduled)}
+          </div>
+          <div class="product-summary">${productSummary()}</div>
+          <div class="output-wrap"><div class="output-content">${topicSummary()}</div></div>
+        </div>
+      </section>
       ${plannedWeeks().map((week) => trainers.map((trainer, trainerIndex) => `
         <section class="pdf-preview-sheet">
           <div class="pdf-preview-header">
@@ -1535,7 +1576,7 @@ function renderPreview() {
               <h2>${escapeHtml(project.title || "Schulungsplan")}</h2>
               <p>Produkt: ${escapeHtml(productName)} &nbsp;|&nbsp; Trainer: ${escapeHtml(trainerLabel(trainer))} &nbsp;|&nbsp; Woche ${week}</p>
             </div>
-            ${customer ? `<strong>${escapeHtml(customer)}</strong>` : ""}
+            <div class="pdf-preview-customer"><strong>Kunde: ${escapeHtml(customer)}</strong><strong>Standort: ${escapeHtml(location)}</strong></div>
           </div>
           <h3 class="pdf-preview-week-heading">${weekHeading(week)}</h3>
           <div class="calendar-week" style="--calendar-height:${height}px">
@@ -1584,10 +1625,40 @@ async function exportProjectState() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "schulungsplanung.schulungsplan.json";
+  link.download = projectExportFilename();
   link.click();
   URL.revokeObjectURL(url);
   setStatus("Planungsstand exportiert.");
+}
+
+function safeFilenamePart(value, fallback) {
+  const source = String(value || fallback || "").trim().normalize("NFKD");
+  let result = "";
+  let separatorPending = false;
+  for (const char of source) {
+    const code = char.charCodeAt(0);
+    const asciiLetter = (code >= 65 && code <= 90) || (code >= 97 && code <= 122);
+    const digit = code >= 48 && code <= 57;
+    if (asciiLetter || digit) {
+      if (separatorPending && result) result += "-";
+      result += char;
+      separatorPending = false;
+    } else if (char === "-") {
+      separatorPending = Boolean(result);
+    } else if (code < 0x0300 || code > 0x036f) {
+      separatorPending = Boolean(result);
+    }
+  }
+  return result || String(fallback || "wert");
+}
+
+function projectExportFilename(now = new Date()) {
+  const productName = currentProduct()?.name || project.product_id || "produkt";
+  const customer = project.customer_data_required ? project.customer_name : "ohne-kunde";
+  const location = project.customer_data_required ? project.location : "ohne-standort";
+  const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const time = `${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
+  return `${safeFilenamePart(customer, "kunde")}_${safeFilenamePart(location, "standort")}_${safeFilenamePart(productName, "produkt")}_${date}_${time}.json`;
 }
 
 async function importProjectState(event) {

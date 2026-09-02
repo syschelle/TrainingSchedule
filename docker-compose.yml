@@ -26,15 +26,15 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        APP_VERSION: 0.2.36
-    image: schulungsplantool:0.2.36
+        APP_VERSION: 0.2.37
+    image: schulungsplantool:0.2.37
     container_name: schulungsplantool-dev
     init: true
     ports:
       - "${APP_BIND:-0.0.0.0}:${APP_PORT:-18083}:8000"
     environment:
       TZ: ${TZ:-Europe/Berlin}
-      APP_VERSION: 0.2.36
+      APP_VERSION: 0.2.37
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-25}
       DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set in .env}
     depends_on:

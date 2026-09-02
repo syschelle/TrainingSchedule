@@ -1500,3 +1500,63 @@ body.modal-open {
     width: 100%;
   }
 }
+
+
+/* v0.2.37 overview-first preview and project metadata */
+.overview-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.overview-meta {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+}
+
+.overview-meta-wide {
+  grid-column: 1 / -1;
+}
+
+.overview-meta span {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 850;
+}
+
+.overview-meta strong {
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.pdf-preview-overview-sheet {
+  min-height: 720px;
+}
+
+.pdf-preview-overview-body {
+  display: grid;
+  gap: 2px;
+  padding: 16px 18px 20px;
+}
+
+.pdf-preview-customer {
+  display: grid;
+  gap: 4px;
+  text-align: right;
+  font-size: 0.78rem;
+}
+
+@media (max-width: 760px) {
+  .overview-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-meta-wide {
+    grid-column: auto;
+  }
+}
