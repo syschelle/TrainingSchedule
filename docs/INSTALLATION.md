@@ -1,4 +1,4 @@
-# Produktionsinstallation
+# Produktionsinstallation v0.2.24
 
 ## 1. Repository klonen
 
@@ -7,63 +7,71 @@ git clone <REPOSITORY-URL> Schulungsplantool
 cd Schulungsplantool
 ```
 
-## 2. Installation starten
+## 2. Installieren
 
 ```bash
-./scripts/install.sh
+./install.sh
 ```
 
-Bei der ersten Ausfuehrung wird `.env` aus `.env.example` erzeugt und ein zufaelliges PostgreSQL-Passwort gesetzt. Anschliessend zieht Docker das veroeffentlichte Multi-Arch-Image aus GHCR. Unterstuetzt werden `linux/amd64` und `linux/arm64`; Docker waehlt automatisch die zum Host passende Architektur.
+Die Installation verwendet standardmaessig `docker-compose.images.yml`, erzeugt bei Bedarf `.env` mit einem zufaelligen PostgreSQL-Passwort, zieht das Multi-Arch-Image aus GHCR und startet die Container.
 
-## 3. Status pruefen
+## 3. Netzwerkmodell
 
-```bash
-docker compose ps
-curl http://127.0.0.1:18083/api/health
-```
-
-Beide Container sollen `healthy` anzeigen.
-
-## 4. Port oder Bind-Adresse aendern
-
-`.env` bearbeiten:
+Nur die Webanwendung wird auf dem Host veroeffentlicht:
 
 ```text
-APP_BIND=0.0.0.0
-APP_PORT=18083
+0.0.0.0:${APP_PORT:-18083} -> schulungsplantool:8000
 ```
 
-Danach:
+PostgreSQL besitzt absichtlich **kein Host-Port-Mapping**. Es gibt insbesondere kein `5432:5432`. Die Datenbank ist nur im privaten Compose-Netz unter `postgres:5432` fuer die Webapp erreichbar.
+
+## 4. Status pruefen
 
 ```bash
-docker compose up -d
+docker compose -f docker-compose.images.yml ps
+curl http://127.0.0.1:18083/api/health
 ```
 
 ## 5. Update
 
 ```bash
-./scripts/update.sh
+./update.sh
 ```
 
-Das Skript aktualisiert zuerst den Git-Stand, fuehrt `docker compose pull` aus und startet die aktualisierten Container. Das PostgreSQL-Volume bleibt dabei erhalten.
+Das PostgreSQL-Volume `schulungsplantool_pgdata` bleibt erhalten.
 
-## 6. Backup vor groesseren Updates
+## 6. Backup
 
 ```bash
 ./scripts/backup-db.sh
 ```
 
-## 7. Wichtiger Hinweis
+## 7. Manuelle Image-Installation
 
-Zum normalen Update niemals `docker compose down -v` verwenden. `-v` wuerde das PostgreSQL-Volume und damit die gespeicherten Schulungsinhalte entfernen.
-
-
-## 8. Container-Image
-
-Standard fuer v0.2.23:
-
-```text
-ghcr.io/syschelle/schulungsplantool:0.2.23
+```bash
+docker compose -f docker-compose.images.yml pull
+docker compose -f docker-compose.images.yml up -d --remove-orphans
 ```
 
-Release-Tags `vX.Y.Z` veroeffentlichen ueber GitHub Actions automatisch `linux/amd64` und `linux/arm64` sowie den Tag `latest`. Fuer ein privates GHCR-Package muss sich das Zielsystem vor dem Pull an `ghcr.io` anmelden.
+Standard-Image fuer v0.2.24:
+
+```text
+ghcr.io/syschelle/schulungsplantool:0.2.24
+```
+
+Unterstuetzte Architekturen: `linux/amd64` und `linux/arm64`.
+
+## 8. Lokaler Build
+
+Fuer Entwicklung/Test kann weiterhin lokal gebaut werden:
+
+```bash
+docker compose -f docker-compose.yml build
+docker compose -f docker-compose.yml up -d
+```
+
+Auch in diesem Modus ist PostgreSQL nicht auf dem Host veroeffentlicht.
+
+## 9. Wichtiger Hinweis
+
+Zum normalen Update niemals `docker compose down -v` verwenden. `-v` wuerde das PostgreSQL-Volume und damit gespeicherte Produkt- und Schulungsinhalte entfernen.

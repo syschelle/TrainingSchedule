@@ -16,3 +16,7 @@ docs/
 README.md
 CHANGELOG.md
 scripts/
+
+install.sh
+update.sh
+docker-compose*.yml

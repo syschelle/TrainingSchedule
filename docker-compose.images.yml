@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:17-alpine
-    container_name: schulungsplantool-postgres-dev
+    container_name: schulungsplantool-postgres
     environment:
       TZ: ${TZ:-Europe/Berlin}
       POSTGRES_DB: ${POSTGRES_DB:-schulungsplantool}
@@ -18,17 +18,13 @@ services:
     restart: unless-stopped
     networks:
       - backend
-    # Intentionally no "ports" mapping: PostgreSQL is reachable only on the
-    # private Compose network and is never published on the Docker host.
+    # SECURITY: no host port is published for PostgreSQL.
+    # The database is reachable only as postgres:5432 inside this Compose network.
 
   schulungsplantool:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        APP_VERSION: 0.2.24
-    image: schulungsplantool:0.2.24
-    container_name: schulungsplantool-dev
+    image: ${APP_IMAGE:-ghcr.io/syschelle/schulungsplantool:0.2.24}
+    pull_policy: always
+    container_name: schulungsplantool
     init: true
     ports:
       - "${APP_BIND:-0.0.0.0}:${APP_PORT:-18083}:8000"

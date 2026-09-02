@@ -1,6 +1,6 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.2.23**
+Aktuelle Version: **v0.2.24**
 
 Lokale Webanwendung zur Erstellung, Bearbeitung, Validierung und zum Export mehrtaegiger Schulungsplaene. Die Anwendung laeuft vollstaendig in Docker und verwendet PostgreSQL fuer den strukturierten Schulungsinhalte-Katalog.
 
@@ -37,64 +37,78 @@ Auf dem Zielsystem werden benoetigt:
 
 ## Schnellinstallation
 
-Nach dem Klonen des Repositorys:
+Nach dem Klonen des Repositorys reicht fuer das Produktivsystem:
 
 ```bash
 cd Schulungsplantool
-./scripts/install.sh
+./install.sh
 ```
+
+Das Root-Skript startet `scripts/install.sh`. Standardmaessig verwendet die Installation **`docker-compose.images.yml`** und zieht das bereits veroeffentlichte Multi-Arch-Image aus GHCR. Ein lokaler Build ist auf dem Produktivsystem nicht erforderlich.
 
 Das Installationsskript:
 
-1. prueft Docker und Docker Compose,
-2. erzeugt bei der Erstinstallation automatisch eine lokale `.env`,
+1. prueft Docker und Docker Compose v2,
+2. erzeugt bei der Erstinstallation `.env`,
 3. erzeugt ein zufaelliges PostgreSQL-Passwort,
-4. validiert die Compose-Konfiguration,
-5. zieht die veroeffentlichten Container-Images,
-6. startet PostgreSQL und Schulungsplantool.
+4. validiert `docker-compose.images.yml`,
+5. zieht Anwendungs- und PostgreSQL-Image,
+6. startet beide Container.
 
-Das Schulungsplantool-Image wird von GitHub Container Registry (GHCR) geladen. Das veroeffentlichte Image ist Multi-Arch und enthaelt `linux/amd64` sowie `linux/arm64`. Docker waehlt auf dem Zielsystem automatisch die passende Architektur.
-
-Standardmaessig ist die Anwendung erreichbar unter:
+Standardmaessig ist die Webanwendung erreichbar unter:
 
 ```text
 http://SERVER-IP:18083
 ```
 
-Der Port kann in `.env` ueber `APP_PORT` geaendert werden.
+### Netzwerk/Sicherheit
 
-## Manuelle Installation
+**Nur die Webanwendung wird auf dem Docker-Host veroeffentlicht.**
+
+```text
+Host/LAN -> APP_PORT:8000 -> Schulungsplantool -> postgres:5432
+                                             private Docker network
+```
+
+PostgreSQL hat bewusst **kein `ports:`-Mapping**. Port 5432 ist deshalb nicht am Docker-Host/LAN veroeffentlicht. Die Anwendung erreicht PostgreSQL ausschliesslich intern ueber den Servicenamen `postgres` im Compose-Netz `schulungsplantool_backend`.
+
+## Compose-Dateien
+
+### Produktion / fertige Images
+
+```text
+docker-compose.images.yml
+```
+
+Verwendet standardmaessig:
+
+```text
+ghcr.io/syschelle/schulungsplantool:0.2.24
+```
+
+Das Release-Image enthaelt `linux/amd64` und `linux/arm64`; Docker waehlt automatisch die passende Architektur.
+
+Manueller Produktionsstart:
 
 ```bash
-cp .env.example .env
+docker compose -f docker-compose.images.yml pull
+docker compose -f docker-compose.images.yml up -d
 ```
 
-Vor dem Produktionsstart in `.env` mindestens `POSTGRES_PASSWORD` und den gleichen Wert innerhalb von `DATABASE_URL` ersetzen.
+### Lokaler Build / Entwicklung
 
-Anschliessend:
+```text
+docker-compose.yml
+```
+
+Diese Compose-Datei baut die Anwendung lokal aus dem `Dockerfile`:
 
 ```bash
-docker compose pull
-docker compose up -d
+docker compose -f docker-compose.yml build
+docker compose -f docker-compose.yml up -d
 ```
 
-Status anzeigen:
-
-```bash
-docker compose ps
-```
-
-Healthcheck testen:
-
-```bash
-curl http://127.0.0.1:18083/api/health
-```
-
-Erwartete Antwort:
-
-```json
-{"status":"ok","version":"0.2.23"}
-```
+Auch hier wird PostgreSQL nicht auf dem Host veroeffentlicht.
 
 ## Konfiguration
 
@@ -102,17 +116,16 @@ Wichtige Werte in `.env`:
 
 | Variable | Standard | Bedeutung |
 |---|---|---|
-| `APP_IMAGE` | nicht gesetzt | optionaler Override fuer das Anwendungsimage; standardmaessig wird die zur Repository-Version passende GHCR-Version aus `docker-compose.yml` verwendet |
-| `APP_BIND` | `0.0.0.0` | Host-Adresse, an die der Webport gebunden wird |
+| `APP_BIND` | `0.0.0.0` | Bind-Adresse des einzigen veroeffentlichten Webports |
 | `APP_PORT` | `18083` | Webport des Schulungsplantools |
 | `TZ` | `Europe/Berlin` | Zeitzone |
 | `MAX_UPLOAD_MB` | `25` | maximale Uploadgroesse pro Datei |
-| `POSTGRES_DB` | `schulungsplantool` | Datenbankname |
-| `POSTGRES_USER` | `schulungsplantool` | Datenbankbenutzer |
-| `POSTGRES_PASSWORD` | kein sicherer Default | Datenbankpasswort |
-| `DATABASE_URL` | siehe `.env.example` | interne Verbindung der Anwendung zu PostgreSQL |
+| `POSTGRES_DB` | `schulungsplantool` | interner Datenbankname |
+| `POSTGRES_USER` | `schulungsplantool` | interner Datenbankbenutzer |
+| `POSTGRES_PASSWORD` | zufaellig durch Installer | Datenbankpasswort; nicht committen |
+| `DATABASE_URL` | intern auf `postgres:5432` | Verbindung der App zur Datenbank |
 
-Wenn ein Reverse Proxy auf demselben Docker-Host verwendet wird und der Port nicht im LAN erreichbar sein soll, kann beispielsweise gesetzt werden:
+Wenn die Webapp nur lokal bzw. hinter einem Reverse Proxy erreichbar sein soll:
 
 ```text
 APP_BIND=127.0.0.1
@@ -120,23 +133,21 @@ APP_BIND=127.0.0.1
 
 ## Update
 
-Wenn das Projekt aus Git installiert wurde:
-
 ```bash
-./scripts/update.sh
+./update.sh
 ```
 
-Das Skript fuehrt einen Fast-Forward-Pull aus, zieht die zur neuen Repository-Version gehoerenden Images und aktualisiert die laufenden Container ohne das PostgreSQL-Volume zu loeschen.
+Das Skript fuehrt bei einer Git-Installation `git pull --ff-only` aus, zieht anschliessend die Images aus `docker-compose.images.yml` und startet die Container neu. Das PostgreSQL-Volume bleibt erhalten.
 
-Manuell entspricht das im Wesentlichen:
+Alternativ manuell:
 
 ```bash
 git pull --ff-only
-docker compose pull
-docker compose up -d --remove-orphans
+docker compose -f docker-compose.images.yml pull
+docker compose -f docker-compose.images.yml up -d --remove-orphans
 ```
 
-**Nicht** `docker compose down -v` verwenden, wenn die gespeicherten Produkt- und Schulungsinhalte erhalten bleiben sollen.
+**Nicht** `docker compose down -v` verwenden, wenn die gespeicherten Schulungsinhalte erhalten bleiben sollen.
 
 ## Datenbank sichern
 
@@ -144,33 +155,43 @@ docker compose up -d --remove-orphans
 ./scripts/backup-db.sh
 ```
 
-Die Sicherung wird lokal unter `backups/` als komprimierter SQL-Dump abgelegt. Der Ordner ist von Git ausgeschlossen.
+Die Sicherung wird lokal unter `backups/` als komprimierter SQL-Dump abgelegt. Dabei wird ebenfalls standardmaessig `docker-compose.images.yml` verwendet.
 
-## Stoppen und neu starten
-
-```bash
-docker compose stop
-docker compose start
-```
-
-Komplett neu erzeugen, ohne die Datenbankdaten zu loeschen:
+## Status und Logs
 
 ```bash
-docker compose pull
-docker compose up -d --force-recreate
+docker compose -f docker-compose.images.yml ps
+docker compose -f docker-compose.images.yml logs -f schulungsplantool
+docker compose -f docker-compose.images.yml logs -f postgres
 ```
 
-## Logs
+Healthcheck:
 
 ```bash
-docker compose logs -f schulungsplantool
+curl http://127.0.0.1:18083/api/health
 ```
 
-PostgreSQL:
+Erwartet:
 
-```bash
-docker compose logs -f postgres
+```json
+{"status":"ok","version":"0.2.24"}
 ```
+
+## GitHub Container Registry
+
+Bei einem Release-Tag wie `v0.2.24` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+
+- `linux/amd64`
+- `linux/arm64`
+
+und veroeffentlicht:
+
+```text
+ghcr.io/syschelle/schulungsplantool:0.2.24
+ghcr.io/syschelle/schulungsplantool:latest
+```
+
+Damit eine Installation ohne `docker login ghcr.io` moeglich ist, muss das GHCR-Package oeffentlich sein.
 
 ## Entwicklung und Tests
 
@@ -188,7 +209,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.2.23` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.2.24` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -196,7 +217,7 @@ Bei einem Release-Tag wie `v0.2.23` baut der Workflow `.github/workflows/release
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.23
+ghcr.io/syschelle/schulungsplantool:0.2.24
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -212,7 +233,10 @@ Damit das Image ohne `docker login` installiert werden kann, muss das GHCR-Packa
 ├── tests/                  # automatisierte Tests
 ├── .github/workflows/      # CI
 ├── Dockerfile
-├── docker-compose.yml
+├── docker-compose.yml          # lokaler Build/Test
+├── docker-compose.images.yml   # Produktion mit GHCR-Image
+├── install.sh                  # einfacher Produktions-Installer
+├── update.sh                   # einfacher Produktions-Updater
 ├── .env.example
 ├── requirements.txt
 ├── requirements-dev.txt

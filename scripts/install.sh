@@ -2,6 +2,7 @@
 set -Eeuo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
+COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.images.yml}"
 
 if ! command -v docker >/dev/null 2>&1; then
   echo "Fehler: Docker wurde nicht gefunden." >&2
@@ -10,6 +11,11 @@ fi
 
 if ! docker compose version >/dev/null 2>&1; then
   echo "Fehler: Docker Compose v2 wurde nicht gefunden." >&2
+  exit 1
+fi
+
+if [[ ! -f "${COMPOSE_FILE}" ]]; then
+  echo "Fehler: Compose-Datei ${COMPOSE_FILE} wurde nicht gefunden." >&2
   exit 1
 fi
 
@@ -28,12 +34,14 @@ else
   echo "Vorhandene .env wird unveraendert verwendet."
 fi
 
-docker compose config >/dev/null
-docker compose pull
-docker compose up -d --remove-orphans
+echo "Verwende ${COMPOSE_FILE}."
+docker compose -f "${COMPOSE_FILE}" config >/dev/null
+docker compose -f "${COMPOSE_FILE}" pull
+docker compose -f "${COMPOSE_FILE}" up -d --remove-orphans
 
 echo
-docker compose ps
+docker compose -f "${COMPOSE_FILE}" ps
 echo
 echo "Schulungsplantool wurde gestartet."
+echo "Nur der Webport wird auf dem Host veroeffentlicht; PostgreSQL besitzt kein Host-Port-Mapping."
 echo "Aufruf: http://localhost:$(grep '^APP_PORT=' .env | cut -d= -f2 || echo 18083)"

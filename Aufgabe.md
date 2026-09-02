@@ -1052,7 +1052,7 @@ Die Version wurde auf `v0.2.22` erhoeht.
 
 # 55. Anpassungsnotiz 2026-09-02
 
-Die Version wurde auf `v0.2.23` erhoeht.
+Die Version wurde auf `v0.2.24` erhoeht.
 
 - Ein eigener GitHub-Actions-Workflow veroeffentlicht bei Release-Tags automatisch das Anwendungsimage in GitHub Container Registry.
 - Das Release-Image wird als Multi-Arch-Image fuer `linux/amd64` und `linux/arm64` gebaut.
@@ -1062,4 +1062,19 @@ Die Version wurde auf `v0.2.23` erhoeht.
 - `docker-compose.yml` verwendet standardmaessig das fertig veroeffentlichte GHCR-Image und baut auf Produktivsystemen nicht mehr lokal.
 - `scripts/install.sh` und `scripts/update.sh` verwenden `docker compose pull` vor dem Start der Container.
 - Docker waehlt aus demselben Multi-Arch-Image automatisch die passende Architektur fuer x86_64/amd64 oder arm64.
+
+---
+
+# 56. Anpassungsnotiz 2026-09-02
+
+Die Version wurde auf `v0.2.24` erhoeht.
+
+- Fuer den produktiven Image-Betrieb wurde `docker-compose.images.yml` hinzugefuegt.
+- `docker-compose.yml` dient wieder als lokaler Build-/Entwicklungsmodus mit dem vorhandenen Dockerfile.
+- `./install.sh` installiert standardmaessig ueber das veroeffentlichte GHCR-Multi-Arch-Image.
+- `./update.sh` zieht spaetere Image-Versionen und startet die Container neu, ohne das PostgreSQL-Volume zu entfernen.
+- PostgreSQL besitzt weder im lokalen noch im Image-Compose ein `ports`-Mapping und ist damit nicht ueber einen Host-Port erreichbar.
+- Ausschliesslich der Webport des Schulungsplantools wird auf dem Docker-Host publiziert.
+- Anwendung und PostgreSQL kommunizieren ueber das dedizierte Compose-Netz `schulungsplantool_backend`.
+- CI und Release-Workflow validieren beide Compose-Dateien.
 

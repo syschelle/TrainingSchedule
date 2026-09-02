@@ -1,6 +1,21 @@
 # Changelog
 
-## v0.2.23 - 2026-09-02
+## v0.2.24 - 2026-09-02
+
+### Image-Compose und isolierte PostgreSQL-Datenbank
+
+- separates `docker-compose.images.yml` fuer den produktiven Betrieb mit GHCR-Image hinzugefuegt
+- `docker-compose.yml` bleibt als lokaler Build-/Entwicklungsmodus erhalten
+- Produktionsinstallation verwendet standardmaessig `docker-compose.images.yml`
+- PostgreSQL besitzt in beiden Compose-Dateien bewusst keinerlei Host-Port-Mapping
+- nur der Webport der FastAPI-Anwendung wird auf dem Docker-Host veroeffentlicht
+- eigenes privates Compose-Netz `schulungsplantool_backend` fuer App und PostgreSQL definiert
+- Root-Skripte `./install.sh` und `./update.sh` als einfache Einstiegspunkte hinzugefuegt
+- Install-, Update- und Backup-Skripte verwenden standardmaessig `docker-compose.images.yml`
+- CI und Release-Workflow validieren nun beide Compose-Dateien
+- Version auf v0.2.24 angehoben
+
+## v0.2.24 - 2026-09-02
 
 ### GHCR Multi-Arch Deployment
 
@@ -14,7 +29,7 @@
 - `docker-compose.yml` verwendet standardmaessig das fertige GHCR-Image statt eines lokalen Builds
 - Installation und Updates verwenden `docker compose pull`
 - x86_64/amd64- und arm64-Systeme verwenden dieselbe Compose-Datei
-- Version auf v0.2.23 angehoben
+- Version auf v0.2.24 angehoben
 
 ## v0.2.22 - 2026-09-02
 
