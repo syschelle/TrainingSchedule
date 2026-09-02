@@ -6,8 +6,8 @@
   <meta name="referrer" content="no-referrer">
   <meta name="robots" content="noindex, nofollow">
   <title>Schulungsplantool</title>
-  <link rel="stylesheet" href="styles.css?v=0.2.25">
-  <script defer src="app.js?v=0.2.25"></script>
+  <link rel="stylesheet" href="styles.css?v=0.2.26">
+  <script defer src="app.js?v=0.2.26"></script>
 </head>
 <body>
   <header class="topbar">
@@ -22,7 +22,7 @@
     <button type="button" id="autoPlan" class="feedback-link header-button">Plan erstellen</button>
     <div class="topbar-actions">
       <button type="button" id="resetDemo" class="feedback-link header-button">Standarddaten</button>
-      <span class="version">v0.2.25</span>
+      <span class="version">v0.2.26</span>
     </div>
   </header>
 
@@ -144,8 +144,57 @@
     </div>
   </main>
 
+  <div id="markdownEditorModal" class="modal-overlay" hidden>
+    <section class="markdown-modal" role="dialog" aria-modal="true" aria-labelledby="markdownEditorTitle">
+      <div class="markdown-modal-header">
+        <div>
+          <p class="eyebrow editor-eyebrow">Schulungsinhalt</p>
+          <h2 id="markdownEditorTitle">Schulungspunkte bearbeiten</h2>
+        </div>
+        <button type="button" id="closeMarkdownEditor" class="icon" aria-label="Editor schliessen">×</button>
+      </div>
+      <div class="markdown-toolbar" aria-label="Markdown-Werkzeuge">
+        <button type="button" data-md-action="heading" class="button button-ghost">Ueberschrift</button>
+        <button type="button" data-md-action="bold" class="button button-ghost"><strong>Fett</strong></button>
+        <button type="button" data-md-action="italic" class="button button-ghost"><em>Kursiv</em></button>
+        <button type="button" data-md-action="bullet" class="button button-ghost">Aufzaehlung</button>
+        <button type="button" data-md-action="number" class="button button-ghost">Nummerierung</button>
+      </div>
+      <div class="markdown-editor-grid">
+        <label class="markdown-source">
+          <span>Markdown</span>
+          <textarea id="markdownEditorInput" spellcheck="true" placeholder="## Schulungspunkte
+
+- Erster Schulungspunkt
+- Zweiter Schulungspunkt"></textarea>
+        </label>
+        <div class="markdown-preview-panel">
+          <span>Vorschau</span>
+          <div id="markdownPreview" class="markdown-preview"></div>
+        </div>
+      </div>
+      <div class="markdown-history-section">
+        <div class="markdown-history-heading">
+          <div>
+            <h3>Aenderungshistorie</h3>
+            <p class="muted">Die letzten gespeicherten Staende koennen wiederhergestellt werden.</p>
+          </div>
+          <span id="markdownHistoryStatus" class="muted"></span>
+        </div>
+        <div id="markdownHistory" class="markdown-history"></div>
+      </div>
+      <div class="markdown-modal-actions">
+        <span id="markdownEditorStatus" class="muted"></span>
+        <div>
+          <button type="button" id="cancelMarkdownEditor" class="button button-ghost">Schliessen</button>
+          <button type="button" id="saveMarkdownEditor" class="button button-primary">Schulungspunkte speichern</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
   <footer>
-    <span>Schulungsplantool v0.2.25</span>
+    <span>Schulungsplantool v0.2.26</span>
   </footer>
 </body>
 </html>

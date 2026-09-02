@@ -3,9 +3,10 @@ from __future__ import annotations
 import os
 import re
 import json
+from datetime import datetime, timezone
 from collections.abc import Iterator
 
-from sqlalchemy import ForeignKey, Integer, String, Text, create_engine, inspect, select, text
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, create_engine, inspect, select, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, relationship, sessionmaker
 
 
@@ -46,8 +47,29 @@ class TrainingContentRecord(Base):
     preparation: Mapped[str] = mapped_column(Text, default="", nullable=False)
     special_notes: Mapped[str] = mapped_column(Text, default="", nullable=False)
     source_file: Mapped[str] = mapped_column(String(240), default="", nullable=False)
+    markdown_content: Mapped[str] = mapped_column(Text, default="", nullable=False)
 
     product: Mapped[ProductRecord] = relationship(back_populates="contents")
+    revisions: Mapped[list[TrainingContentRevisionRecord]] = relationship(
+        back_populates="content",
+        cascade="all, delete-orphan",
+    )
+
+
+class TrainingContentRevisionRecord(Base):
+    __tablename__ = "training_content_revisions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    content_id: Mapped[str] = mapped_column(ForeignKey("training_contents.id"), index=True, nullable=False)
+    markdown_content: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    change_type: Mapped[str] = mapped_column(String(30), default="saved", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+
+    content: Mapped[TrainingContentRecord] = relationship(back_populates="revisions")
 
 
 DEFAULT_PRODUCTS = [
@@ -218,6 +240,8 @@ def ensure_training_content_columns() -> None:
             connection.execute(text("ALTER TABLE training_contents ADD COLUMN participant_group_ids TEXT DEFAULT '[]' NOT NULL"))
         if "background_color" not in columns:
             connection.execute(text("ALTER TABLE training_contents ADD COLUMN background_color VARCHAR(20) DEFAULT '#eaf8f2' NOT NULL"))
+        if "markdown_content" not in columns:
+            connection.execute(text("ALTER TABLE training_contents ADD COLUMN markdown_content TEXT DEFAULT '' NOT NULL"))
 
 
 def seed_database(session: Session) -> None:
@@ -278,6 +302,7 @@ def create_training_content(session: Session, product_id: str, title: str) -> di
         preparation="",
         special_notes="",
         source_file="",
+        markdown_content="",
     )
     session.add(record)
     session.commit()
@@ -324,6 +349,66 @@ def training_content_to_dict(item: TrainingContentRecord) -> dict:
         "requirements": item.requirements,
         "preparation": item.preparation,
         "special_notes": item.special_notes,
+        "markdown_content": item.markdown_content or "",
+    }
+
+
+def update_training_content_markdown(session: Session, content_id: str, markdown_content: str, change_type: str = "saved") -> dict | None:
+    record = session.get(TrainingContentRecord, content_id)
+    if not record:
+        return None
+    markdown_content = markdown_content or ""
+    if markdown_content != (record.markdown_content or ""):
+        record.markdown_content = markdown_content
+        session.add(TrainingContentRevisionRecord(
+            content_id=content_id,
+            markdown_content=markdown_content,
+            change_type=change_type,
+        ))
+        session.commit()
+        session.refresh(record)
+    return training_content_to_dict(record)
+
+
+def list_training_content_history(session: Session, content_id: str, limit: int = 50) -> list[dict] | None:
+    if not session.get(TrainingContentRecord, content_id):
+        return None
+    statement = (
+        select(TrainingContentRevisionRecord)
+        .where(TrainingContentRevisionRecord.content_id == content_id)
+        .order_by(TrainingContentRevisionRecord.created_at.desc(), TrainingContentRevisionRecord.id.desc())
+        .limit(max(1, min(limit, 100)))
+    )
+    records = session.scalars(statement).all()
+    return [training_content_revision_to_dict(item) for item in records]
+
+
+def restore_training_content_revision(session: Session, content_id: str, revision_id: int) -> dict | None:
+    record = session.get(TrainingContentRecord, content_id)
+    revision = session.get(TrainingContentRevisionRecord, revision_id)
+    if not record or not revision or revision.content_id != content_id:
+        return None
+    record.markdown_content = revision.markdown_content
+    session.add(TrainingContentRevisionRecord(
+        content_id=content_id,
+        markdown_content=revision.markdown_content,
+        change_type="restored",
+    ))
+    session.commit()
+    session.refresh(record)
+    return training_content_to_dict(record)
+
+
+def training_content_revision_to_dict(item: TrainingContentRevisionRecord) -> dict:
+    created_at = item.created_at
+    if created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=timezone.utc)
+    return {
+        "id": item.id,
+        "content_id": item.content_id,
+        "markdown_content": item.markdown_content,
+        "change_type": item.change_type,
+        "created_at": created_at.isoformat(),
     }
 
 

@@ -29,6 +29,7 @@ const calendarSnapMinutes = 15;
 let trainingContents = [];
 let catalogProducts = [];
 let selectedContentId = null;
+let markdownEditorContentId = null;
 let project = makeDefaultProject();
 
 function makeDefaultProject() {
@@ -101,6 +102,14 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   $("#addTopic").addEventListener("click", addTopic);
   $("#addTrainingContent").addEventListener("click", addTrainingContent);
+  $("#closeMarkdownEditor").addEventListener("click", closeMarkdownEditor);
+  $("#cancelMarkdownEditor").addEventListener("click", closeMarkdownEditor);
+  $("#saveMarkdownEditor").addEventListener("click", saveMarkdownEditor);
+  $("#markdownEditorInput").addEventListener("input", updateMarkdownPreview);
+  document.querySelectorAll("[data-md-action]").forEach((button) => button.addEventListener("click", applyMarkdownAction));
+  $("#markdownEditorModal").addEventListener("click", (event) => {
+    if (event.target === $("#markdownEditorModal")) closeMarkdownEditor();
+  });
   $("#exportPdf").addEventListener("click", () => downloadExport("pdf"));
   $("#exportXlsx").addEventListener("click", () => downloadExport("xlsx"));
   document.querySelectorAll("[data-tab]").forEach((button) => {
@@ -487,6 +496,7 @@ function renderContentCatalog() {
   detail.querySelectorAll("input[data-content], textarea[data-content]").forEach((input) => input.addEventListener("input", updateTrainingContentDraft));
   detail.querySelectorAll("select[data-content]").forEach((input) => input.addEventListener("change", updateTrainingContentDraft));
   detail.querySelectorAll("button[data-save-content]").forEach((button) => button.addEventListener("click", saveTrainingContent));
+  detail.querySelectorAll("button[data-open-markdown]").forEach((button) => button.addEventListener("click", openMarkdownEditor));
 }
 
 async function addTrainingContent() {
@@ -565,6 +575,7 @@ function contentCard(item) {
     ${contentTextarea(item, "preparation", "Vorbereitung")}
     ${contentTextarea(item, "special_notes", "Hinweise")}
     <div class="content-actions">
+      <button type="button" class="button button-ghost" data-open-markdown="${item.id}">Schulungspunkte bearbeiten</button>
       <button type="button" class="button button-secondary" data-save-content="${item.id}">Speichern</button>
     </div>
   </article>`;
@@ -631,6 +642,191 @@ async function saveTrainingContent(event) {
   } catch (error) {
     event.target.disabled = false;
     event.target.textContent = "Fehler";
+  }
+}
+
+function openMarkdownEditor(event) {
+  const item = trainingContents.find((candidate) => candidate.id === event.currentTarget.dataset.openMarkdown);
+  if (!item) return;
+  markdownEditorContentId = item.id;
+  $("#markdownEditorTitle").textContent = `Schulungspunkte: ${item.title}`;
+  $("#markdownEditorInput").value = item.markdown_content || "";
+  $("#markdownEditorStatus").textContent = "";
+  $("#markdownEditorModal").hidden = false;
+  document.body.classList.add("modal-open");
+  updateMarkdownPreview();
+  loadMarkdownHistory(item.id);
+  window.setTimeout(() => $("#markdownEditorInput").focus(), 0);
+}
+
+function closeMarkdownEditor() {
+  $("#markdownEditorModal").hidden = true;
+  document.body.classList.remove("modal-open");
+  markdownEditorContentId = null;
+}
+
+function updateMarkdownPreview() {
+  $("#markdownPreview").innerHTML = renderMarkdown($("#markdownEditorInput").value);
+}
+
+function renderMarkdown(markdown) {
+  const lines = String(markdown || "").replace(/\r\n?/g, "\n").split("\n");
+  const html = [];
+  let listType = null;
+  const closeList = () => {
+    if (listType) html.push(`</${listType}>`);
+    listType = null;
+  };
+  lines.forEach((rawLine) => {
+    const line = rawLine.trimEnd();
+    if (!line.trim()) {
+      closeList();
+      return;
+    }
+    let match = line.match(/^###\s+(.+)$/);
+    if (match) {
+      closeList();
+      html.push(`<h3>${renderMarkdownInline(match[1])}</h3>`);
+      return;
+    }
+    match = line.match(/^##\s+(.+)$/);
+    if (match) {
+      closeList();
+      html.push(`<h2>${renderMarkdownInline(match[1])}</h2>`);
+      return;
+    }
+    match = line.match(/^#\s+(.+)$/);
+    if (match) {
+      closeList();
+      html.push(`<h1>${renderMarkdownInline(match[1])}</h1>`);
+      return;
+    }
+    match = line.match(/^[-*]\s+(.+)$/);
+    if (match) {
+      if (listType !== "ul") {
+        closeList();
+        html.push("<ul>");
+        listType = "ul";
+      }
+      html.push(`<li>${renderMarkdownInline(match[1])}</li>`);
+      return;
+    }
+    match = line.match(/^\d+\.\s+(.+)$/);
+    if (match) {
+      if (listType !== "ol") {
+        closeList();
+        html.push("<ol>");
+        listType = "ol";
+      }
+      html.push(`<li>${renderMarkdownInline(match[1])}</li>`);
+      return;
+    }
+    closeList();
+    html.push(`<p>${renderMarkdownInline(line)}</p>`);
+  });
+  closeList();
+  return html.join("") || '<p class="muted">Noch keine Schulungspunkte hinterlegt.</p>';
+}
+
+function renderMarkdownInline(value) {
+  return escapeHtml(value)
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g, "<em>$1</em>");
+}
+
+function applyMarkdownAction(event) {
+  const textarea = $("#markdownEditorInput");
+  const action = event.currentTarget.dataset.mdAction;
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const selected = textarea.value.slice(start, end);
+  let replacement = selected;
+  if (action === "bold") replacement = `**${selected || "Text"}**`;
+  if (action === "italic") replacement = `*${selected || "Text"}*`;
+  if (action === "heading") replacement = selected ? selected.split("\n").map((line) => `## ${line}`).join("\n") : "## Ueberschrift";
+  if (action === "bullet") replacement = selected ? selected.split("\n").map((line) => `- ${line.replace(/^[-*]\s+/, "")}`).join("\n") : "- Schulungspunkt";
+  if (action === "number") replacement = selected ? selected.split("\n").map((line, index) => `${index + 1}. ${line.replace(/^\d+\.\s+/, "")}`).join("\n") : "1. Schulungspunkt";
+  textarea.setRangeText(replacement, start, end, "end");
+  textarea.focus();
+  updateMarkdownPreview();
+}
+
+async function saveMarkdownEditor() {
+  const item = trainingContents.find((candidate) => candidate.id === markdownEditorContentId);
+  if (!item) return;
+  const button = $("#saveMarkdownEditor");
+  button.disabled = true;
+  button.textContent = "Speichern...";
+  $("#markdownEditorStatus").textContent = "";
+  try {
+    const response = await fetch(`api/training-contents/${encodeURIComponent(item.id)}/markdown`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ markdown_content: $("#markdownEditorInput").value })
+    });
+    if (!response.ok) throw new Error("save-markdown");
+    const updated = await response.json();
+    trainingContents = trainingContents.map((candidate) => candidate.id === updated.id ? updated : candidate);
+    $("#markdownEditorStatus").textContent = "Gespeichert.";
+    await loadMarkdownHistory(item.id);
+  } catch (error) {
+    $("#markdownEditorStatus").textContent = "Speichern fehlgeschlagen.";
+  } finally {
+    button.disabled = false;
+    button.textContent = "Schulungspunkte speichern";
+  }
+}
+
+async function loadMarkdownHistory(contentId) {
+  const history = $("#markdownHistory");
+  const status = $("#markdownHistoryStatus");
+  status.textContent = "Wird geladen...";
+  try {
+    const response = await fetch(`api/training-contents/${encodeURIComponent(contentId)}/history`);
+    if (!response.ok) throw new Error("history");
+    const items = (await response.json()).items || [];
+    status.textContent = items.length ? `${items.length} Version${items.length === 1 ? "" : "en"}` : "Noch keine Versionen";
+    history.innerHTML = items.length ? items.map(markdownHistoryItem).join("") : '<p class="muted">Nach dem ersten Speichern erscheint hier die Aenderungshistorie.</p>';
+    history.querySelectorAll("[data-restore-markdown]").forEach((button) => button.addEventListener("click", restoreMarkdownVersion));
+  } catch (error) {
+    status.textContent = "Historie nicht erreichbar";
+    history.innerHTML = '<p class="muted">Die Aenderungshistorie konnte nicht geladen werden.</p>';
+  }
+}
+
+function markdownHistoryItem(item) {
+  const timestamp = new Date(item.created_at).toLocaleString("de-DE");
+  const label = item.change_type === "restored" ? "Wiederhergestellt" : "Gespeichert";
+  const preview = String(item.markdown_content || "").replace(/\s+/g, " ").trim().slice(0, 140) || "Leerer Inhalt";
+  return `<article class="markdown-history-item">
+    <div>
+      <strong>${label}</strong>
+      <span>${escapeHtml(timestamp)}</span>
+      <p>${escapeHtml(preview)}${preview.length >= 140 ? "…" : ""}</p>
+    </div>
+    <button type="button" class="button button-ghost" data-restore-markdown="${item.id}">Wiederherstellen</button>
+  </article>`;
+}
+
+async function restoreMarkdownVersion(event) {
+  const item = trainingContents.find((candidate) => candidate.id === markdownEditorContentId);
+  if (!item) return;
+  if (!window.confirm("Diesen gespeicherten Stand wiederherstellen? Der aktuelle Stand bleibt als neue Historienversion nachvollziehbar.")) return;
+  const revisionId = event.currentTarget.dataset.restoreMarkdown;
+  event.currentTarget.disabled = true;
+  try {
+    const response = await fetch(`api/training-contents/${encodeURIComponent(item.id)}/history/${encodeURIComponent(revisionId)}/restore`, { method: "POST" });
+    if (!response.ok) throw new Error("restore");
+    const updated = await response.json();
+    trainingContents = trainingContents.map((candidate) => candidate.id === updated.id ? updated : candidate);
+    $("#markdownEditorInput").value = updated.markdown_content || "";
+    updateMarkdownPreview();
+    $("#markdownEditorStatus").textContent = "Version wiederhergestellt.";
+    await loadMarkdownHistory(item.id);
+  } catch (error) {
+    $("#markdownEditorStatus").textContent = "Wiederherstellen fehlgeschlagen.";
+    event.currentTarget.disabled = false;
   }
 }
 
@@ -781,7 +977,7 @@ function dayHtml(day, dayStart, calendarHeight, week) {
     <div class="calendar-day-body" ondragover="event.preventDefault()" ondrop="dropBlock(event, '${day}', ${week})">
       ${quarterGridLines(dayStart, project.settings.day_end).join("")}
       <div class="day-time-labels" aria-hidden="true">${timeAxisLabels(dayStart, toMinutes(project.settings.day_end)).join("")}</div>
-      ${visibleBlocks.map((block) => blockHtml(block, dayStart, calendarHeight)).join("") || "<p class='calendar-empty muted'>Keine sichtbaren Bloecke.</p>"}
+      ${visibleBlocks.map((block) => blockHtml(block, dayStart, calendarHeight)).join("")}
     </div>
   </section>`;
 }

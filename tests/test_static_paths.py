@@ -16,3 +16,13 @@ def test_frontend_api_calls_are_subpath_safe() -> None:
     assert 'fetch("/api/' not in javascript
     assert 'fetch(`/api/' not in javascript
     assert 'fetch("api/' in javascript or 'fetch(`api/' in javascript
+
+
+def test_markdown_editor_is_present_and_calendar_empty_hint_is_removed() -> None:
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    assert 'id="markdownEditorModal"' in html
+    assert 'data-open-markdown' in javascript
+    assert 'Schulungspunkte bearbeiten' in javascript
+    assert 'Keine sichtbaren Bloecke.' not in javascript
+    assert 'api/training-contents/${encodeURIComponent(item.id)}/markdown' in javascript

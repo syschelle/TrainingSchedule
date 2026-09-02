@@ -126,6 +126,10 @@ class TrainingContentUpdate(BaseModel):
     special_notes: str = ""
 
 
+class TrainingContentMarkdownUpdate(BaseModel):
+    markdown_content: str = ""
+
+
 class TrainingContentCreate(BaseModel):
     product_id: str
     title: str

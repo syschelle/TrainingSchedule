@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.2.26 - 2026-09-02
+
+### Markdown-Schulungspunkte und Aenderungshistorie
+
+- beim gewaehlten Schulungsinhalt gibt es den Button `Schulungspunkte bearbeiten`
+- integrierter lokaler Markdown-Editor mit Toolbar und Live-Vorschau
+- Markdown-Schulungspunkte werden produktbezogen in PostgreSQL gespeichert
+- pro Schulungsinhalt wird eine persistente Aenderungshistorie gefuehrt
+- gespeicherte Historienstaende koennen direkt im Editor wiederhergestellt werden
+- Wiederherstellungen werden selbst als neuer Historieneintrag protokolliert
+- bestehende Datenbanken werden beim Start automatisch um das Markdown-Feld erweitert
+- der Kalender-Hinweis `Keine sichtbaren Bloecke.` wurde entfernt; leere Kalenderbereiche bleiben leer
+- keine externe CDN- oder Cloud-Abhaengigkeit fuer den Editor
+- Version auf v0.2.26 angehoben
+
 ## v0.2.25 - 2026-09-02
 
 ### Traefik Subpath Deployment

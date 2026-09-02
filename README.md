@@ -1,6 +1,6 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.2.25**
+Aktuelle Version: **v0.2.26**
 
 Lokale Webanwendung zur Erstellung, Bearbeitung, Validierung und zum Export mehrtaegiger Schulungsplaene. Die Anwendung laeuft vollstaendig in Docker und verwendet PostgreSQL fuer den strukturierten Schulungsinhalte-Katalog.
 
@@ -20,12 +20,14 @@ Lokale Webanwendung zur Erstellung, Bearbeitung, Validierung und zum Export mehr
 - Export als PDF und XLSX
 - lokale Projektdatei fuer den Benutzer
 - PostgreSQL-Katalog fuer dauerhaft gepflegte Schulungsinhalte
+- Markdown-Editor fuer detaillierte Schulungspunkte je Schulungsinhalt
+- persistente Aenderungshistorie mit Wiederherstellung gespeicherter Markdown-Staende
 
 ## Datenschutz
 
 Hochgeladene Excel- oder PDF-Dateien werden nicht in PostgreSQL oder Docker-Volumes abgelegt. Die vorhandene Import-API verarbeitet Uploads nur im Request-Speicher. Der Quellordner `Aufgabe/`, lokale Quelldokumente sowie `Aufgabe.md` werden durch `.dockerignore` nicht in das Anwendungsimage uebernommen.
 
-Persistiert wird ausschliesslich das PostgreSQL-Volume fuer strukturierte Produkt- und Schulungsinhalte.
+Persistiert wird ausschliesslich das PostgreSQL-Volume fuer strukturierte Produkt- und Schulungsinhalte. Dazu gehoeren auch die Markdown-Schulungspunkte und deren Aenderungshistorie.
 
 ## Voraussetzungen
 
@@ -83,7 +85,7 @@ docker-compose.images.yml
 Verwendet standardmaessig:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.25
+ghcr.io/syschelle/schulungsplantool:latest
 ```
 
 Das Release-Image enthaelt `linux/amd64` und `linux/arm64`; Docker waehlt automatisch die passende Architektur.
@@ -174,12 +176,12 @@ curl http://127.0.0.1:18083/api/health
 Erwartet:
 
 ```json
-{"status":"ok","version":"0.2.25"}
+{"status":"ok","version":"0.2.26"}
 ```
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.2.25` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.2.26` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -187,7 +189,7 @@ Bei einem Release-Tag wie `v0.2.25` baut `.github/workflows/release-image.yml` n
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.25
+ghcr.io/syschelle/schulungsplantool:0.2.26
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -209,7 +211,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.2.25` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.2.26` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -217,7 +219,7 @@ Bei einem Release-Tag wie `v0.2.25` baut der Workflow `.github/workflows/release
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.25
+ghcr.io/syschelle/schulungsplantool:0.2.26
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -259,3 +261,10 @@ Es enthaelt ausschliesslich die PostgreSQL-Datenbank. Originale Upload-Dateien w
 Ab v0.2.25 kann die Weboberflaeche sowohl direkt unter `/` als auch hinter einem Reverse Proxy unter einem Unterpfad wie `/trainingschedule/` betrieben werden. Frontend-Assets und Browser-API-Aufrufe verwenden relative URLs. Bei Traefik kann der Prefix daher mit `StripPrefix` entfernt werden, bevor die Anfrage an den Container-Port `8000` weitergeleitet wird.
 
 Das Produktions-Compose verwendet standardmaessig `ghcr.io/syschelle/schulungsplantool:latest`. Mit `APP_IMAGE` in `.env` kann bei Bedarf weiterhin gezielt eine feste Image-Version gesetzt werden.
+
+
+## Markdown-Schulungspunkte
+
+Unter `Schulungsinhalte` kann beim ausgewaehlten Inhalt ueber `Schulungspunkte bearbeiten` ein lokaler Markdown-Editor geoeffnet werden. Der Editor zeigt den aktuell gespeicherten Inhalt, bietet eine Live-Vorschau und speichert den Markdown-Quelltext direkt in PostgreSQL.
+
+Bei jeder inhaltlichen Aenderung wird ein neuer Historienstand gespeichert. Die letzten Versionen werden im Editor angezeigt und koennen dort wiederhergestellt werden. Wiederherstellungen werden ebenfalls als neuer Historieneintrag protokolliert. Der Editor verwendet keine externe CDN- oder Cloud-Verbindung.

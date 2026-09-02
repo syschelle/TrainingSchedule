@@ -1,4 +1,4 @@
-# Produktionsinstallation v0.2.25
+# Produktionsinstallation v0.2.26
 
 ## 1. Repository klonen
 
@@ -38,7 +38,7 @@ curl http://127.0.0.1:18083/api/health
 ./update.sh
 ```
 
-Das PostgreSQL-Volume `schulungsplantool_pgdata` bleibt erhalten.
+Das PostgreSQL-Volume `schulungsplantool_pgdata` bleibt erhalten. Beim ersten Start von v0.2.26 wird die bestehende Tabelle `training_contents` automatisch um das Markdown-Feld erweitert; die neue Historientabelle wird ebenfalls automatisch angelegt.
 
 ## 6. Backup
 
@@ -53,11 +53,13 @@ docker compose -f docker-compose.images.yml pull
 docker compose -f docker-compose.images.yml up -d --remove-orphans
 ```
 
-Standard-Image fuer v0.2.25:
+Standard-Image fuer die Produktion:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.25
+ghcr.io/syschelle/schulungsplantool:latest
 ```
+
+Fuer reproduzierbare Rollbacks steht zusaetzlich der Versions-Tag `ghcr.io/syschelle/schulungsplantool:0.2.26` zur Verfuegung.
 
 Unterstuetzte Architekturen: `linux/amd64` und `linux/arm64`.
 

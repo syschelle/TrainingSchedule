@@ -1091,3 +1091,19 @@ Die Version wurde auf `v0.2.25` erhoeht.
 - Der direkte Betrieb am Webroot bleibt weiterhin moeglich.
 - Regressionstests verhindern, dass absolute Frontend-/API-Pfade versehentlich wieder eingefuehrt werden.
 - `docker-compose.images.yml` verwendet standardmaessig `ghcr.io/syschelle/schulungsplantool:latest`.
+
+---
+
+# 58. Anpassungsnotiz 2026-09-02
+
+Die Version wurde auf `v0.2.26` erhoeht.
+
+- Beim gewaehlten Eintrag unter `Hinterlegte Schulungsinhalte` gibt es nun den Button `Schulungspunkte bearbeiten`.
+- Der Button oeffnet einen lokalen Markdown-Editor mit dem aktuell in PostgreSQL gespeicherten Inhalt.
+- Der Editor bietet einfache Formatierungswerkzeuge fuer Ueberschriften, Fett/Kursiv, Aufzaehlungen und Nummerierungen sowie eine Live-Vorschau.
+- Die Markdown-Schulungspunkte werden als eigenes Textfeld am Schulungsinhalt gespeichert.
+- Pro Schulungsinhalt wird eine persistente Aenderungshistorie in PostgreSQL gefuehrt.
+- Gespeicherte Versionen koennen aus der Historie wiederhergestellt werden; Wiederherstellungen werden ebenfalls protokolliert.
+- Der Editor benoetigt keine externe CDN- oder Cloud-Verbindung.
+- Der Hinweis `Keine sichtbaren Bloecke.` wurde aus leeren Kalenderbereichen entfernt.
+

@@ -8,16 +8,27 @@ from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
-from .content_db import create_product, create_training_content, db_session, init_database, list_products, list_training_contents, update_training_content
+from .content_db import (
+    create_product,
+    create_training_content,
+    db_session,
+    init_database,
+    list_products,
+    list_training_content_history,
+    list_training_contents,
+    restore_training_content_revision,
+    update_training_content,
+    update_training_content_markdown,
+)
 from .exporter import export_pdf, export_xlsx
 from .importer import build_project_from_uploads
-from .models import ExportRequest, ProductCreate, TrainingContentCreate, TrainingContentUpdate, TrainingProject
+from .models import ExportRequest, ProductCreate, TrainingContentCreate, TrainingContentMarkdownUpdate, TrainingContentUpdate, TrainingProject
 from .planner import plan_project, validate_project
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 STATIC_DIR = BASE_DIR / "static"
 MAX_UPLOAD_MB = int(os.environ.get("MAX_UPLOAD_MB", "25"))
-APP_VERSION = os.environ.get("APP_VERSION", "0.2.25")
+APP_VERSION = os.environ.get("APP_VERSION", "0.2.26")
 MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
 
 app = FastAPI(title="Schulungsplantool", version=APP_VERSION)
@@ -76,6 +87,30 @@ def save_training_content(content_id: str, payload: TrainingContentUpdate, sessi
     if updated is None:
         raise HTTPException(status_code=404, detail="Schulungsinhalt wurde nicht gefunden.")
     return updated
+
+
+@app.put("/api/training-contents/{content_id}/markdown")
+def save_training_content_markdown(content_id: str, payload: TrainingContentMarkdownUpdate, session: Session = Depends(db_session)) -> dict:
+    updated = update_training_content_markdown(session, content_id, payload.markdown_content)
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Schulungsinhalt wurde nicht gefunden.")
+    return updated
+
+
+@app.get("/api/training-contents/{content_id}/history")
+def training_content_history(content_id: str, session: Session = Depends(db_session)) -> dict:
+    history = list_training_content_history(session, content_id)
+    if history is None:
+        raise HTTPException(status_code=404, detail="Schulungsinhalt wurde nicht gefunden.")
+    return {"items": history}
+
+
+@app.post("/api/training-contents/{content_id}/history/{revision_id}/restore")
+def restore_training_content_history(content_id: str, revision_id: int, session: Session = Depends(db_session)) -> dict:
+    restored = restore_training_content_revision(session, content_id, revision_id)
+    if restored is None:
+        raise HTTPException(status_code=404, detail="Version wurde nicht gefunden.")
+    return restored
 
 
 async def _read_upload(upload: UploadFile) -> tuple[str, bytes]:

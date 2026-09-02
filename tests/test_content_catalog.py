@@ -1,5 +1,7 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import Session
+
+import app.server.content_db as content_db
 
 from app.server.content_db import (
     Base,
@@ -8,7 +10,10 @@ from app.server.content_db import (
     create_product,
     create_training_content,
     seed_database,
+    list_training_content_history,
+    restore_training_content_revision,
     update_training_content,
+    update_training_content_markdown,
 )
 
 
@@ -106,3 +111,71 @@ def test_training_contents_can_be_added_for_product():
         assert created["product_id"] == "deepunity-pacs"
         assert created["duration_minutes"] == 60
         assert created["background_color"] == "#eaf8f2"
+
+
+def test_markdown_content_has_persistent_history_and_can_be_restored():
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    with Session(engine) as session:
+        seed_database(session)
+
+        first = update_training_content_markdown(
+            session,
+            "du-diagnost-basic",
+            "## Grundlagen\n\n- Anmeldung\n- Patientensuche",
+        )
+        assert first is not None
+        assert "Patientensuche" in first["markdown_content"]
+
+        unchanged = update_training_content_markdown(
+            session,
+            "du-diagnost-basic",
+            first["markdown_content"],
+        )
+        assert unchanged is not None
+        history = list_training_content_history(session, "du-diagnost-basic")
+        assert history is not None
+        assert len(history) == 1
+
+        second = update_training_content_markdown(
+            session,
+            "du-diagnost-basic",
+            "## Grundlagen\n\n- Anmeldung\n- Patientensuche\n- Viewer",
+        )
+        assert second is not None
+        history = list_training_content_history(session, "du-diagnost-basic")
+        assert history is not None
+        assert len(history) == 2
+        oldest_revision_id = history[-1]["id"]
+
+        restored = restore_training_content_revision(session, "du-diagnost-basic", oldest_revision_id)
+        assert restored is not None
+        assert restored["markdown_content"] == first["markdown_content"]
+
+        history_after_restore = list_training_content_history(session, "du-diagnost-basic")
+        assert history_after_restore is not None
+        assert len(history_after_restore) == 3
+        assert history_after_restore[0]["change_type"] == "restored"
+
+
+def test_existing_training_contents_table_gets_markdown_column(monkeypatch):
+    legacy_engine = create_engine("sqlite+pysqlite:///:memory:")
+    with legacy_engine.begin() as connection:
+        connection.execute(text("""
+            CREATE TABLE training_contents (
+                id VARCHAR(120) PRIMARY KEY,
+                product_id VARCHAR(120) NOT NULL,
+                title VARCHAR(240) NOT NULL,
+                target_group TEXT NOT NULL DEFAULT '',
+                duration_minutes INTEGER NOT NULL DEFAULT 60,
+                goals TEXT NOT NULL DEFAULT '',
+                requirements TEXT NOT NULL DEFAULT '',
+                preparation TEXT NOT NULL DEFAULT '',
+                special_notes TEXT NOT NULL DEFAULT '',
+                source_file VARCHAR(240) NOT NULL DEFAULT ''
+            )
+        """))
+    monkeypatch.setattr(content_db, "engine", legacy_engine)
+    content_db.ensure_training_content_columns()
+    columns = {column["name"] for column in inspect(legacy_engine).get_columns("training_contents")}
+    assert "markdown_content" in columns
