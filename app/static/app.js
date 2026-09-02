@@ -984,13 +984,11 @@ function renderTabs() {
 
 function renderOverview() {
   const totals = totalMinutesByType();
+  const serviceDays = serviceDayCount();
   $("#tab-overview").innerHTML = `
     <div class="metric-grid">
       ${metric("Schulung", totals.training || 0)}
-      ${metric("Pausen", totals.break || 0)}
-      ${metric("Mittag", totals.lunch || 0)}
-      ${metric("Anreise", totals.arrival || 0)}
-      ${metric("Abreise", totals.departure || 0)}
+      ${metricValue("Dienstleistungstage", formatServiceDays(serviceDays))}
       ${metric("Nicht eingeplant", project.unscheduled_topics.reduce((sum, item) => sum + item.duration_minutes, 0))}
     </div>
     <div class="product-summary">${productSummary()}</div>
@@ -1000,7 +998,23 @@ function renderOverview() {
 }
 
 function metric(label, minutes) {
-  return `<div class="metric"><span>${label}</span><strong>${formatDuration(minutes)}</strong></div>`;
+  return metricValue(label, formatDuration(minutes));
+}
+
+function metricValue(label, value) {
+  return `<div class="metric"><span>${label}</span><strong>${value}</strong></div>`;
+}
+
+function serviceDayCount() {
+  return new Set(
+    project.blocks
+      .filter((block) => block.type === "training")
+      .map((block) => `${Number(block.week || 1)}::${block.day}`)
+  ).size;
+}
+
+function formatServiceDays(count) {
+  return `${count} ${count === 1 ? "Tag" : "Tage"}`;
 }
 
 function topicSummary() {

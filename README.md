@@ -1,6 +1,6 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.2.29**
+Aktuelle Version: **v0.2.30**
 
 Lokale Webanwendung zur Erstellung, Bearbeitung, Validierung und zum Export mehrtaegiger Schulungsplaene. Die Anwendung laeuft vollstaendig in Docker und verwendet PostgreSQL fuer den strukturierten Schulungsinhalte-Katalog.
 
@@ -17,6 +17,7 @@ Lokale Webanwendung zur Erstellung, Bearbeitung, Validierung und zum Export mehr
 - Drag-and-Drop von Schulungsbloecken zwischen Zeiten, Tagen und Wochen
 - Ausschneiden und Einfuegen von Bloecken
 - Live-Validierung
+- Planuebersicht mit Schulungszeit, nicht eingeplanter Zeit und Dienstleistungstagen
 - Druckvorschau
 - Export als PDF und XLSX
 - lokale Projektdatei fuer den Benutzer
@@ -178,12 +179,12 @@ curl http://127.0.0.1:18083/api/health
 Erwartet:
 
 ```json
-{"status":"ok","version":"0.2.29"}
+{"status":"ok","version":"0.2.30"}
 ```
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.2.29` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.2.30` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -191,7 +192,7 @@ Bei einem Release-Tag wie `v0.2.29` baut `.github/workflows/release-image.yml` n
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.29
+ghcr.io/syschelle/schulungsplantool:0.2.30
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -213,7 +214,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.2.29` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.2.30` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -221,7 +222,7 @@ Bei einem Release-Tag wie `v0.2.29` baut der Workflow `.github/workflows/release
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.29
+ghcr.io/syschelle/schulungsplantool:0.2.30
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -304,3 +305,7 @@ Nicht zulaessig sind insbesondere:
 **Bilder und Screenshots werden nicht stillschweigend entfernt.** Enthält das DOCX ein Bild bzw. eine Grafik, wird der gesamte Import mit einer klaren Fehlermeldung abgelehnt und der vorhandene Schulungsinhalt bleibt unveraendert.
 
 Ein erfolgreicher DOCX-Import wird zuerst nur in den Markdown-Editor geladen. Erst nach Sichtpruefung und Klick auf `Schulungspunkte speichern` wird der Inhalt in PostgreSQL uebernommen. Dieser Speichervorgang erscheint in der Aenderungshistorie als `DOCX importiert`. Die hochgeladene DOCX-Datei selbst wird nicht gespeichert.
+## Dienstleistungstage in der Planuebersicht
+
+Die Planuebersicht zeigt keine separaten Summen mehr fuer normale Pausen, Mittagspause, Anreise oder Abreise. Stattdessen wird die Anzahl der `Dienstleistungstage` ausgewiesen. Gezaehlt wird jeder Tag einer Schulungswoche genau einmal, an dem mindestens ein Block vom Typ `training` geplant ist. Mehrere Schulungsbloecke am selben Tag erhoehen die Anzahl der Dienstleistungstage daher nicht. Tage, die ausschliesslich Anreise, Abreise oder Pausen enthalten, werden nicht als Dienstleistungstag gezaehlt.
+

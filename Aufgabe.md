@@ -1151,3 +1151,16 @@ Die Version wurde auf `v0.2.29` erhoeht.
 - Regionale Feiertage werden ohne Bundesland-/Kantonsauswahl nicht als sicher geltend dargestellt.
 - Die Feiertagsberechnung benoetigt keine externe API oder Cloud-Verbindung.
 
+---
+
+# 62. Anpassungsnotiz 2026-09-02
+
+Die Version wurde auf `v0.2.30` erhoeht.
+
+- In der Planuebersicht werden die Summenkarten fuer Pausen, Mittagspause, Anreise und Abreise nicht mehr angezeigt.
+- Stattdessen zeigt die Uebersicht die Anzahl der `Dienstleistungstage`.
+- Als Dienstleistungstag zaehlt jeder Tag einer Schulungswoche, an dem mindestens ein Schulungsblock vom Typ `training` geplant ist.
+- Mehrere Schulungen am gleichen Tag werden nur als ein Dienstleistungstag gezaehlt.
+- Tage mit ausschliesslich Anreise, Abreise oder Pausen werden nicht als Dienstleistungstage gezaehlt.
+- Die Kennzahlen fuer gesamte Schulungszeit und nicht eingeplante Schulungszeit bleiben erhalten.
+

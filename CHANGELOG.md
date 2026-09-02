@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.2.30 - 2026-09-02
+
+### Dienstleistungstage in der Planuebersicht
+
+- die Planuebersicht zeigt keine separaten Summen mehr fuer Pausen, Mittagspause, Anreise und Abreise
+- neu angezeigt werden `Dienstleistungstage`
+- als Dienstleistungstag wird jeder Tag genau einmal gezaehlt, an dem mindestens ein Schulungsblock vom Typ `training` geplant ist
+- mehrere Schulungsbloecke am selben Tag zaehlen weiterhin nur als ein Dienstleistungstag
+- reine Anreise-, Abreise- oder Pausentage werden nicht als Dienstleistungstage gezaehlt
+- Schulungszeit und nicht eingeplante Schulungszeit bleiben in der Uebersicht sichtbar
+- Regressionstest fuer die neue Uebersichtslogik hinzugefuegt
+- Version auf v0.2.30 angehoben
+
 ## v0.2.29 - 2026-09-02
 
 ### Leere Kundendaten, Kalenderdatum und DACH-Feiertagshinweise

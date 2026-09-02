@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.2.29"' in html
+    assert 'src="calendar.js?v=0.2.30"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -59,3 +59,17 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     assert 'add("AT", "Nationalfeiertag"' in calendar_js
     assert 'add("CH", "Bundesfeier"' in calendar_js
     assert "Regionale Feiertage" in javascript
+
+
+def test_plan_overview_uses_service_days_instead_of_break_metrics() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    overview = javascript.split("function renderOverview()", 1)[1].split("function topicSummary()", 1)[0]
+    assert 'metricValue("Dienstleistungstage", formatServiceDays(serviceDays))' in overview
+    assert 'metric("Pausen"' not in overview
+    assert 'metric("Mittag"' not in overview
+    assert 'metric("Anreise"' not in overview
+    assert 'metric("Abreise"' not in overview
+    assert '.filter((block) => block.type === "training")' in overview
+    assert '.map((block) => `${Number(block.week || 1)}::${block.day}`)' in overview
+    assert 'count === 1 ? "Tag" : "Tage"' in overview
+
