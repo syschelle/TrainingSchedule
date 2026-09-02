@@ -1,6 +1,10 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.2.39**
+Aktuelle Version: **v0.2.40**
+
+## Aenderungen v0.2.40
+
+In Kalenderkacheln wird der Anreiseblock jetzt kompakt als `Anreise` angezeigt. Der intern gespeicherte Titel `Anreise / Eintreffen der Teilnehmer`, die Planungslogik, Validierung und Exportdaten bleiben unveraendert.
 
 ## Aenderungen v0.2.39
 
@@ -213,12 +217,12 @@ curl http://127.0.0.1:18083/api/health
 Erwartet:
 
 ```json
-{"status":"ok","version":"0.2.39"}
+{"status":"ok","version":"0.2.40"}
 ```
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.2.39` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.2.40` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -226,7 +230,7 @@ Bei einem Release-Tag wie `v0.2.39` baut `.github/workflows/release-image.yml` n
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.39
+ghcr.io/syschelle/schulungsplantool:0.2.40
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -248,7 +252,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.2.39` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.2.40` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -256,7 +260,7 @@ Bei einem Release-Tag wie `v0.2.39` baut der Workflow `.github/workflows/release
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.39
+ghcr.io/syschelle/schulungsplantool:0.2.40
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 

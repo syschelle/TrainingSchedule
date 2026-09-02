@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.2.39"' in html
+    assert 'src="calendar.js?v=0.2.40"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -203,4 +203,9 @@ def test_add_week_button_uses_correct_german_umlaut() -> None:
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     assert "Woche hinzufügen" in javascript
     assert "Woche hinzufuegen" not in javascript
+
+def test_arrival_calendar_tile_uses_compact_display_title_only() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    assert 'block.type === "arrival" ? "Anreise" : block.title' in javascript
+    assert 'monday_arrival_label: "Anreise / Eintreffen der Teilnehmer"' in javascript
 

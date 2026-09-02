@@ -1279,3 +1279,10 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Die technische Anzeige `Seite 1 · Uebersicht` wird dort nicht mehr ausgegeben.
 - Version bleibt `v0.2.39`, da dieser Stand noch nicht gepusht oder veröffentlicht wurde.
 
+## Erweiterung v0.2.40 - Kompakter Anreise-Titel im Kalender
+
+- Kalenderkacheln fuer den Blocktyp `arrival` zeigen nur noch `Anreise` als sichtbaren Titel.
+- Der vorhandene interne Standardtitel `Anreise / Eintreffen der Teilnehmer` wird nicht veraendert.
+- Die Aenderung betrifft ausschliesslich die Darstellung der Kalenderkachel; Planung, Validierung, Blockeditor und Exportlogik bleiben unveraendert.
+- Version auf `v0.2.40` erhoeht.
+

@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.2.40 - 2026-09-02
+
+### Kompakter Anreise-Titel in Kalenderkacheln
+
+- Anreisebloecke werden in den Kalenderkacheln nur noch als `Anreise` angezeigt.
+- Der intern gespeicherte Titel `Anreise / Eintreffen der Teilnehmer` bleibt unveraendert.
+- Planungslogik, Validierung sowie PDF-/XLSX-/Projekt-Exportdaten werden durch die reine Anzeigeaenderung nicht veraendert.
+
 ## v0.2.39 - 2026-09-02
 
 ### Korrekte deutsche Beschriftung im Schulungsplan

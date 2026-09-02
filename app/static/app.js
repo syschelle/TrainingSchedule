@@ -1258,6 +1258,7 @@ function dayHtml(day, dayStart, calendarHeight, week, trainer, trainerIndex, int
 }
 
 function blockHtml(block, dayStart, calendarHeight, interactive = true) {
+  const displayTitle = block.type === "arrival" ? "Anreise" : block.title;
   const start = toMinutes(block.start);
   const blockDuration = Math.max(calendarSnapMinutes, duration(block.start, block.end));
   const top = Math.max(0, ((start - dayStart) / 60) * calendarHourHeight);
@@ -1265,7 +1266,7 @@ function blockHtml(block, dayStart, calendarHeight, interactive = true) {
   const cappedHeight = Math.min(height, Math.max(44, calendarHeight - top));
   return `<article class="block calendar-block ${block.type} ${block.id === cutBlockId ? "is-cut" : ""}" ${interactive ? `draggable="true" ondragstart="dragBlock(event, '${block.id}')"` : ""} style="top:${top}px;height:${cappedHeight}px;--block-bg:${escapeHtml(block.background_color || "#ffffff")}">
     <div>
-      <strong>${escapeHtml(block.title)}</strong>
+      <strong>${escapeHtml(displayTitle)}</strong>
       <span>${block.start}-${block.end} · ${block.type}</span>
     </div>
     ${interactive ? `<div class="block-actions">
