@@ -1,6 +1,10 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.2.38**
+Aktuelle Version: **v0.2.39**
+
+## Aenderungen v0.2.39
+
+Im Schulungsplan wurde die Beschriftung des Buttons zum manuellen Anlegen einer weiteren Woche sprachlich korrigiert: `Woche hinzufügen` ersetzt `Woche hinzufuegen`. Die Funktion selbst bleibt unveraendert. Auf der ersten Vorschau- und PDF-Uebersichtsseite zeigt der rechte Kopfbereich jetzt wie auf den folgenden Kalenderseiten `Kunde` und `Standort`; die technische Anzeige `Seite 1 · Uebersicht` entfällt.
 
 ## Aenderungen v0.2.38
 
@@ -209,12 +213,12 @@ curl http://127.0.0.1:18083/api/health
 Erwartet:
 
 ```json
-{"status":"ok","version":"0.2.38"}
+{"status":"ok","version":"0.2.39"}
 ```
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.2.38` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.2.39` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -222,7 +226,7 @@ Bei einem Release-Tag wie `v0.2.38` baut `.github/workflows/release-image.yml` n
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.38
+ghcr.io/syschelle/schulungsplantool:0.2.39
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -244,7 +248,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.2.38` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.2.39` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -252,7 +256,7 @@ Bei einem Release-Tag wie `v0.2.38` baut der Workflow `.github/workflows/release
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.38
+ghcr.io/syschelle/schulungsplantool:0.2.39
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 

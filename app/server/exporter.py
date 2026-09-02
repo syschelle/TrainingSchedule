@@ -152,8 +152,9 @@ def _draw_overview_page(pdf: canvas.Canvas, project: TrainingProject, page_width
     pdf.drawString(margin, page_height - 29, project.title or "Schulungsplan")
     pdf.setFont("Helvetica", 9)
     pdf.drawString(margin, page_height - 47, "Planuebersicht")
-    pdf.setFont("Helvetica-Bold", 8)
-    pdf.drawRightString(page_width - margin, page_height - 40, "Seite 1 · Uebersicht")
+    pdf.setFont("Helvetica-Bold", 7.2)
+    pdf.drawRightString(page_width - margin, page_height - 34, f"Kunde: {customer}")
+    pdf.drawRightString(page_width - margin, page_height - 47, f"Standort: {location}")
 
     top = page_height - 96
     left = margin

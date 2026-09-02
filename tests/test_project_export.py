@@ -64,6 +64,9 @@ def test_pdf_starts_with_overview_then_has_one_page_per_trainer_and_week():
     assert "Musterklinik" in first_text
     assert "Standort" in first_text
     assert "Berlin" in first_text
+    assert "Kunde: Musterklinik" in first_text
+    assert "Standort: Berlin" in first_text
+    assert "Seite 1 · Uebersicht" not in first_text
     text = "\n".join(page.extract_text() or "" for page in reader.pages)
     assert "Trainer A" in text
     assert "Trainer B" in text

@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.2.38"' in html
+    assert 'src="calendar.js?v=0.2.39"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -157,7 +157,10 @@ def test_overview_and_preview_show_customer_location_and_overview_first_page() -
     assert 'overviewMeta("Kunde", customer)' in javascript
     assert 'overviewMeta("Standort", location)' in javascript
     assert 'pdf-preview-overview-sheet' in javascript
-    assert 'Seite 1 · Uebersicht' in javascript
+    assert 'Seite 1 · Uebersicht' not in javascript
+    overview_section = javascript.split('pdf-preview-overview-sheet', 1)[1].split('${projectOverviewMeta()}', 1)[0]
+    assert 'Kunde: ${escapeHtml(customer)}' in overview_section
+    assert 'Standort: ${escapeHtml(location)}' in overview_section
     assert 'Kunde: ${escapeHtml(customer)}' in javascript
     assert 'Standort: ${escapeHtml(location)}' in javascript
 
@@ -195,3 +198,9 @@ def test_trainer_editor_is_compact_and_keyboard_friendly() -> None:
     assert 'flex-wrap: wrap;' in css
     assert '.trainer-row {' in css
     assert 'flex: 0 1 230px;' in css
+
+def test_add_week_button_uses_correct_german_umlaut() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    assert "Woche hinzufügen" in javascript
+    assert "Woche hinzufuegen" not in javascript
+

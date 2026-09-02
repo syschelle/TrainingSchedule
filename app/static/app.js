@@ -1196,7 +1196,7 @@ function renderWeek() {
   $("#tab-week").innerHTML = `
     <div class="calendar-toolbar">
       <div class="calendar-help">Bloecke koennen zwischen Tagen, Wochen und Trainern verschoben werden. Jeder Trainer besitzt pro Kalenderwoche eine eigene Wochenansicht.</div>
-      <button type="button" class="button button-secondary" onclick="addManualWeek()">Woche hinzufuegen</button>
+      <button type="button" class="button button-secondary" onclick="addManualWeek()">Woche hinzufügen</button>
     </div>
     ${cutBlockId ? `<div class="cut-notice">Ausgeschnitten: ${escapeHtml(cutBlockTitle())}. Zieltag und Zieltrainer waehlen und Einfuegen klicken.</div>` : ""}
     <div class="calendar-weeks">
@@ -1588,7 +1588,7 @@ function renderPreview() {
             <h2>${escapeHtml(project.title || "Schulungsplan")}</h2>
             <p>Planuebersicht</p>
           </div>
-          <strong>Seite 1 · Uebersicht</strong>
+          <div class="pdf-preview-customer"><strong>Kunde: ${escapeHtml(customer)}</strong><strong>Standort: ${escapeHtml(location)}</strong></div>
         </div>
         <div class="pdf-preview-overview-body">
           ${projectOverviewMeta()}

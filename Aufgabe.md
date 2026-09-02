@@ -1270,3 +1270,12 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - `Enter` im Trainerfeld speichert den Namen und oeffnet direkt das naechste Feld.
 - Die bestehende Trainerzuordnung von Kalenderbloecken bleibt bei Umbenennen und Entfernen erhalten bzw. wird wie bisher aktualisiert.
 - Version auf `v0.2.38` erhoeht.
+
+## Erweiterung v0.2.39 - Beschriftung Woche hinzufügen
+
+- Der Button `Woche hinzufuegen` in der Schulungsplan-Ansicht heißt jetzt korrekt `Woche hinzufügen`.
+- Die bestehende Funktion zum manuellen Anlegen weiterer Kalenderwochen bleibt unverändert.
+- Die erste Vorschau- und PDF-Uebersichtsseite verwendet rechts im Kopf dieselbe Kundendarstellung (`Kunde` und `Standort`) wie die Kalenderseiten.
+- Die technische Anzeige `Seite 1 · Uebersicht` wird dort nicht mehr ausgegeben.
+- Version bleibt `v0.2.39`, da dieser Stand noch nicht gepusht oder veröffentlicht wurde.
+

@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.2.39 - 2026-09-02
+
+### Korrekte deutsche Beschriftung im Schulungsplan
+
+- Der Button `Woche hinzufuegen` wurde in der Schulungsplan-Ansicht in `Woche hinzufügen` umbenannt.
+- Die Funktion zum manuellen Hinzufuegen einer Kalenderwoche bleibt unveraendert.
+- Auf der ersten Vorschau- und PDF-Uebersichtsseite werden rechts im Kopf jetzt wie auf den folgenden Kalenderseiten `Kunde` und `Standort` angezeigt.
+- Die technische Kopfzeile `Seite 1 · Uebersicht` wurde entfernt.
+
 ## v0.2.38 - 2026-09-02
 
 ### Kompaktere Trainerverwaltung
