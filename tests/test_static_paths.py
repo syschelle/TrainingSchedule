@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.3.0"' in html
+    assert 'src="calendar.js?v=0.3.1"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -393,3 +393,24 @@ def test_v030_project_menu_separates_project_workflow_from_administration() -> N
     assert 'data-page="validation"' in project_part
     assert 'data-page="products"' in admin_part
     assert 'data-page="contents"' in admin_part
+
+
+def test_v031_participant_count_typing_keeps_input_node_and_focus_stable() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    handler = javascript.split("function updateParticipantGroupField(event)", 1)[1].split("function currentProduct()", 1)[0]
+    assert "renderPeopleWorkflow();" not in handler
+    assert "renderPeopleSummary();" in handler
+    assert "renderTrainingWorkflow();" in handler
+    assert "function renderPeopleSummary()" in javascript
+
+
+def test_v031_participant_count_input_supports_multi_digit_entry() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    editor = javascript.split("function groupEditor(group)", 1)[1].split("function productEditor()", 1)[0]
+    assert 'data-key="participant_count" type="number" min="0" step="1" inputmode="numeric"' in editor
+
+
+def test_v031_review_uses_clear_duration_label_instead_of_basisdauer() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    assert "Basisdauer" not in javascript
+    assert "Dauer der Auswahl" in javascript

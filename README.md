@@ -1,6 +1,14 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.3.0**
+Aktuelle Version: **v0.3.1**
+
+## Aenderungen v0.3.1
+
+- Teilnehmerzahlen im Schritt `Personen` koennen jetzt fluessig mit zwei, drei oder mehr Stellen eingegeben werden, ohne dass das Feld nach jeder Ziffer den Fokus verliert.
+- Die laufende Personen-Zusammenfassung und abhaengige Ansichten aktualisieren sich weiter, ohne das aktive Eingabefeld neu zu erzeugen.
+- Teilnehmerzahl-Felder sind explizit auf ganzzahlige Eingabe optimiert.
+- `Basisdauer` wurde in der Schulungsauswahl und der Pruefansicht in `Dauer der Auswahl` umbenannt. Die Kennzahl bleibt die Summe der ausgewaehlten Schulungsinhalte vor gruppenbedingten Wiederholungen.
+- Keine Datenbankmigration erforderlich.
 
 ## Aenderungen v0.3.0
 
@@ -284,12 +292,12 @@ curl http://127.0.0.1:18083/api/health
 Erwartet:
 
 ```json
-{"status":"ok","version":"0.3.0"}
+{"status":"ok","version":"0.3.1"}
 ```
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.3.0` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.3.1` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -297,7 +305,7 @@ Bei einem Release-Tag wie `v0.3.0` baut `.github/workflows/release-image.yml` na
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.3.0
+ghcr.io/syschelle/schulungsplantool:0.3.1
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -319,7 +327,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.3.0` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.3.1` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -327,7 +335,7 @@ Bei einem Release-Tag wie `v0.3.0` baut der Workflow `.github/workflows/release-
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.3.0
+ghcr.io/syschelle/schulungsplantool:0.3.1
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 

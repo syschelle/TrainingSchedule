@@ -1394,3 +1394,13 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Neue Projekte starten ohne Beispiel-Teilnehmerzahlen, ohne Startdatum und ohne automatisch ausgewaehlte Schulungsinhalte.
 - Keine Datenbankmigration erforderlich.
 - Version auf `v0.3.0` erhoeht.
+
+
+## Erweiterung v0.3.1 - Stabile Teilnehmerzahl-Eingabe und klarere Dauerbezeichnung
+
+- Im Workflow-Schritt `Personen` darf die Eingabe der Teilnehmerzahl das aktive Zahlenfeld beim Tippen nicht neu erzeugen. Zwei-, drei- und mehrstellige Werte muessen ohne Fokusverlust in einem Zug eingegeben werden koennen.
+- Abhaengige Zusammenfassungen und Workflow-Anzeigen duerfen weiterhin live aktualisiert werden, ohne den DOM-Knoten des aktiven Eingabefelds zu ersetzen.
+- Teilnehmerzahl-Felder verwenden ganzzahlige Schritte und numerischen Eingabemodus.
+- Die Bezeichnung `Basisdauer` wird im gefuehrten Workflow durch `Dauer der Auswahl` ersetzt. Sie bezeichnet die Summe der ausgewaehlten Schulungsinhalte vor zusaetzlichen Wiederholungen durch Teilnehmergruppen bzw. automatisch erzeugte Gruppen.
+- Keine Datenbankmigration erforderlich.
+- Version auf `v0.3.1` erhoeht.

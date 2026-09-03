@@ -250,14 +250,17 @@ function renderPeopleWorkflow() {
     if (addTrainerButton) addTrainerButton.addEventListener("click", () => addTrainer(true));
   }
   renderParticipantGroups();
-  const summary = $("#people-summary");
-  if (summary) {
-    const trainers = activeTrainers();
-    const groups = currentProduct().participant_groups || [];
-    const participants = groups.reduce((sum, group) => sum + Math.max(0, Number(group.participant_count || 0)), 0);
-    summary.innerHTML = `<strong>${trainers.length} ${trainers.length === 1 ? "Trainer" : "Trainer"}</strong><span>·</span><strong>${participants} Teilnehmer</strong><span>·</span><strong>${groups.length} ${groups.length === 1 ? "Gruppe" : "Gruppen"}</strong>`;
-  }
+  renderPeopleSummary();
   applyWorkflowFieldErrors();
+}
+
+function renderPeopleSummary() {
+  const summary = $("#people-summary");
+  if (!summary) return;
+  const trainers = activeTrainers();
+  const groups = currentProduct().participant_groups || [];
+  const participants = groups.reduce((sum, group) => sum + Math.max(0, Number(group.participant_count || 0)), 0);
+  summary.innerHTML = `<strong>${trainers.length} ${trainers.length === 1 ? "Trainer" : "Trainer"}</strong><span>·</span><strong>${participants} Teilnehmer</strong><span>·</span><strong>${groups.length} ${groups.length === 1 ? "Gruppe" : "Gruppen"}</strong>`;
 }
 
 function activeTrainers() {
@@ -310,7 +313,7 @@ function renderTrainingWorkflow() {
   container.querySelectorAll("[data-training-choice]").forEach((input) => input.addEventListener("change", toggleTrainingContent));
   const selectedCount = items.filter((item) => selectedIds.has(item.id)).length;
   const selectedMinutes = items.filter((item) => selectedIds.has(item.id)).reduce((sum, item) => sum + Number(item.duration_minutes || 0), 0);
-  summary.innerHTML = `<strong>${selectedCount} ${selectedCount === 1 ? "Schulungsinhalt" : "Schulungsinhalte"}</strong><span>·</span><strong>${formatDuration(selectedMinutes)} Basisdauer</strong>`;
+  summary.innerHTML = `<strong>${selectedCount} ${selectedCount === 1 ? "Schulungsinhalt" : "Schulungsinhalte"}</strong><span>·</span><strong>${formatDuration(selectedMinutes)} Dauer der Auswahl</strong>`;
   applyWorkflowFieldErrors();
 }
 
@@ -452,7 +455,7 @@ function productEditor() {
 function groupEditor(group) {
   return `<div class="participant-row">
     <label><span>Gruppe</span><input data-group="${group.id}" data-key="name" value="${escapeHtml(group.name)}" aria-label="Teilnehmergruppe"></label>
-    <label><span>Teilnehmer</span><input data-group="${group.id}" data-key="participant_count" type="number" min="0" value="${Number(group.participant_count)}" aria-label="Teilnehmerzahl"></label>
+    <label><span>Teilnehmer</span><input data-group="${group.id}" data-key="participant_count" type="number" min="0" step="1" inputmode="numeric" value="${Number(group.participant_count)}" aria-label="Teilnehmerzahl"></label>
     <button type="button" class="icon danger participant-remove" title="Löschen" onclick="deleteParticipantGroup('${group.id}')">×</button>
   </div>`;
 }
@@ -656,7 +659,7 @@ function renderWorkflowReview() {
     <div class="review-grid">
       ${reviewCard("Projekt", [["Produkt", product.name], ["Start", dateLabel], ["Standort", project.location || "—"]], "project")}
       ${reviewCard("Personen", [["Trainer", trainers.length ? trainers.join(", ") : "—"], ["Teilnehmer", String(participants)], ["Gruppen", String(groups.length)]], "people")}
-      ${reviewCard("Schulungen", [["Ausgewählt", String(trainingCount)], ["Basisdauer", formatDuration(trainingMinutes)]], "training")}
+      ${reviewCard("Schulungen", [["Ausgewählt", String(trainingCount)], ["Dauer der Auswahl", formatDuration(trainingMinutes)]], "training")}
       ${reviewCard("Zeiten", [["Schulungstag", `${project.settings.day_start}–${project.settings.day_end}`], ["Anreise", project.settings.monday_arrival_enabled ? `${project.settings.monday_arrival_start}–${project.settings.monday_arrival_end}` : "Aus"], ["Abreise", project.settings.thursday_departure_enabled ? `${project.settings.thursday_departure_start}–${project.settings.thursday_departure_end}` : "Aus"]], "time")}
     </div>
     ${missing.length ? `<div class="review-missing">${missing.map((step) => `<button type="button" data-review-step="${step.id}">${step.label} ergänzen</button>`).join("")}</div>` : ""}
@@ -736,7 +739,12 @@ function updateParticipantGroupField(event) {
   group[key] = key === "participant_count" ? Number(event.target.value) : event.target.value;
   project.participant_group = currentProduct().participant_groups.map((item) => item.name).join(", ");
   markPlanningInputsChanged();
-  renderPeopleWorkflow();
+  // Keep the active input node untouched while typing. Re-rendering the whole
+  // people panel on every input event used to replace the number field and
+  // therefore steal focus after each digit. Only dependent summaries/views
+  // are refreshed here.
+  renderPeopleSummary();
+  renderTrainingWorkflow();
   renderWorkflowProgress();
   renderWorkflowReview();
   renderTabs();

@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.1 - 2026-09-03
+
+### Personen-Eingabe stabilisiert
+
+- Teilnehmerzahlen koennen jetzt ohne Fokusverlust mehrstellig eingegeben werden; das Personenformular wird beim Tippen nicht mehr vollstaendig neu aufgebaut.
+- Zusammenfassung, Workflow-Fortschritt, Pruefansicht und abhaengige Schulungsinformationen werden weiterhin unmittelbar aktualisiert, ohne das aktive Eingabefeld zu ersetzen.
+- Teilnehmerzahl-Felder verwenden explizit ganzzahlige Schritte und einen numerischen Eingabemodus.
+- Der missverstaendliche Begriff `Basisdauer` wurde im gefuehrten Workflow durch `Dauer der Auswahl` ersetzt. Gemeint ist weiterhin die Summe der ausgewaehlten Schulungsinhalte vor zusaetzlichen Wiederholungen durch Teilnehmergruppen.
+- Keine Datenbankmigration erforderlich.
+
 ## v0.3.0 - 2026-09-03
 
 ### Gefuehrter Planungsworkflow
