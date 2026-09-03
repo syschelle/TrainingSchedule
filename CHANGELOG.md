@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.3.4 - 2026-09-03
+
+### XLSX-Export an PDF-Kalenderstruktur angepasst
+
+- Der Excel-Export beginnt jetzt mit dem Arbeitsblatt `Übersicht` und erzeugt danach je tatsaechlich geplanter Woche ein eigenes Blatt `Woche 1`, `Woche 2` usw.
+- Das Uebersichtsblatt uebernimmt die wesentlichen Inhalte und die visuelle Gliederung der PDF-Planuebersicht: Kunde, Standort, Produkt, Startdatum, Trainer, Schulungszeit, Dienstleistungstage, nicht eingeplante Zeit, Teilnehmergruppen und Schulungsthemen.
+- Wochenblaetter zeigen Montag bis Freitag als Kalender mit Viertelstundenraster und farbigen Terminbloecken.
+- Bei mehreren Trainern werden deren Kalender innerhalb desselben Wochenblatts untereinander dargestellt; Druckseiten werden zwischen Trainern getrennt.
+- Kalenderbloecke verwenden dieselbe kompakte Anzeige wie PDF/Vorschau: Schulungsinhalt, optionale `Gruppe x/y`, Zeitbereich und Dauer. Pausen und Mittag bleiben ausgeblendet.
+- Nicht geplante/leere Wochen erzeugen weiterhin kein Excel-Arbeitsblatt.
+- Keine PostgreSQL-Migration erforderlich.
+
 ## v0.3.3 - 2026-09-03
 
 ### Planungsstand-Meldung vereinfacht

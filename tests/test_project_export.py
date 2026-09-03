@@ -1,9 +1,11 @@
 from datetime import datetime, timezone
 from io import BytesIO
+from xml.etree import ElementTree
+from zipfile import ZipFile
 
 from pypdf import PdfReader
 
-from app.server.exporter import _service_day_count, export_pdf, planned_weeks
+from app.server.exporter import _service_day_count, export_pdf, export_xlsx, planned_weeks
 from app.server.main import _project_export_filename
 from app.server.models import ParticipantGroup, ProductLine, ProjectFile, ScheduleBlock, TrainingProject
 
@@ -107,3 +109,50 @@ def test_pdf_calendar_hides_participant_group_name_but_keeps_generated_split_lab
     assert "DU Viewer - Webviewer Gruppe 4/6" not in calendar_text
     assert "10:00-11:30 · 1,5 h" in calendar_text
 
+
+
+def _xlsx_sheet_names(data: bytes) -> list[str]:
+    with ZipFile(BytesIO(data)) as archive:
+        root = ElementTree.fromstring(archive.read("xl/workbook.xml"))
+    namespace = {"main": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
+    return [sheet.attrib["name"] for sheet in root.findall("main:sheets/main:sheet", namespace)]
+
+
+def _xlsx_shared_strings(data: bytes) -> str:
+    with ZipFile(BytesIO(data)) as archive:
+        return archive.read("xl/sharedStrings.xml").decode("utf-8")
+
+
+def test_xlsx_mirrors_pdf_structure_with_overview_and_week_sheets():
+    project = sample_project()
+    data = export_xlsx(project)
+    assert _xlsx_sheet_names(data) == ["Übersicht", "Woche 1"]
+    shared = _xlsx_shared_strings(data)
+    assert "Planübersicht" in shared
+    assert "Musterklinik" in shared
+    assert "Dienstleistungstage" in shared
+    assert "Trainer A" in shared
+    assert "Trainer B" in shared
+    assert "Montag" in shared
+    assert "Thema A" in shared
+    assert "Thema B" in shared
+
+
+def test_xlsx_creates_one_worksheet_per_planned_week_only():
+    project = sample_project()
+    project.blocks.append(ScheduleBlock(
+        id="block-c",
+        type="training",
+        week=2,
+        day="Dienstag",
+        title="Thema C",
+        start="09:00",
+        end="10:00",
+        trainer="Trainer A",
+        background_color="#fef3c7",
+    ))
+    data = export_xlsx(project)
+    assert _xlsx_sheet_names(data) == ["Übersicht", "Woche 1", "Woche 2"]
+    shared = _xlsx_shared_strings(data)
+    assert "Woche 2" in shared
+    assert "Thema C" in shared

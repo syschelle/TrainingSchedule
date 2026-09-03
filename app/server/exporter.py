@@ -440,43 +440,344 @@ def export_pdf(project: TrainingProject) -> bytes:
     return buffer.getvalue()
 
 
+def _xlsx_font_color(background: str | None) -> str:
+    value = (background or "#ffffff").lstrip("#")
+    if len(value) != 6:
+        return "#000000"
+    try:
+        red = int(value[0:2], 16)
+        green = int(value[2:4], 16)
+        blue = int(value[4:6], 16)
+    except ValueError:
+        return "#000000"
+    luminance = 0.299 * red + 0.587 * green + 0.114 * blue
+    return "#000000" if luminance > 158 else "#ffffff"
+
+
+def _xlsx_write_overview(workbook: xlsxwriter.Workbook, project: TrainingProject) -> None:
+    sheet = workbook.add_worksheet("Übersicht")
+    sheet.hide_gridlines(2)
+    sheet.set_landscape()
+    sheet.set_paper(9)
+    sheet.fit_to_pages(1, 1)
+    sheet.set_margins(0.35, 0.35, 0.4, 0.4)
+    sheet.set_zoom(90)
+    sheet.set_column("A:F", 19)
+
+    dark = "#0f1b2d"
+    border = "#dbe3ee"
+    light = "#f8fafc"
+    muted = "#64748b"
+    text = "#0f172a"
+    accent = "#3157d5"
+
+    title_fmt = workbook.add_format({
+        "bold": True, "font_size": 20, "font_color": "#ffffff",
+        "bg_color": dark, "valign": "vcenter",
+    })
+    sub_fmt = workbook.add_format({
+        "font_size": 10, "font_color": "#ffffff", "bg_color": dark,
+        "valign": "vcenter",
+    })
+    header_right_fmt = workbook.add_format({
+        "bold": True, "font_size": 8, "font_color": "#ffffff",
+        "bg_color": dark, "align": "right", "valign": "vcenter",
+    })
+    card_label_fmt = workbook.add_format({
+        "bold": True, "font_size": 8, "font_color": muted,
+        "bg_color": light, "border": 1, "border_color": border,
+        "valign": "top",
+    })
+    card_value_fmt = workbook.add_format({
+        "bold": True, "font_size": 10, "font_color": text,
+        "bg_color": light, "border": 1, "border_color": border,
+        "valign": "vcenter", "text_wrap": True,
+    })
+    metric_label_fmt = workbook.add_format({
+        "bold": True, "font_size": 8, "font_color": muted,
+        "bg_color": light, "border": 1, "border_color": border,
+    })
+    metric_value_fmt = workbook.add_format({
+        "bold": True, "font_size": 14, "font_color": text,
+        "bg_color": light, "border": 1, "border_color": border,
+        "valign": "vcenter",
+    })
+    section_fmt = workbook.add_format({"bold": True, "font_size": 12, "font_color": text})
+    strong_fmt = workbook.add_format({"bold": True, "font_size": 9, "font_color": text})
+    body_fmt = workbook.add_format({"font_size": 8, "font_color": "#475569", "text_wrap": True})
+    group_fmt = workbook.add_format({"bold": True, "font_size": 8, "font_color": accent, "text_wrap": True})
+    topic_fmt = workbook.add_format({"font_size": 8, "font_color": text})
+    topic_minutes_fmt = workbook.add_format({"font_size": 8, "font_color": "#475569", "align": "right"})
+    footer_fmt = workbook.add_format({"font_size": 7, "font_color": muted, "align": "right"})
+
+    product = next((item for item in project.product_lines if item.id == project.product_id), None)
+    product_name = product.name if product else project.product_id or "—"
+    trainers = project_trainers(project)
+    customer = (project.customer_name or "—") if project.customer_data_required else "Nicht erforderlich"
+    location = (project.location or "—") if project.customer_data_required else "Nicht erforderlich"
+
+    sheet.set_row(0, 30)
+    sheet.set_row(1, 20)
+    sheet.merge_range("A1:D1", project.title or "Schulungsplan", title_fmt)
+    sheet.merge_range("E1:F1", f"Kunde: {customer}", header_right_fmt)
+    sheet.merge_range("A2:D2", "Planübersicht", sub_fmt)
+    sheet.merge_range("E2:F2", f"Standort: {location}", header_right_fmt)
+
+    def write_card(label_range: str, value_range: str, label: str, value: str) -> None:
+        sheet.merge_range(label_range, label, card_label_fmt)
+        sheet.merge_range(value_range, value, card_value_fmt)
+
+    write_card("A4:C4", "A5:C6", "Kunde", customer)
+    write_card("D4:F4", "D5:F6", "Standort", location)
+    write_card("A8:C8", "A9:C10", "Produkt", product_name)
+    write_card("D8:F8", "D9:F10", "Startdatum", german_date(project.start_date) or "—")
+    write_card("A12:F12", "A13:F14", "Trainer", ", ".join(value or "Nicht zugewiesen" for value in trainers) or "—")
+
+    metrics = [
+        ("A16:B16", "A17:B18", "Schulung", _format_duration(_training_minutes(project))),
+        ("C16:D16", "C17:D18", "Dienstleistungstage", f"{_service_day_count(project)} {'Tag' if _service_day_count(project) == 1 else 'Tage'}"),
+        ("E16:F16", "E17:F18", "Nicht eingeplant", _format_duration(_unscheduled_minutes(project))),
+    ]
+    for label_range, value_range, label, value in metrics:
+        sheet.merge_range(label_range, label, metric_label_fmt)
+        sheet.merge_range(value_range, value, metric_value_fmt)
+
+    row = 20
+    sheet.merge_range(row, 0, row, 5, "Produkt und Teilnehmergruppen", section_fmt)
+    row += 2
+    if product:
+        sheet.merge_range(row, 0, row, 5, product.name, strong_fmt)
+        row += 1
+        if product.description:
+            sheet.merge_range(row, 0, row + 1, 5, product.description, body_fmt)
+            row += 2
+        group_text = " · ".join(f"{group.name}: {group.participant_count}" for group in product.participant_groups)
+        if group_text:
+            sheet.merge_range(row, 0, row + 1, 5, group_text, group_fmt)
+            row += 3
+    else:
+        sheet.merge_range(row, 0, row, 5, "Keine Produktdaten hinterlegt.", body_fmt)
+        row += 2
+
+    sheet.merge_range(row, 0, row, 5, "Schulungsthemen", section_fmt)
+    row += 2
+    for topic in project.topics:
+        planned = any((block.source_topic_id or block.topic_id) == topic.id for block in project.blocks)
+        planned_minutes = topic.duration_minutes if planned else 0
+        sheet.merge_range(row, 0, row, 4, topic.title, topic_fmt)
+        sheet.write(row, 5, f"{planned_minutes} / {topic.duration_minutes} min", topic_minutes_fmt)
+        row += 1
+
+    row += 2
+    sheet.merge_range(row, 0, row, 5, "Schulungsplantool · Planübersicht", footer_fmt)
+    sheet.print_area(0, 0, row, 5)
+
+
+def _xlsx_write_week(workbook: xlsxwriter.Workbook, project: TrainingProject, week: int) -> None:
+    sheet = workbook.add_worksheet(f"Woche {week}")
+    sheet.hide_gridlines(2)
+    sheet.set_landscape()
+    sheet.set_paper(9)
+    sheet.fit_to_pages(1, 0)
+    sheet.set_margins(0.3, 0.3, 0.35, 0.35)
+    sheet.set_zoom(75)
+    sheet.set_column("A:A", 8)
+    sheet.set_column("B:F", 25)
+
+    dark = "#0f1b2d"
+    border = "#cbd5e1"
+    quarter_border = "#e9eef5"
+    muted = "#64748b"
+    text = "#0f172a"
+
+    title_fmt = workbook.add_format({
+        "bold": True, "font_size": 18, "font_color": "#ffffff",
+        "bg_color": dark, "valign": "vcenter",
+    })
+    info_fmt = workbook.add_format({
+        "font_size": 8, "font_color": "#ffffff", "bg_color": dark,
+        "valign": "vcenter",
+    })
+    right_header_fmt = workbook.add_format({
+        "bold": True, "font_size": 8, "font_color": "#ffffff", "bg_color": dark,
+        "align": "right", "valign": "vcenter",
+    })
+    week_fmt = workbook.add_format({"bold": True, "font_size": 10, "font_color": "#334155"})
+    day_fmt = workbook.add_format({
+        "bold": True, "font_size": 9, "font_color": text,
+        "bg_color": "#f7f9fc", "border": 1, "border_color": border,
+        "valign": "top", "text_wrap": True,
+    })
+    time_hour_fmt = workbook.add_format({
+        "font_size": 7, "font_color": muted, "align": "right", "valign": "top",
+        "bottom": 1, "bottom_color": border,
+    })
+    time_quarter_fmt = workbook.add_format({
+        "font_size": 7, "font_color": muted, "align": "right", "valign": "top",
+        "bottom": 1, "bottom_color": quarter_border,
+    })
+    grid_hour_fmt = workbook.add_format({
+        "bottom": 1, "bottom_color": border, "right": 1, "right_color": border,
+        "left": 1, "left_color": border,
+    })
+    grid_quarter_fmt = workbook.add_format({
+        "bottom": 1, "bottom_color": quarter_border, "right": 1, "right_color": border,
+        "left": 1, "left_color": border,
+    })
+    footer_fmt = workbook.add_format({"font_size": 7, "font_color": muted, "align": "right"})
+
+    product = next((item for item in project.product_lines if item.id == project.product_id), None)
+    product_name = product.name if product else project.product_id or "—"
+    customer = (project.customer_name or "—") if project.customer_data_required else "Nicht erforderlich"
+    location = (project.location or "—") if project.customer_data_required else "Nicht erforderlich"
+    day_start = parse_time(project.settings.day_start)
+    day_end = parse_time(project.settings.day_end)
+    total_minutes = max(15, day_end - day_start)
+    quarter_count = max(1, (total_minutes + 14) // 15)
+
+    all_trainers = project_trainers(project)
+    visible_trainers = [
+        trainer for trainer in all_trainers
+        if any(
+            block.week == week
+            and block.trainer == trainer
+            and block.type not in {BlockType.break_block, BlockType.lunch}
+            for block in project.blocks
+        )
+    ]
+    if not visible_trainers:
+        visible_trainers = all_trainers
+
+    block_formats: dict[tuple[str, str, int], xlsxwriter.format.Format] = {}
+
+    def block_format(background: str, foreground: str, font_size: int) -> xlsxwriter.format.Format:
+        key = (background, foreground, font_size)
+        if key not in block_formats:
+            block_formats[key] = workbook.add_format({
+                "bold": True,
+                "font_size": font_size,
+                "font_color": foreground,
+                "bg_color": background,
+                "border": 1,
+                "border_color": "#94a3b8",
+                "text_wrap": True,
+                "valign": "top",
+                "align": "left",
+            })
+        return block_formats[key]
+
+    current_row = 0
+    page_breaks: list[int] = []
+    for trainer_index, trainer in enumerate(visible_trainers):
+        if trainer_index:
+            page_breaks.append(current_row)
+
+        sheet.set_row(current_row, 28)
+        sheet.merge_range(current_row, 0, current_row, 2, project.title or "Schulungsplan", title_fmt)
+        sheet.merge_range(current_row, 3, current_row, 5, f"Kunde: {customer}", right_header_fmt)
+        current_row += 1
+        sheet.set_row(current_row, 20)
+        info = f"Produkt: {product_name}  |  Trainer: {trainer or 'Nicht zugewiesen'}  |  Woche {week}"
+        sheet.merge_range(current_row, 0, current_row, 2, info, info_fmt)
+        sheet.merge_range(current_row, 3, current_row, 5, f"Standort: {location}", right_header_fmt)
+        current_row += 2
+
+        first = _week_date(project, week, 0)
+        last = _week_date(project, week, 4)
+        date_range = f"{german_date(first)}-{german_date(last)}" if first and last else ""
+        sheet.merge_range(current_row, 0, current_row, 5, f"Woche {week}{' · ' + date_range if date_range else ''}", week_fmt)
+        current_row += 2
+
+        header_row = current_row
+        sheet.write(header_row, 0, "", day_fmt)
+        for day_index, day in enumerate(DISPLAY_WEEKDAYS):
+            current_date = _week_date(project, week, day_index)
+            header_text = day
+            if current_date:
+                header_text += f"\n{german_date(current_date)}"
+                hints = _holiday_hints(current_date)
+                if hints:
+                    header_text += "\n" + " · ".join(hints)
+            sheet.write(header_row, day_index + 1, header_text, day_fmt)
+        sheet.set_row(header_row, 42)
+        grid_start = header_row + 1
+
+        for quarter_index in range(quarter_count):
+            row = grid_start + quarter_index
+            sheet.set_row(row, 20)
+            minute = day_start + quarter_index * 15
+            is_hour = minute % 60 == 0
+            time_label = f"{minute // 60:02d}:00" if is_hour else ""
+            sheet.write(row, 0, time_label, time_hour_fmt if is_hour else time_quarter_fmt)
+            for day_col in range(1, 6):
+                sheet.write_blank(row, day_col, None, grid_hour_fmt if is_hour else grid_quarter_fmt)
+
+        final_row = grid_start + quarter_count - 1
+        for day_index, day in enumerate(DISPLAY_WEEKDAYS):
+            day_col = day_index + 1
+            blocks = [
+                block for block in project.blocks
+                if block.week == week
+                and block.day == day
+                and block.trainer == trainer
+                and block.type not in {BlockType.break_block, BlockType.lunch}
+            ]
+            for block in sorted(blocks, key=lambda item: item.start):
+                raw_start = max(day_start, parse_time(block.start))
+                raw_end = min(day_end, parse_time(block.end))
+                if raw_end <= raw_start:
+                    continue
+                start_index = max(0, (raw_start - day_start) // 15)
+                end_index = min(quarter_count, (raw_end - day_start + 14) // 15)
+                row_start = grid_start + start_index
+                row_end = max(row_start, grid_start + end_index - 1)
+                duration_minutes = max(0, parse_time(block.end) - parse_time(block.start))
+                display_title, group_label = _calendar_display_parts(project, block)
+                lines = [display_title]
+                if group_label:
+                    lines.append(group_label)
+                lines.append(f"{block.start}-{block.end} · {_format_hours(duration_minutes)}")
+                cell_text = "\n".join(lines)
+                background = block.background_color if block.type == BlockType.training else "#eef2ff"
+                if not background or not background.startswith("#") or len(background) != 7:
+                    background = "#eef2ff"
+                foreground = _xlsx_font_color(background)
+                font_size = 6 if duration_minutes <= 30 else 7 if duration_minutes <= 60 else 8
+                fmt = block_format(background, foreground, font_size)
+                if row_end > row_start:
+                    sheet.merge_range(row_start, day_col, row_end, day_col, cell_text, fmt)
+                else:
+                    sheet.write(row_start, day_col, cell_text, fmt)
+
+        current_row = final_row + 2
+        sheet.merge_range(current_row, 0, current_row, 5, "Schulungsplantool · Kalenderexport", footer_fmt)
+        current_row += 3
+
+    if page_breaks:
+        sheet.set_h_pagebreaks(page_breaks)
+    if current_row:
+        sheet.print_area(0, 0, current_row - 1, 5)
+
+
 def export_xlsx(project: TrainingProject) -> bytes:
+    """Export a workbook that mirrors the PDF structure.
+
+    The first worksheet is the project overview. Every planned calendar week
+    gets its own worksheet (``Woche 1``, ``Woche 2``, ...). Trainer calendars
+    are stacked vertically inside the matching week sheet and use the same
+    Monday-Friday, quarter-hour presentation as the PDF calendar pages.
+    """
     buffer = BytesIO()
     workbook = xlsxwriter.Workbook(buffer, {"in_memory": True})
-    sheet = workbook.add_worksheet("Schulungsplan")
-    header = workbook.add_format({"bold": True, "bg_color": "#1f4f5f", "font_color": "#ffffff"})
-    sheet.write_row(0, 0, ["Tag", "Zeit", "Typ", "Inhalt", "Trainer", "Raum", "Hinweise"], header)
-    row = 1
-    for week in planned_weeks(project):
-        for day in DISPLAY_WEEKDAYS:
-            for block in [item for item in project.blocks if item.week == week and item.day == day]:
-                sheet.write_row(row, 0, [f"Woche {week} {day}", f"{block.start}-{block.end}", block.type.value, block.title, block.trainer, block.room, block.notes])
-                row += 1
-    sheet.set_column(0, 0, 18)
-    sheet.set_column(1, 1, 15)
-    sheet.set_column(2, 6, 24)
+    workbook.set_properties({
+        "title": project.title or "Schulungsplan",
+        "subject": "Schulungsplan",
+        "author": "Schulungsplantool",
+    })
 
-    summary = workbook.add_worksheet("Uebersicht")
-    summary.write_row(0, 0, ["Modus", "Kunde", "Standort", "Trainer"], header)
-    summary.write_row(1, 0, [
-        "Dienstleistungskalkulation" if project.project_mode == "service_calculation" else "Schulungsplanung",
-        project.customer_name if project.customer_data_required else "",
-        project.location if project.customer_data_required else "",
-        ", ".join(project_trainers(project)).strip(", "),
-    ])
-    summary.write_row(3, 0, ["Produkt", "Teilnehmergruppe", "Anzahl"], header)
-    row = 4
-    for product in project.product_lines:
-        for group in product.participant_groups:
-            summary.write_row(row, 0, [product.name, group.name, group.participant_count])
-            row += 1
-    row += 1
-    summary.write_row(row, 0, ["Thema", "Geplant Minuten", "Benoetigt Minuten"], header)
-    for index, topic in enumerate(project.topics, start=1):
-        planned = topic.duration_minutes if any(
-            (block.source_topic_id or block.topic_id) == topic.id
-            for block in project.blocks
-        ) else 0
-        summary.write_row(row + index, 0, [topic.title, planned, topic.duration_minutes])
+    _xlsx_write_overview(workbook, project)
+    for week in planned_weeks(project):
+        _xlsx_write_week(workbook, project, week)
+
     workbook.close()
     return buffer.getvalue()

@@ -1424,3 +1424,17 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Die sichtbare Statusmeldung nach erfolgreichem Planungimport lautet nur noch `Planungsstand geladen.`.
 - Die im Projekt-Snapshot gespeicherte App-Version bleibt fuer die Dateikompatibilitaet erhalten, wird aber nicht mehr in der Planungsansicht angezeigt.
 - Version auf `v0.3.3` erhoeht.
+
+## Erweiterung v0.3.4 - XLSX-Kalenderexport wie PDF
+
+- Der XLSX-Export muss analog zur PDF-Struktur aufgebaut sein.
+- Erstes Arbeitsblatt: `Übersicht`.
+- Danach nur fuer tatsaechlich geplante Schulungswochen eigene Blaetter `Woche 1`, `Woche 2`, usw.
+- Jedes Wochenblatt zeigt die Kalenderstruktur Montag bis Freitag mit Datum und Viertelstunden-Zeitraster.
+- Mehrere Trainer werden innerhalb des jeweiligen Wochenblatts als getrennte Kalenderbereiche untereinander dargestellt.
+- Trainerbereiche sollen beim Drucken sinnvoll getrennt werden.
+- Sichtbare Schulungsbloecke verwenden die gleichen Titel-/Gruppen-/Zeit-/Dauerinformationen und Farben wie PDF und Browser-Vorschau.
+- Pausen und Mittagspausen bleiben im Kalenderexport ausgeblendet.
+- Leere Wochen erzeugen kein Arbeitsblatt.
+- Keine PostgreSQL-Migration erforderlich.
+
