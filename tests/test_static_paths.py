@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.3.2"' in html
+    assert 'src="calendar.js?v=0.3.3"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -431,3 +431,10 @@ def test_v032_project_menu_has_no_planning_validation_entry() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     assert 'Planungsprüfung' not in html
     assert 'data-page="validation"' not in html
+
+
+def test_imported_planning_status_does_not_show_stored_app_version() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    assert 'setStatus("Planungsstand geladen.");' in javascript
+    assert 'Planungsstand geladen (${payload.app_version' not in javascript
+    assert 'unbekannte Version' not in javascript

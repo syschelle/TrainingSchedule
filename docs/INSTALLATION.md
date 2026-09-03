@@ -1,4 +1,4 @@
-# Produktionsinstallation v0.3.2
+# Produktionsinstallation v0.3.3
 
 ## 1. Repository klonen
 
@@ -59,7 +59,7 @@ Standard-Image fuer die Produktion:
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
-Fuer reproduzierbare Rollbacks steht zusaetzlich der Versions-Tag `ghcr.io/syschelle/schulungsplantool:0.3.2` zur Verfuegung.
+Fuer reproduzierbare Rollbacks steht zusaetzlich der Versions-Tag `ghcr.io/syschelle/schulungsplantool:0.3.3` zur Verfuegung.
 
 Unterstuetzte Architekturen: `linux/amd64` und `linux/arm64`.
 

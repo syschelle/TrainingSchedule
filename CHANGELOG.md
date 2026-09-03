@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.3.3 - 2026-09-03
+
+### Planungsstand-Meldung vereinfacht
+
+- Nach dem Import einer Planung zeigt die Statusmeldung nur noch `Planungsstand geladen.`
+- Die in einer aelteren Projektdatei gespeicherte App-Version wird nicht mehr in der Benutzeroberflaeche angezeigt.
+- Importformat und Rueckwaertskompatibilitaet bleiben unveraendert.
+- Keine PostgreSQL-Migration erforderlich.
+
 ## v0.3.2 - 2026-09-03
 
 ### Planungsworkflow und automatische Verteilung verbessert

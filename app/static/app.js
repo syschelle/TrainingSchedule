@@ -2302,7 +2302,7 @@ async function importProjectState(event) {
   currentWorkflowStep = "review";
   workflowErrors = {};
   render();
-  setStatus(`Planungsstand geladen (${payload.app_version || "unbekannte Version"}).`);
+  setStatus("Planungsstand geladen.");
 }
 
 async function downloadExport(format) {

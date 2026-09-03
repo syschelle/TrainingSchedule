@@ -1418,3 +1418,9 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Keine PostgreSQL-Migration erforderlich.
 - Version auf `v0.3.2` erhoeht.
 
+
+## Erweiterung v0.3.3 - Importstatus ohne Versionsnummer
+
+- Die sichtbare Statusmeldung nach erfolgreichem Planungimport lautet nur noch `Planungsstand geladen.`.
+- Die im Projekt-Snapshot gespeicherte App-Version bleibt fuer die Dateikompatibilitaet erhalten, wird aber nicht mehr in der Planungsansicht angezeigt.
+- Version auf `v0.3.3` erhoeht.
