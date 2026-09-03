@@ -6,7 +6,7 @@ import json
 from datetime import datetime, timezone
 from collections.abc import Iterator
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, create_engine, inspect, select, text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, create_engine, inspect, select, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, relationship, sessionmaker
 
 
@@ -40,6 +40,7 @@ class TrainingContentRecord(Base):
     target_group: Mapped[str] = mapped_column(Text, default="", nullable=False)
     duration_minutes: Mapped[int] = mapped_column(default=60, nullable=False)
     max_participants: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    split_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     dependency_content_id: Mapped[str | None] = mapped_column(String(120), nullable=True)
     participant_group_ids: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
     background_color: Mapped[str] = mapped_column(String(20), default="#eaf8f2", nullable=False)
@@ -236,6 +237,8 @@ def ensure_training_content_columns() -> None:
     with engine.begin() as connection:
         if "max_participants" not in columns:
             connection.execute(text("ALTER TABLE training_contents ADD COLUMN max_participants INTEGER"))
+        if "split_enabled" not in columns:
+            connection.execute(text("ALTER TABLE training_contents ADD COLUMN split_enabled BOOLEAN DEFAULT FALSE NOT NULL"))
         if "dependency_content_id" not in columns:
             connection.execute(text("ALTER TABLE training_contents ADD COLUMN dependency_content_id VARCHAR(120)"))
         if "participant_group_ids" not in columns:
@@ -296,6 +299,7 @@ def create_training_content(session: Session, product_id: str, title: str) -> di
         target_group="",
         duration_minutes=60,
         max_participants=None,
+        split_enabled=False,
         dependency_content_id=None,
         participant_group_ids="[]",
         background_color="#eaf8f2",
@@ -332,8 +336,9 @@ def update_training_content(session: Session, content_id: str, values: dict) -> 
     record = session.get(TrainingContentRecord, content_id)
     if not record:
         return None
-    for key in ["title", "target_group", "duration_minutes", "max_participants", "dependency_content_id", "goals", "requirements", "preparation", "special_notes"]:
-        setattr(record, key, values[key])
+    for key in ["title", "target_group", "duration_minutes", "max_participants", "split_enabled", "dependency_content_id", "goals", "requirements", "preparation", "special_notes"]:
+        if key in values:
+            setattr(record, key, values[key])
     record.background_color = clean_color(values.get("background_color"))
     record.participant_group_ids = json.dumps(values.get("participant_group_ids", []))
     session.commit()
@@ -349,6 +354,7 @@ def training_content_to_dict(item: TrainingContentRecord) -> dict:
         "target_group": item.target_group,
         "duration_minutes": item.duration_minutes,
         "max_participants": item.max_participants,
+        "split_enabled": bool(item.split_enabled),
         "dependency_content_id": item.dependency_content_id,
         "participant_group_ids": parse_group_ids(item.participant_group_ids),
         "background_color": item.background_color,

@@ -54,6 +54,7 @@ def test_training_content_can_be_edited_without_seed_overwrite():
                 "target_group": "Neue Zielgruppe",
                 "duration_minutes": 95,
                 "max_participants": 7,
+                "split_enabled": True,
                 "dependency_content_id": None,
                 "participant_group_ids": ["radiologen", "mfa"],
                 "background_color": "#abcdef",
@@ -66,6 +67,7 @@ def test_training_content_can_be_edited_without_seed_overwrite():
         assert updated is not None
         assert updated["title"] == "DU Diagnost Basic angepasst"
         assert updated["max_participants"] == 7
+        assert updated["split_enabled"] is True
         assert updated["participant_group_ids"] == ["radiologen", "mfa"]
         assert updated["background_color"] == "#abcdef"
 
@@ -78,6 +80,7 @@ def test_training_content_can_be_edited_without_seed_overwrite():
                 "target_group": "Neue Zielgruppe",
                 "duration_minutes": 95,
                 "max_participants": 7,
+                "split_enabled": True,
                 "dependency_content_id": None,
                 "participant_group_ids": ["radiologen", "mfa"],
                 "background_color": "#abcdef",
@@ -89,6 +92,7 @@ def test_training_content_can_be_edited_without_seed_overwrite():
         )
         assert edited_again is not None
         assert edited_again["title"] == "DU Diagnost Basic angepasst"
+        assert edited_again["split_enabled"] is True
         assert "source_file" not in edited_again
 
 
@@ -114,6 +118,7 @@ def test_training_contents_can_be_added_for_product():
         assert created["product_id"] == "deepunity-pacs"
         assert created["duration_minutes"] == 60
         assert created["background_color"] == "#eaf8f2"
+        assert created["split_enabled"] is False
 
 
 def test_markdown_content_has_persistent_history_and_can_be_restored():
@@ -234,6 +239,7 @@ def test_existing_training_contents_table_gets_markdown_column(monkeypatch):
     content_db.ensure_training_content_columns()
     columns = {column["name"] for column in inspect(legacy_engine).get_columns("training_contents")}
     assert "markdown_content" in columns
+    assert "split_enabled" in columns
 
 
 def test_docx_import_save_is_marked_in_history():

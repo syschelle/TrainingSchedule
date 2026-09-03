@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.2.47 - 2026-09-03
+
+- Schulungsinhalte besitzen jetzt die Option `Schulungsblock teilen`.
+- Aktivierte Inhalte werden bei `Plan erstellen` pro erforderlicher Schulungssitzung automatisch in zwei moeglichst gleich grosse, aufeinanderfolgende Teile aufgeteilt.
+- Beide Teile bleiben demselben Trainer zugeordnet; Teil 2 wird niemals vor Teil 1 eingeplant und kann bei Bedarf auf den naechsten Schulungstag wechseln.
+- Teilnehmerbasierte `Gruppe x/y`-Aufteilungen werden zuerst erzeugt und anschliessend jeweils in zwei Haelften geteilt, sodass jede benoetigte Gruppe den kompletten Schulungsinhalt erhaelt.
+- Die Einstellung wird persistent im Schulungsinhalte-Katalog gespeichert und beim Start bestehender Datenbanken automatisch ueber die neue Spalte `split_enabled` ergaenzt.
+- Bestehende Projektdateien bleiben kompatibel; neue Planungsbloecke speichern zusaetzlich ihre Herkunft zum urspruenglichen Schulungsinhalt und optionale Teil-Metadaten.
+
 ## v0.2.46 - 2026-09-03
 
 - Kalenderkacheln zeigen Schulungsbloecke jetzt strukturiert in bis zu drei Zeilen: Schulungsinhalt-Titel, optionale automatisch erzeugte Gruppennummer und Zeitbereich mit Gesamtdauer in Stunden.

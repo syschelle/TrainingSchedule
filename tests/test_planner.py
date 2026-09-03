@@ -222,3 +222,64 @@ def test_validation_flags_non_quarter_hour_start():
     ]
     warnings = validate_project(project)
     assert any("15-Minuten-Raster" in warning for warning in warnings)
+
+
+def test_training_topic_can_be_split_into_two_sequential_halves():
+    project = TrainingProject(
+        trainers=["Trainer A", "Trainer B"],
+        topics=[TrainingTopic(id="lang", title="Lange Schulung", duration_minutes=180, split_enabled=True)],
+    )
+    planned = plan_project(project)
+    blocks = [block for block in planned.blocks if block.type == "training"]
+    assert len(blocks) == 2
+    assert [block.split_part for block in blocks] == [1, 2]
+    assert all(block.split_parts == 2 for block in blocks)
+    assert all(block.source_topic_id == "lang" for block in blocks)
+    assert all(block.trainer == blocks[0].trainer for block in blocks)
+    durations = [
+        (int(block.end[:2]) * 60 + int(block.end[3:])) - (int(block.start[:2]) * 60 + int(block.start[3:]))
+        for block in blocks
+    ]
+    assert sum(durations) == 180
+    assert abs(durations[0] - durations[1]) <= 1
+
+
+def test_training_topic_split_can_be_disabled():
+    project = TrainingProject(
+        topics=[TrainingTopic(id="lang", title="Lange Schulung", duration_minutes=180, split_enabled=False)]
+    )
+    planned = plan_project(project)
+    blocks = [block for block in planned.blocks if block.type == "training"]
+    assert len(blocks) == 1
+    assert blocks[0].source_topic_id == "lang"
+    assert blocks[0].split_part is None
+
+
+def test_participant_sessions_are_split_after_group_expansion():
+    project = TrainingProject(
+        trainers=["Trainer A"],
+        product_lines=[
+            ProductLine(
+                id="deepunity-pacs",
+                name="DeepUnity PACS",
+                participant_groups=[ParticipantGroup(id="radiologen", name="Radiologen", participant_count=18)],
+            )
+        ],
+        topics=[
+            TrainingTopic(
+                id="diagnost",
+                title="Diagnost",
+                duration_minutes=90,
+                participant_group_ids=["radiologen"],
+                participants_per_session=8,
+                split_enabled=True,
+            )
+        ],
+    )
+    planned = plan_project(project)
+    blocks = [block for block in planned.blocks if block.type == "training"]
+    assert len(blocks) == 6
+    assert all(block.source_topic_id == "diagnost" for block in blocks)
+    assert sum(block.split_part == 1 for block in blocks) == 3
+    assert sum(block.split_part == 2 for block in blocks) == 3
+    assert sum("Gruppe" in block.title for block in blocks) == 6

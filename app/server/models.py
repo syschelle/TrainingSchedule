@@ -52,6 +52,10 @@ class TrainingTopic(BaseModel):
     notes: str = ""
     participants_per_session: int | None = None
     sessions_required: float | None = None
+    split_enabled: bool = False
+    split_part: int | None = None
+    split_parts: int | None = None
+    split_sequence_id: str | None = None
     background_color: str = "#eaf8f2"
 
 
@@ -64,6 +68,9 @@ class ScheduleBlock(BaseModel):
     start: str
     end: str
     topic_id: str | None = None
+    source_topic_id: str | None = None
+    split_part: int | None = None
+    split_parts: int | None = None
     description: str = ""
     trainer: str = ""
     room: str = ""
@@ -136,6 +143,7 @@ class TrainingContentUpdate(BaseModel):
     target_group: str = ""
     duration_minutes: int = Field(gt=0)
     max_participants: int | None = Field(default=None, gt=0)
+    split_enabled: bool = False
     dependency_content_id: str | None = None
     participant_group_ids: list[str] = Field(default_factory=list)
     background_color: str = "#eaf8f2"

@@ -1354,3 +1354,16 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Strukturierte Projekt-/XLSX-Exportdaten bleiben unveraendert.
 - Version auf `v0.2.46` erhoeht.
 
+
+
+## Erweiterung v0.2.47 - Schulungsinhalte optional in zwei Haelften teilen
+
+- Jeder persistierte Schulungsinhalt erhaelt eine aktivier-/deaktivierbare Option `Schulungsblock teilen`.
+- Standardwert ist deaktiviert, damit bestehende Schulungsinhalte unveraendert geplant werden.
+- Bei aktivierter Option wird jede fuer diesen Inhalt benoetigte Schulungssitzung bei `Plan erstellen` in genau zwei moeglichst gleich grosse Teile zerlegt; die Summe beider Teile entspricht exakt der definierten Gesamtdauer.
+- Teilnehmerbasierte Mehrfachgruppen (`Gruppe x/y`) werden zuerst erzeugt und danach je Sitzung geteilt.
+- Teil 2 darf nie vor Teil 1 stattfinden und bleibt demselben Trainer zugeordnet. Er darf am selben Tag nach der regulaeren Pausenlogik oder an einem spaeteren Schulungstag stattfinden.
+- Kalenderbloecke behalten einen Verweis auf den urspruenglichen Schulungsinhalt (`source_topic_id`) sowie optionale `split_part`/`split_parts`-Metadaten.
+- Bestehende Projektdateien ohne diese Felder bleiben durch Defaults kompatibel.
+- Die Katalogeinstellung wird persistent als `split_enabled` gespeichert; bestehende Datenbanken werden beim Start automatisch erweitert.
+- Version auf `v0.2.47` erhoeht.

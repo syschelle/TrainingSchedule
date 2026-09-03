@@ -240,7 +240,7 @@ def _draw_overview_page(pdf: canvas.Canvas, project: TrainingProject, page_width
             pdf.setFillColor(colors.HexColor("#64748b"))
             pdf.drawString(margin, y, f"... {remaining} weitere Themen")
             break
-        planned = any(block.topic_id == topic.id for block in project.blocks)
+        planned = any((block.source_topic_id or block.topic_id) == topic.id for block in project.blocks)
         planned_minutes = topic.duration_minutes if planned else 0
         pdf.setFillColor(colors.HexColor("#0f172a"))
         pdf.drawString(margin, y, topic.title)
@@ -261,7 +261,8 @@ def _calendar_display_parts(project: TrainingProject, block: ScheduleBlock) -> t
     if block.type != BlockType.training:
         return block.title, ""
 
-    topic = next((item for item in project.topics if item.id == block.topic_id), None)
+    topic_key = block.source_topic_id or block.topic_id
+    topic = next((item for item in project.topics if item.id == topic_key), None)
     title = (topic.title if topic else block.title).strip()
     group_label = ""
     group_names = sorted(
@@ -469,10 +470,10 @@ def export_xlsx(project: TrainingProject) -> bytes:
     row += 1
     summary.write_row(row, 0, ["Thema", "Geplant Minuten", "Benoetigt Minuten"], header)
     for index, topic in enumerate(project.topics, start=1):
-        planned = sum(
-            1 for block in project.blocks
-            if block.topic_id == topic.id
-        ) * topic.duration_minutes
+        planned = topic.duration_minutes if any(
+            (block.source_topic_id or block.topic_id) == topic.id
+            for block in project.blocks
+        ) else 0
         summary.write_row(row + index, 0, [topic.title, planned, topic.duration_minutes])
     workbook.close()
     return buffer.getvalue()

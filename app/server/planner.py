@@ -54,6 +54,32 @@ def absolute_day_index(week: int, day: str) -> int:
     return (week - 1) * len(DISPLAY_WEEKDAYS) + DISPLAY_WEEKDAYS.index(day)
 
 
+def _split_session_topic(topic: TrainingTopic) -> list[TrainingTopic]:
+    """Split one planned session into two sequential halves when enabled."""
+    if not topic.split_enabled or topic.duration_minutes < 2:
+        return [topic]
+
+    first_minutes = topic.duration_minutes // 2
+    second_minutes = topic.duration_minutes - first_minutes
+    sequence_id = topic.id
+    return [
+        topic.model_copy(update={
+            "id": f"{topic.id}-teil-1",
+            "duration_minutes": first_minutes,
+            "split_part": 1,
+            "split_parts": 2,
+            "split_sequence_id": sequence_id,
+        }),
+        topic.model_copy(update={
+            "id": f"{topic.id}-teil-2",
+            "duration_minutes": second_minutes,
+            "split_part": 2,
+            "split_parts": 2,
+            "split_sequence_id": sequence_id,
+        }),
+    ]
+
+
 def expand_topic_sessions(project: TrainingProject) -> tuple[list[TrainingTopic], dict[str, str]]:
     groups = {
         group.id: group
@@ -62,13 +88,18 @@ def expand_topic_sessions(project: TrainingProject) -> tuple[list[TrainingTopic]
     }
     expanded: list[TrainingTopic] = []
     source_by_id: dict[str, str] = {}
+
+    def append_session(session_topic: TrainingTopic, source_id: str) -> None:
+        for planned_topic in _split_session_topic(session_topic):
+            expanded.append(planned_topic)
+            source_by_id[planned_topic.id] = source_id
+
     for topic in project.topics:
         group_ids = topic.participant_group_ids or ([topic.participant_group_id] if topic.participant_group_id else [])
         max_participants = topic.participants_per_session or 0
         selected_groups = [groups[group_id] for group_id in group_ids if group_id in groups]
         if not selected_groups or max_participants <= 0:
-            expanded.append(topic)
-            source_by_id[topic.id] = topic.id
+            append_session(topic, topic.id)
             continue
         for group in selected_groups:
             if group.participant_count <= max_participants:
@@ -77,8 +108,7 @@ def expand_topic_sessions(project: TrainingProject) -> tuple[list[TrainingTopic]
                     "title": f"{topic.title} - {group.name}",
                     "participant_group_id": group.id,
                 })
-                expanded.append(session_topic)
-                source_by_id[session_topic.id] = topic.id
+                append_session(session_topic, topic.id)
                 continue
             session_count = ceil(group.participant_count / max_participants)
             for index in range(1, session_count + 1):
@@ -88,8 +118,7 @@ def expand_topic_sessions(project: TrainingProject) -> tuple[list[TrainingTopic]
                     "participant_group_id": group.id,
                     "sessions_required": session_count,
                 })
-                expanded.append(session_topic)
-                source_by_id[session_topic.id] = topic.id
+                append_session(session_topic, topic.id)
     return expanded, source_by_id
 
 
@@ -137,6 +166,7 @@ def plan_project(project: TrainingProject) -> TrainingProject:
     cursor_by_lane: dict[tuple[int, str, str], int] = {}
     initialized_weeks: set[int] = set()
     topic_placement: dict[str, int] = {}
+    split_placement: dict[str, dict] = {}
     lane_has_training: set[tuple[int, str, str]] = set()
     available_days = training_days(project)
 
@@ -194,6 +224,14 @@ def plan_project(project: TrainingProject) -> TrainingProject:
     for topic in sort_topics(expanded_topics):
         candidate_days = [topic.preferred_day] if topic.preferred_day in available_days else available_days
         earliest_day = topic_placement.get(topic.depends_on, -1) + 1 if topic.depends_on else 0
+        previous_split = split_placement.get(topic.split_sequence_id or "") if topic.split_part and topic.split_part > 1 else None
+        if topic.split_part and topic.split_part > 1 and previous_split is None:
+            unscheduled.append(topic)
+            continue
+        if previous_split is not None:
+            # The second half may continue on the same day, but never before
+            # the first half and always with the same trainer.
+            earliest_day = max(earliest_day, previous_split["day_index"])
         chosen: dict | None = None
 
         for week in range(1, 13):
@@ -202,9 +240,17 @@ def plan_project(project: TrainingProject) -> TrainingProject:
             for day in candidate_days:
                 if day is None or absolute_day_index(week, day) < earliest_day:
                     continue
-                # All configured trainers are equally qualified for every topic.
+                # All configured trainers are equally qualified. For the
+                # second half of a split session, keep the trainer of part 1 so
+                # both halves remain one coherent participant session.
                 for trainer_index, trainer in enumerate(trainers):
+                    if previous_split is not None and trainer != previous_split["trainer"]:
+                        continue
                     candidate = candidate_for(topic, week, day, trainer)
+                    if candidate is not None and previous_split is not None:
+                        candidate_day = absolute_day_index(week, day)
+                        if candidate_day == previous_split["day_index"] and candidate["start"] < previous_split["end"]:
+                            continue
                     if candidate is not None:
                         candidate["trainer_order"] = trainers.index(trainer) if trainer in trainers else trainer_index
                         candidates.append(candidate)
@@ -261,6 +307,9 @@ def plan_project(project: TrainingProject) -> TrainingProject:
             start=format_time(chosen["start"]),
             end=format_time(chosen["end"]),
             topic_id=topic.id,
+            source_topic_id=source_by_id.get(topic.id, topic.id),
+            split_part=topic.split_part,
+            split_parts=topic.split_parts,
             trainer=chosen["trainer"],
             room=topic.room,
             notes=topic.notes,
@@ -268,8 +317,15 @@ def plan_project(project: TrainingProject) -> TrainingProject:
         ))
         cursor_by_lane[key] = chosen["end"]
         lane_has_training.add(key)
-        topic_placement[topic.id] = absolute_day_index(chosen["week"], chosen["day"])
-        topic_placement[source_by_id.get(topic.id, topic.id)] = absolute_day_index(chosen["week"], chosen["day"])
+        placed_day_index = absolute_day_index(chosen["week"], chosen["day"])
+        topic_placement[topic.id] = placed_day_index
+        topic_placement[source_by_id.get(topic.id, topic.id)] = placed_day_index
+        if topic.split_sequence_id:
+            split_placement[topic.split_sequence_id] = {
+                "day_index": placed_day_index,
+                "end": chosen["end"],
+                "trainer": chosen["trainer"],
+            }
 
     # Every active trainer/day gets a lunch break, even when all training took
     # place before the preferred lunch window. The break is not displayed in
@@ -332,12 +388,18 @@ def validate_project(project: TrainingProject) -> list[str]:
         if block.type == BlockType.lunch and minutes_between(block.start, block.end) != settings.lunch_minutes:
             warnings.append(f"Woche {block.week}, {block.day}{trainer_suffix}: Mittagspause ist nicht exakt {settings.lunch_minutes} Minuten lang.")
 
-    training_by_topic = {block.topic_id: block for block in project.blocks if block.topic_id and block.type == BlockType.training}
+    training_by_source: dict[str, list[ScheduleBlock]] = defaultdict(list)
+    for block in project.blocks:
+        if block.type != BlockType.training:
+            continue
+        source_id = block.source_topic_id or block.topic_id
+        if source_id:
+            training_by_source[source_id].append(block)
     topics_by_id = {topic.id: topic for topic in project.topics}
     for topic in project.topics:
-        if topic.depends_on and topic.id in training_by_topic and topic.depends_on in training_by_topic:
-            current = training_by_topic[topic.id]
-            dependency = training_by_topic[topic.depends_on]
+        if topic.depends_on and topic.id in training_by_source and topic.depends_on in training_by_source:
+            current = min(training_by_source[topic.id], key=lambda block: (absolute_day_index(block.week, block.day), block.start))
+            dependency = max(training_by_source[topic.depends_on], key=lambda block: (absolute_day_index(block.week, block.day), block.end))
             if absolute_day_index(current.week, current.day) <= absolute_day_index(dependency.week, dependency.day):
                 dependency_title = topics_by_id[topic.depends_on].title if topic.depends_on in topics_by_id else topic.depends_on
                 warnings.append(f"'{topic.title}' muss mindestens einen Tag nach '{dependency_title}' stattfinden.")

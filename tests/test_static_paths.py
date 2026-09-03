@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.2.46"' in html
+    assert 'src="calendar.js?v=0.2.47"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -218,7 +218,7 @@ def test_calendar_hides_participant_group_name_but_keeps_generated_split_group()
     assert 'const marker = ` - ${groupName}`;' in display_helper
     assert 'suffix.startsWith("Gruppe ")' in display_helper
     assert 'groupLabel = suffix.startsWith("Gruppe ") ? suffix : "";' in display_helper
-    assert '(project.topics || []).find((item) => item.id === block.topic_id)' in display_helper
+    assert '(project.topics || []).find((item) => item.id === (block.source_topic_id || block.topic_id))' in display_helper
     block_html = javascript.split("function blockHtml", 1)[1].split("function startBlockResize", 1)[0]
     assert "const displayParts = calendarDisplayParts(block);" in block_html
 
@@ -297,3 +297,14 @@ def test_calendar_block_typography_scales_smoothly_with_live_height() -> None:
     assert "font-size: var(--calendar-title-size" in css
     assert "font-size: var(--calendar-meta-size" in css
     assert "transition: font-size 90ms linear" in css
+
+
+def test_training_content_editor_exposes_split_toggle_and_syncs_it_to_planning():
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    css = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
+    assert "Schulungsblock teilen" in javascript
+    assert 'data-key="split_enabled" type="checkbox"' in javascript
+    assert 'split_enabled: Boolean(item.split_enabled)' in javascript
+    assert 'topic.split_enabled = Boolean(content.split_enabled);' in javascript
+    assert 'event.target.type === "checkbox"' in javascript
+    assert '.split-training-option {' in css

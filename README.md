@@ -1,6 +1,14 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.2.46**
+Aktuelle Version: **v0.2.47**
+
+## Aenderungen v0.2.47
+
+- Schulungsinhalte koennen ueber `Schulungsblock teilen` fuer die automatische Halbierung aktiviert oder deaktiviert werden.
+- Bei aktivierter Option teilt `Plan erstellen` jede benoetigte Schulungssitzung in zwei moeglichst gleich grosse Teile; die Gesamtdauer bleibt erhalten.
+- Teil 2 bleibt beim selben Trainer und wird erst nach Teil 1 eingeplant. Passt die zweite Haelfte nicht mehr sinnvoll in den Tag, kann sie an einem folgenden Schulungstag liegen.
+- Automatisch erzeugte Teilnehmergruppen werden weiterhin korrekt behandelt: Jede `Gruppe x/y` erhaelt beide Haelften des Schulungsinhalts.
+- Die Option wird in PostgreSQL gespeichert. Beim Start wird die neue Spalte `split_enabled` automatisch und rueckwaertskompatibel angelegt; kein manueller SQL-Schritt ist notwendig.
 
 ## Aenderungen v0.2.46
 
@@ -260,7 +268,7 @@ Erwartet:
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.2.46` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.2.47` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -268,7 +276,7 @@ Bei einem Release-Tag wie `v0.2.46` baut `.github/workflows/release-image.yml` n
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.46
+ghcr.io/syschelle/schulungsplantool:0.2.47
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -290,7 +298,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.2.46` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.2.47` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -298,7 +306,7 @@ Bei einem Release-Tag wie `v0.2.46` baut der Workflow `.github/workflows/release
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.46
+ghcr.io/syschelle/schulungsplantool:0.2.47
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 

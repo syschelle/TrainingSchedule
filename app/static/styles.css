@@ -419,6 +419,27 @@ textarea:focus {
   justify-self: start;
 }
 
+.split-training-field {
+  max-width: 520px;
+}
+
+.split-training-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 5px 9px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.split-training-option input {
+  margin: 0;
+}
+
 .button {
   display: inline-flex;
   min-height: 34px;

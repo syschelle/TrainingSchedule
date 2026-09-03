@@ -83,7 +83,7 @@ function makeDefaultProject() {
 }
 
 function topic(id, title, duration_minutes, priority, description, depends_on = null, product_id = "deepunity-pacs", background_color = "#eaf8f2") {
-  return { id, product_id, participant_group_id: null, participant_group_ids: [], title, description, duration_minutes, priority, preferred_day: null, preferred_order: null, depends_on, trainer: "", room: "", notes: "", background_color };
+  return { id, product_id, participant_group_id: null, participant_group_ids: [], title, description, duration_minutes, priority, preferred_day: null, preferred_order: null, depends_on, trainer: "", room: "", notes: "", split_enabled: false, background_color };
 }
 
 function participantGroup(id, name, participant_count, product_id = "deepunity-pacs") {
@@ -498,6 +498,7 @@ function syncTopicsFromCatalog() {
     if (content.max_participants) topic.participants_per_session = Number(content.max_participants);
     topic.participant_group_ids = content.participant_group_ids || [];
     topic.participant_group_id = null;
+    topic.split_enabled = Boolean(content.split_enabled);
     topic.background_color = content.background_color || "#eaf8f2";
     if (content.dependency_content_id && topicByContentId.has(content.dependency_content_id)) {
       topic.depends_on = topicByContentId.get(content.dependency_content_id);
@@ -687,6 +688,7 @@ function contentCard(item) {
       <label class="field duration-field"><span>Max. Teilnehmer</span><input data-content="${item.id}" data-key="max_participants" type="number" min="1" step="1" value="${Number(item.max_participants || 0) || ""}"></label>
       <label class="field duration-field"><span>Dauer</span><input data-content="${item.id}" data-key="duration_minutes" type="number" min="5" step="5" value="${Number(item.duration_minutes || 0)}"></label>
     </div>
+    <label class="field checkbox-field split-training-field"><span>Schulungsblock teilen</span><span class="split-training-option"><input data-content="${item.id}" data-key="split_enabled" type="checkbox" ${item.split_enabled ? "checked" : ""}><span>Bei der Planung automatisch in zwei Hälften aufteilen</span></span></label>
     <label class="field"><span>Abhaengigkeit</span><select data-content="${item.id}" data-key="dependency_content_id">${dependencyOptions(item)}</select></label>
     <label class="field field-wide"><span>Teilnehmergruppen</span><select data-content="${item.id}" data-key="participant_group_ids" multiple size="${Math.min(Math.max(groups.length, 3), 7)}">${participantGroupOptions(item, groups)}</select></label>
     ${contentTextarea(item, "target_group", "Zielgruppe")}
@@ -724,6 +726,8 @@ function updateTrainingContentDraft(event) {
   const key = event.target.dataset.key;
   if (key === "participant_group_ids") {
     item[key] = Array.from(event.target.selectedOptions).map((option) => option.value);
+  } else if (event.target.type === "checkbox") {
+    item[key] = event.target.checked;
   } else {
     item[key] = ["duration_minutes", "max_participants"].includes(key) ? Number(event.target.value || 0) || null : event.target.value || null;
   }
@@ -737,6 +741,7 @@ async function saveTrainingContent(event) {
     target_group: item.target_group || "",
     duration_minutes: Number(item.duration_minutes || 5),
     max_participants: item.max_participants ? Number(item.max_participants) : null,
+    split_enabled: Boolean(item.split_enabled),
     dependency_content_id: item.dependency_content_id || null,
     participant_group_ids: item.participant_group_ids || [],
     background_color: item.background_color || "#eaf8f2",
@@ -1056,11 +1061,11 @@ function duplicateTopic(id) {
 function deleteTopic(id) {
   const affectedWeeks = new Set(
     project.blocks
-      .filter((block) => block.topic_id === id)
+      .filter((block) => (block.source_topic_id || block.topic_id) === id)
       .map((block) => Number(block.week || 1))
   );
   project.topics = project.topics.filter((item) => item.id !== id);
-  project.blocks = project.blocks.filter((block) => block.topic_id !== id);
+  project.blocks = project.blocks.filter((block) => (block.source_topic_id || block.topic_id) !== id);
   affectedWeeks.forEach((week) => hideEmptyTransientWeek(week));
   render();
 }
@@ -1164,7 +1169,7 @@ function formatServiceDays(count) {
 function topicSummary() {
   if (!project.topics.length) return "Noch keine Themen.";
   return project.topics.map((item) => {
-    const planned = project.blocks.some((block) => block.topic_id === item.id) ? item.duration_minutes : 0;
+    const planned = project.blocks.some((block) => (block.source_topic_id || block.topic_id) === item.id) ? item.duration_minutes : 0;
     return `<div class="summary-row"><span>${escapeHtml(item.title)}</span><b>${planned} / ${item.duration_minutes} min</b></div>`;
   }).join("");
 }
@@ -1312,7 +1317,7 @@ function calendarDisplayParts(block) {
   const displayTitle = block.type === "arrival" ? "Anreise" : String(block.title || "").trim();
   if (block.type !== "training") return { title: displayTitle, groupLabel: "" };
 
-  const topic = (project.topics || []).find((item) => item.id === block.topic_id);
+  const topic = (project.topics || []).find((item) => item.id === (block.source_topic_id || block.topic_id));
   let title = String(topic?.title || displayTitle).trim();
   let groupLabel = "";
   const groupNames = (project.product_lines || [])
@@ -1544,7 +1549,7 @@ function calendarOffset(minute, start) {
 
 function addBlock(day, week = 1, trainerIndex = 0) {
   const trainer = calendarTrainers()[trainerIndex] || "";
-  project.blocks.push({ id: crypto.randomUUID(), type: "training", week, day, title: "Neuer Block", start: "10:00", end: "11:00", topic_id: null, description: "", trainer, room: "", notes: "", background_color: "#ffffff" });
+  project.blocks.push({ id: crypto.randomUUID(), type: "training", week, day, title: "Neuer Block", start: "10:00", end: "11:00", topic_id: null, source_topic_id: null, split_part: null, split_parts: null, description: "", trainer, room: "", notes: "", background_color: "#ffffff" });
   validateAndRender();
 }
 
@@ -1601,7 +1606,7 @@ function openBlockEditor(id) {
   const topicSelect = $("#blockEditorTopic");
   const topicOptions = (project.topics || []).map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.title)}</option>`).join("");
   topicSelect.innerHTML = `<option value="">Freier Kalenderblock</option>${topicOptions}`;
-  topicSelect.value = block.topic_id || "";
+  topicSelect.value = block.source_topic_id || block.topic_id || "";
 
   $("#blockEditorBlockTitle").value = block.title || "";
   $("#blockEditorType").value = block.type || "training";
@@ -1693,7 +1698,16 @@ async function saveBlockEditor() {
     return;
   }
 
-  block.topic_id = $("#blockEditorTopic").value || null;
+  const selectedTopicId = $("#blockEditorTopic").value || null;
+  const previousSourceTopicId = block.source_topic_id || block.topic_id || null;
+  if (block.split_part && selectedTopicId && selectedTopicId === previousSourceTopicId) {
+    block.source_topic_id = selectedTopicId;
+  } else {
+    block.topic_id = selectedTopicId;
+    block.source_topic_id = selectedTopicId;
+    block.split_part = null;
+    block.split_parts = null;
+  }
   block.title = title;
   block.type = $("#blockEditorType").value;
   block.week = week;
