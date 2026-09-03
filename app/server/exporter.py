@@ -127,7 +127,10 @@ def _format_duration(minutes: int) -> str:
 
 
 def _service_day_count(project: TrainingProject) -> int:
-    return len({(block.week, block.day) for block in project.blocks if block.type == BlockType.training})
+    # A service day is a trainer-day: two trainers delivering training on the
+    # same calendar day represent two billable service days. Multiple blocks
+    # by the same trainer on the same day still count once.
+    return len({(block.week, block.day, block.trainer.strip()) for block in project.blocks if block.type == BlockType.training})
 
 
 def _training_minutes(project: TrainingProject) -> int:

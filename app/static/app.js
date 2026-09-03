@@ -85,7 +85,7 @@ function makeDefaultProject() {
 }
 
 function topic(id, title, duration_minutes, priority, description, depends_on = null, product_id = "deepunity-pacs", background_color = "#eaf8f2") {
-  return { id, product_id, participant_group_id: null, participant_group_ids: [], title, description, duration_minutes, priority, preferred_day: null, preferred_order: null, depends_on, trainer: "", room: "", notes: "", split_enabled: false, background_color };
+  return { id, product_id, participant_group_id: null, participant_group_ids: [], title, description, duration_minutes, catalog_duration_minutes: duration_minutes, duration_overridden: false, priority, preferred_day: null, preferred_order: null, depends_on, trainer: "", room: "", notes: "", split_enabled: false, background_color };
 }
 
 function participantGroup(id, name, participant_count, product_id = "deepunity-pacs") {
@@ -169,7 +169,6 @@ function render() {
   renderWorkflowReview();
   renderProductMenu();
   renderContentCatalog();
-  renderWarnings();
   renderTabs();
   renderPages();
   renderNavigation();
@@ -299,22 +298,49 @@ function renderTrainingWorkflow() {
   const selectedIds = selectedTrainingContentIds();
   container.innerHTML = items.length ? items.map((item) => {
     const selected = selectedIds.has(item.id);
+    const selectedTopic = projectTopicForContent(item.id);
     const groupNames = (item.participant_group_ids || []).map((id) => product.participant_groups.find((group) => group.id === id)?.name).filter(Boolean);
-    const details = [formatDuration(Number(item.duration_minutes || 0)), groupNames.length ? groupNames.join(", ") : "Keine feste Teilnehmergruppe", item.max_participants ? `max. ${Number(item.max_participants)} Teilnehmer` : ""].filter(Boolean);
-    return `<label class="training-choice ${selected ? "selected" : ""}">
-      <input type="checkbox" data-training-choice="${escapeHtml(item.id)}" ${selected ? "checked" : ""}>
-      <span class="training-choice-body">
-        <strong>${escapeHtml(item.title)}</strong>
-        <span>${escapeHtml(details.join(" · "))}</span>
-        ${item.split_enabled ? `<em>Geteilter Schulungsblock</em>` : ""}
-      </span>
-    </label>`;
+    const details = [
+      `Standard ${formatDuration(Number(item.duration_minutes || 0))}`,
+      groupNames.length ? groupNames.join(", ") : "Keine feste Teilnehmergruppe",
+      item.max_participants ? `max. ${Number(item.max_participants)} Teilnehmer` : ""
+    ].filter(Boolean);
+    const projectDuration = Number(selectedTopic?.duration_minutes || item.duration_minutes || 60);
+    return `<article class="training-choice ${selected ? "selected" : ""}">
+      <label class="training-choice-select">
+        <input type="checkbox" data-training-choice="${escapeHtml(item.id)}" ${selected ? "checked" : ""}>
+        <span class="training-choice-body">
+          <strong>${escapeHtml(item.title)}</strong>
+          <span>${escapeHtml(details.join(" · "))}</span>
+          ${item.split_enabled ? `<em>Geteilter Schulungsblock</em>` : ""}
+        </span>
+      </label>
+      ${selected ? `<label class="project-training-duration">
+        <span>Dauer im Projekt</span>
+        <span class="project-duration-input"><input data-project-training-duration="${escapeHtml(item.id)}" type="number" min="5" step="5" inputmode="numeric" value="${projectDuration}" aria-label="Dauer im Projekt für ${escapeHtml(item.title)}"><span>min</span></span>
+      </label>` : ""}
+    </article>`;
   }).join("") : `<div class="workflow-empty"><strong>Keine Schulungsinhalte für ${escapeHtml(product.name)}.</strong><span>Schulungsinhalte werden in der Verwaltung gepflegt.</span></div>`;
   container.querySelectorAll("[data-training-choice]").forEach((input) => input.addEventListener("change", toggleTrainingContent));
+  container.querySelectorAll("[data-project-training-duration]").forEach((input) => input.addEventListener("input", updateProjectTrainingDuration));
   const selectedCount = items.filter((item) => selectedIds.has(item.id)).length;
-  const selectedMinutes = items.filter((item) => selectedIds.has(item.id)).reduce((sum, item) => sum + Number(item.duration_minutes || 0), 0);
-  summary.innerHTML = `<strong>${selectedCount} ${selectedCount === 1 ? "Schulungsinhalt" : "Schulungsinhalte"}</strong><span>·</span><strong>${formatDuration(selectedMinutes)} Dauer der Auswahl</strong>`;
+  summary.innerHTML = `<strong>${selectedCount} ${selectedCount === 1 ? "Schulungsinhalt ausgewählt" : "Schulungsinhalte ausgewählt"}</strong>`;
   applyWorkflowFieldErrors();
+}
+
+function projectTopicForContent(contentId) {
+  return (project.topics || []).find((item) => (item.catalog_content_id || item.id) === contentId) || null;
+}
+
+function updateProjectTrainingDuration(event) {
+  const item = projectTopicForContent(event.target.dataset.projectTrainingDuration);
+  if (!item) return;
+  const value = Number(event.target.value);
+  if (!Number.isFinite(value) || value <= 0) return;
+  item.duration_minutes = Math.round(value);
+  item.duration_overridden = true;
+  markPlanningInputsChanged();
+  renderWorkflowReview();
 }
 
 function selectedTrainingContentIds() {
@@ -327,6 +353,8 @@ function topicFromTrainingContent(content) {
   return {
     ...topic(content.id, content.title, Number(content.duration_minutes || 60), 3, content.goals || "", content.dependency_content_id || null, productId, content.background_color || "#eaf8f2"),
     catalog_content_id: content.id,
+    catalog_duration_minutes: Number(content.duration_minutes || 60),
+    duration_overridden: false,
     participant_group_ids: content.participant_group_ids || [],
     participants_per_session: content.max_participants ? Number(content.max_participants) : null,
     split_enabled: Boolean(content.split_enabled)
@@ -647,7 +675,6 @@ function renderWorkflowReview() {
   const groups = product.participant_groups || [];
   const participants = groups.reduce((sum, group) => sum + Math.max(0, Number(group.participant_count || 0)), 0);
   const trainingCount = (project.topics || []).length;
-  const trainingMinutes = (project.topics || []).reduce((sum, item) => sum + Number(item.duration_minutes || 0), 0);
   const ready = workflowStepIsComplete("review");
   const missing = workflowSteps.slice(0, 5).filter((step) => !workflowStepIsComplete(step.id));
   const dateLabel = project.start_date ? TrainingCalendar.formatGermanDate(TrainingCalendar.parseIsoDate(project.start_date)) : "—";
@@ -659,7 +686,7 @@ function renderWorkflowReview() {
     <div class="review-grid">
       ${reviewCard("Projekt", [["Produkt", product.name], ["Start", dateLabel], ["Standort", project.location || "—"]], "project")}
       ${reviewCard("Personen", [["Trainer", trainers.length ? trainers.join(", ") : "—"], ["Teilnehmer", String(participants)], ["Gruppen", String(groups.length)]], "people")}
-      ${reviewCard("Schulungen", [["Ausgewählt", String(trainingCount)], ["Dauer der Auswahl", formatDuration(trainingMinutes)]], "training")}
+      ${reviewCard("Schulungen", [["Ausgewählt", `${trainingCount} ${trainingCount === 1 ? "Schulungsinhalt" : "Schulungsinhalte"}`]], "training")}
       ${reviewCard("Zeiten", [["Schulungstag", `${project.settings.day_start}–${project.settings.day_end}`], ["Anreise", project.settings.monday_arrival_enabled ? `${project.settings.monday_arrival_start}–${project.settings.monday_arrival_end}` : "Aus"], ["Abreise", project.settings.thursday_departure_enabled ? `${project.settings.thursday_departure_start}–${project.settings.thursday_departure_end}` : "Aus"]], "time")}
     </div>
     ${missing.length ? `<div class="review-missing">${missing.map((step) => `<button type="button" data-review-step="${step.id}">${step.label} ergänzen</button>`).join("")}</div>` : ""}
@@ -837,7 +864,8 @@ function syncTopicsFromCatalog() {
     if (!topic) return;
     topic.catalog_content_id = content.id;
     topic.title = content.title;
-    topic.duration_minutes = Number(content.duration_minutes || topic.duration_minutes || 60);
+    topic.catalog_duration_minutes = Number(content.duration_minutes || topic.catalog_duration_minutes || topic.duration_minutes || 60);
+    if (!topic.duration_overridden) topic.duration_minutes = topic.catalog_duration_minutes;
     if (content.max_participants) topic.participants_per_session = Number(content.max_participants);
     topic.participant_group_ids = content.participant_group_ids || [];
     topic.participant_group_id = null;
@@ -1445,7 +1473,7 @@ async function createPlan() {
   transientManualWeeks = new Set();
   planInputsDirty = false;
   workflowErrors = {};
-  setStatus("Plan erstellt und validiert.");
+  setStatus("Plan erstellt.");
   activeTab = "week";
   currentPage = "plan";
   render();
@@ -1519,7 +1547,7 @@ function serviceDayCount() {
   return new Set(
     project.blocks
       .filter((block) => block.type === "training")
-      .map((block) => `${Number(block.week || 1)}::${block.day}`)
+      .map((block) => `${Number(block.week || 1)}::${block.day}::${String(block.trainer || "").trim()}`)
   ).size;
 }
 
@@ -2275,23 +2303,6 @@ async function importProjectState(event) {
   workflowErrors = {};
   render();
   setStatus(`Planungsstand geladen (${payload.app_version || "unbekannte Version"}).`);
-}
-
-function renderWarnings() {
-  const warnings = project.warnings || [];
-  const warningContainer = $("#warnings");
-  if (warningContainer) {
-    warningContainer.innerHTML = warnings.length
-      ? warnings.map((warning) => `<p>${escapeHtml(warning)}</p>`).join("")
-      : `<div class="validation-empty"><strong>Keine Konflikte.</strong><span>Die aktuelle Planung enthaelt keine Validierungshinweise.</span></div>`;
-  }
-  const count = $("#validationCount");
-  if (count) count.textContent = `${warnings.length} ${warnings.length === 1 ? "Hinweis" : "Hinweise"}`;
-  const nav = $("#validationNavButton");
-  if (nav) {
-    nav.textContent = warnings.length ? `Planungsprüfung (${warnings.length})` : "Planungsprüfung";
-    nav.classList.toggle("has-warnings", warnings.length > 0);
-  }
 }
 
 async function downloadExport(format) {

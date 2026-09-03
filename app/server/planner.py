@@ -122,6 +122,79 @@ def expand_topic_sessions(project: TrainingProject) -> tuple[list[TrainingTopic]
     return expanded, source_by_id
 
 
+def balanced_topic_order(
+    project: TrainingProject,
+    expanded_topics: list[TrainingTopic],
+    source_by_id: dict[str, str],
+) -> list[TrainingTopic]:
+    """Spread participant sessions of different contents as evenly as possible.
+
+    The old planner exhausted every generated session of one content before
+    moving to the next content. That often created a day containing only one
+    subject. Logical sessions are now merged proportionally: a content with
+    many repetitions is distributed across the sequence while contents with
+    fewer repetitions are kept for later slots instead of being consumed at
+    the beginning. Split halves stay together as one logical session. A
+    dependency becomes eligible only after all sessions of its prerequisite
+    content have been taken.
+    """
+    source_topics = {topic.id: topic for topic in project.topics}
+    source_order = [topic.id for topic in sort_topics(project.topics)]
+    source_rank = {source_id: index for index, source_id in enumerate(source_order)}
+
+    bundles_by_source: dict[str, list[list[TrainingTopic]]] = defaultdict(list)
+    bundle_index: dict[tuple[str, str], list[TrainingTopic]] = {}
+    for planned_topic in expanded_topics:
+        source_id = source_by_id.get(planned_topic.id, planned_topic.id)
+        bundle_id = planned_topic.split_sequence_id or planned_topic.id
+        key = (source_id, bundle_id)
+        bundle = bundle_index.get(key)
+        if bundle is None:
+            bundle = []
+            bundle_index[key] = bundle
+            bundles_by_source[source_id].append(bundle)
+        bundle.append(planned_topic)
+
+    for bundles in bundles_by_source.values():
+        for bundle in bundles:
+            bundle.sort(key=lambda item: item.split_part or 0)
+
+    pending = {source_id: list(bundles) for source_id, bundles in bundles_by_source.items()}
+    total_bundles = {source_id: len(bundles) for source_id, bundles in pending.items()}
+    placed_bundles = {source_id: 0 for source_id in pending}
+    ordered: list[TrainingTopic] = []
+
+    while pending:
+        eligible: list[str] = []
+        for source_id in pending:
+            dependency = source_topics.get(source_id).depends_on if source_id in source_topics else None
+            if dependency and dependency in pending:
+                continue
+            eligible.append(source_id)
+
+        if not eligible:
+            # Defensive fallback for malformed/cyclic dependency data.
+            eligible = [next(iter(pending))]
+
+        # Each source has ideal positions at k/(n+1). Selecting the smallest
+        # next position merges all source sequences proportionally. For 6
+        # sessions of A and 2 of B this yields A,A,B,A,A,B,A,A instead of
+        # A,B,A,B,A,A,A,A, so the smaller topic is not exhausted too early.
+        source_id = min(
+            eligible,
+            key=lambda candidate: (
+                (placed_bundles[candidate] + 1) / (total_bundles[candidate] + 1),
+                source_rank.get(candidate, len(source_rank)),
+            ),
+        )
+        ordered.extend(pending[source_id].pop(0))
+        placed_bundles[source_id] += 1
+        if not pending[source_id]:
+            pending.pop(source_id, None)
+
+    return ordered
+
+
 def _add_fixed_blocks(project: TrainingProject, day: str, week: int, trainer: str) -> list[ScheduleBlock]:
     settings = project.settings
     blocks: list[ScheduleBlock] = []
@@ -221,7 +294,7 @@ def plan_project(project: TrainingProject) -> TrainingProject:
     ensure_week(1)
     expanded_topics, source_by_id = expand_topic_sessions(project)
 
-    for topic in sort_topics(expanded_topics):
+    for topic in balanced_topic_order(project, expanded_topics, source_by_id):
         candidate_days = [topic.preferred_day] if topic.preferred_day in available_days else available_days
         earliest_day = topic_placement.get(topic.depends_on, -1) + 1 if topic.depends_on else 0
         previous_split = split_placement.get(topic.split_sequence_id or "") if topic.split_part and topic.split_part > 1 else None

@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.3.2 - 2026-09-03
+
+### Planungsworkflow und automatische Verteilung verbessert
+
+- Die missverstaendliche Dauer-Summenkennzahl wurde aus Schulungsauswahl und Pruefansicht entfernt.
+- `Planungspruefung` wurde aus Seitenmenue und Benutzeroberflaeche entfernt; die interne Validierung bleibt bestehen.
+- Dienstleistungstage werden als eindeutige Kombination aus Kalenderwoche, Tag und Trainer berechnet und damit bei Paralleltrainern korrekt gezaehlt.
+- Wiederholte Teilnehmer-Sitzungen verschiedener Schulungsinhalte werden fairer proportional und gleichmaessiger gemischt. Dadurch entstehen weniger Tage, die unnoetig nur aus einem einzelnen Schulungsthema bestehen.
+- Split-Haelften bleiben als zusammengehoerige Sitzung geordnet; Abhaengigkeiten werden erst freigegeben, nachdem das vorausgesetzte Thema abgearbeitet wurde.
+- Ausgewaehlte Schulungsinhalte besitzen im Projektworkflow ein Feld `Dauer im Projekt`. Eine Aenderung wirkt nur auf das aktuelle Projekt und veraendert den persistenten Schulungsinhalte-Katalog nicht.
+- Projektmodelle speichern die Katalogdauer und den Override-Status rueckwaertskompatibel.
+- Keine PostgreSQL-Migration erforderlich.
+
 ## v0.3.1 - 2026-09-03
 
 ### Personen-Eingabe stabilisiert

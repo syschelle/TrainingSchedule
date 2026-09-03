@@ -1404,3 +1404,17 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Die Bezeichnung `Basisdauer` wird im gefuehrten Workflow durch `Dauer der Auswahl` ersetzt. Sie bezeichnet die Summe der ausgewaehlten Schulungsinhalte vor zusaetzlichen Wiederholungen durch Teilnehmergruppen bzw. automatisch erzeugte Gruppen.
 - Keine Datenbankmigration erforderlich.
 - Version auf `v0.3.1` erhoeht.
+
+## Erweiterung v0.3.2 - Workflow vereinfachen, Dienstleistungstage korrigieren und Planung besser mischen
+
+- Die Kennzahl `Basisdauer` bzw. `Dauer der Auswahl` wird aus dem Projektworkflow entfernt, weil sie fuer Anwender keinen eindeutigen Nutzen bietet.
+- Die separate Seite `Planungspruefung` wird aus Navigation und UI entfernt. Die bestehende serverseitige Validierung darf intern fuer Konsistenz und bestehende Schnittstellen erhalten bleiben.
+- Dienstleistungstage werden als Trainer-Tage definiert: Ein Trainer mit mindestens einem Schulungsblock an einem Kalendertag zaehlt als ein Dienstleistungstag. Zwei Trainer am selben Tag ergeben zwei Dienstleistungstage.
+- Die automatische Planung soll bei mehreren benoetigten Sitzungen verschiedener Schulungsinhalte die Themen moeglichst abwechselnd einplanen, statt saemtliche Gruppen eines Themas vor dem naechsten Thema zu verbrauchen.
+- Teilnehmerbasierte Wiederholungen werden deshalb pro Schulungsinhalt gebuendelt und proportional und gleichmaessiger verteilt. Split-Teile bleiben innerhalb einer Sitzung geordnet; Abhaengigkeiten bleiben wirksam.
+- Im Workflow-Schritt `Schulungen` kann fuer jeden ausgewaehlten Schulungsinhalt eine `Dauer im Projekt` eingegeben werden. Diese Dauer ist eine reine Projekteinstellung und darf den persistenten Schulungsinhalte-Katalog nicht veraendern.
+- Die Standarddauer aus dem Katalog bleibt sichtbar, damit der Anwender die projektspezifische Abweichung einordnen kann.
+- Projekt-JSON muss projektspezifische Dauer und Override-Status transportieren; alte Projektdateien bleiben kompatibel.
+- Keine PostgreSQL-Migration erforderlich.
+- Version auf `v0.3.2` erhoeht.
+

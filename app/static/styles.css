@@ -1638,64 +1638,6 @@ body.modal-open {
   padding-right: 9px;
   cursor: default;
 }
-/* v0.2.35 dedicated validation page: warnings no longer resize the calendar view */
-#validation-page {
-  grid-template-columns: minmax(0, 1180px);
-  justify-content: center;
-}
-
-.validation-card {
-  min-width: 0;
-}
-
-.validation-count {
-  display: inline-flex;
-  align-items: center;
-  min-height: 30px;
-  padding: 5px 10px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: #fff;
-  color: var(--muted);
-  font-size: 0.78rem;
-  font-weight: 850;
-  white-space: nowrap;
-}
-
-.menu-nav-button.has-warnings {
-  border-color: rgba(181, 119, 0, 0.42);
-}
-
-.validation-warnings {
-  display: grid;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.validation-warnings p {
-  margin: 0;
-}
-
-.validation-empty {
-  display: grid;
-  gap: 3px;
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: #fbfcfe;
-}
-
-.validation-empty strong {
-  color: var(--text);
-}
-
-.validation-empty span {
-  color: var(--muted);
-  font-size: 0.84rem;
-}
-
-
-
 /* v0.2.36 embedded calendar block editor */
 .block-editor-modal {
   display: grid;
@@ -2269,14 +2211,22 @@ body.modal-open {
 
 .training-choice {
   display: grid;
-  grid-template-columns: 22px minmax(0, 1fr);
-  gap: 9px;
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
   min-height: 82px;
   padding: 11px;
   border: 1px solid var(--line);
   border-radius: 9px;
   background: #fff;
+}
+
+.training-choice-select {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+  min-width: 0;
   cursor: pointer;
 }
 
@@ -2289,7 +2239,7 @@ body.modal-open {
   background: #f8faff;
 }
 
-.training-choice input {
+.training-choice-select > input {
   width: 18px;
   min-height: 18px;
   margin: 2px 0 0;
@@ -2319,6 +2269,35 @@ body.modal-open {
   font-size: 0.68rem;
   font-style: normal;
   font-weight: 800;
+}
+
+.project-training-duration {
+  display: grid;
+  gap: 4px;
+  min-width: 126px;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.project-duration-input {
+  display: grid;
+  grid-template-columns: 76px auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.project-duration-input input {
+  width: 76px;
+  min-height: 34px;
+  margin: 0;
+  padding: 6px 8px;
+  text-align: right;
+}
+
+.project-duration-input > span {
+  color: var(--muted);
+  font-size: 0.72rem;
 }
 
 .time-settings {
@@ -2560,6 +2539,14 @@ body.modal-open {
   .time-settings,
   .review-grid {
     grid-template-columns: 1fr;
+  }
+
+  .training-choice {
+    grid-template-columns: 1fr;
+  }
+
+  .project-training-duration {
+    padding-left: 31px;
   }
 }
 

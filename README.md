@@ -1,6 +1,16 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.3.1**
+Aktuelle Version: **v0.3.2**
+
+## Aenderungen v0.3.2
+
+- Die Kennzahl `Basisdauer`/`Dauer der Auswahl` wurde aus dem gefuehrten Projektworkflow entfernt. Im Schritt `Schulungen` wird nur noch die Anzahl der ausgewaehlten Schulungsinhalte zusammengefasst.
+- Die Seite und Navigation `Planungspruefung` wurde aus der Benutzeroberflaeche entfernt. Die interne Validierungslogik bleibt fuer Planung und Datenkonsistenz erhalten.
+- `Dienstleistungstage` werden jetzt als Trainer-Tage berechnet: Zwei Trainer mit Schulungen am selben Kalendertag ergeben zwei Dienstleistungstage; mehrere Bloecke desselben Trainers am selben Tag zaehlen weiterhin nur einmal.
+- Die automatische Planung mischt wiederholte Sitzungen verschiedener Schulungsinhalte proportional und gleichmaessiger, statt zuerst alle Gruppen eines Themas vollstaendig abzuarbeiten. Abhaengigkeiten und geteilte Schulungsbloecke bleiben beruecksichtigt.
+- Im Schritt `Schulungen` kann die Dauer eines ausgewaehlten Schulungsinhalts projektspezifisch geaendert werden. Die Katalogdauer wird als Standard angezeigt und bleibt unveraendert.
+- Projektdateien speichern, ob eine Dauer projektspezifisch ueberschrieben wurde; bestehende Projektdateien bleiben durch Defaults kompatibel.
+- Keine PostgreSQL-Migration erforderlich.
 
 ## Aenderungen v0.3.1
 
@@ -292,12 +302,12 @@ curl http://127.0.0.1:18083/api/health
 Erwartet:
 
 ```json
-{"status":"ok","version":"0.3.1"}
+{"status":"ok","version":"0.3.2"}
 ```
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.3.1` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.3.2` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -305,7 +315,7 @@ Bei einem Release-Tag wie `v0.3.1` baut `.github/workflows/release-image.yml` na
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.3.1
+ghcr.io/syschelle/schulungsplantool:0.3.2
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -327,7 +337,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.3.1` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.3.2` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -335,7 +345,7 @@ Bei einem Release-Tag wie `v0.3.1` baut der Workflow `.github/workflows/release-
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.3.1
+ghcr.io/syschelle/schulungsplantool:0.3.2
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 

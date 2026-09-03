@@ -283,3 +283,106 @@ def test_participant_sessions_are_split_after_group_expansion():
     assert sum(block.split_part == 1 for block in blocks) == 3
     assert sum(block.split_part == 2 for block in blocks) == 3
     assert sum("Gruppe" in block.title for block in blocks) == 6
+
+
+def test_planner_interleaves_generated_sessions_from_different_topics():
+    project = TrainingProject(
+        trainers=["Trainer A"],
+        product_lines=[
+            ProductLine(
+                id="deepunity-pacs",
+                name="DeepUnity PACS",
+                participant_groups=[
+                    ParticipantGroup(id="group-a", name="Gruppe A", participant_count=4),
+                    ParticipantGroup(id="group-b", name="Gruppe B", participant_count=4),
+                ],
+            )
+        ],
+        topics=[
+            TrainingTopic(
+                id="topic-a",
+                title="Thema A",
+                duration_minutes=90,
+                participant_group_ids=["group-a"],
+                participants_per_session=1,
+            ),
+            TrainingTopic(
+                id="topic-b",
+                title="Thema B",
+                duration_minutes=90,
+                participant_group_ids=["group-b"],
+                participants_per_session=1,
+            ),
+        ],
+    )
+    planned = plan_project(project)
+    monday_topics = {
+        block.source_topic_id
+        for block in planned.blocks
+        if block.type == "training" and block.day == "Montag"
+    }
+    tuesday_topics = {
+        block.source_topic_id
+        for block in planned.blocks
+        if block.type == "training" and block.day == "Dienstag"
+    }
+    assert monday_topics == {"topic-a", "topic-b"}
+    assert tuesday_topics == {"topic-a", "topic-b"}
+
+
+def test_project_specific_topic_duration_is_used_by_planner():
+    project = TrainingProject(
+        topics=[
+            TrainingTopic(
+                id="custom-duration",
+                title="Projektzeit",
+                duration_minutes=135,
+                catalog_duration_minutes=120,
+                duration_overridden=True,
+            )
+        ]
+    )
+    planned = plan_project(project)
+    block = next(block for block in planned.blocks if block.type == "training")
+    start_minutes = int(block.start[:2]) * 60 + int(block.start[3:])
+    end_minutes = int(block.end[:2]) * 60 + int(block.end[3:])
+    assert end_minutes - start_minutes == 135
+
+
+def test_planner_spreads_smaller_topic_across_days_instead_of_exhausting_it_early():
+    project = TrainingProject(
+        trainers=["Trainer A"],
+        product_lines=[
+            ProductLine(
+                id="deepunity-pacs",
+                name="DeepUnity PACS",
+                participant_groups=[
+                    ParticipantGroup(id="many", name="Viele", participant_count=6),
+                    ParticipantGroup(id="few", name="Wenige", participant_count=2),
+                ],
+            )
+        ],
+        topics=[
+            TrainingTopic(
+                id="many-topic",
+                title="Haeufiges Thema",
+                duration_minutes=90,
+                participant_group_ids=["many"],
+                participants_per_session=1,
+            ),
+            TrainingTopic(
+                id="few-topic",
+                title="Selteneres Thema",
+                duration_minutes=90,
+                participant_group_ids=["few"],
+                participants_per_session=1,
+            ),
+        ],
+    )
+    planned = plan_project(project)
+    few_days = [
+        block.day
+        for block in planned.blocks
+        if block.type == "training" and block.source_topic_id == "few-topic"
+    ]
+    assert few_days == ["Montag", "Dienstag"]

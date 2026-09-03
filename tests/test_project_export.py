@@ -3,7 +3,7 @@ from io import BytesIO
 
 from pypdf import PdfReader
 
-from app.server.exporter import export_pdf, planned_weeks
+from app.server.exporter import _service_day_count, export_pdf, planned_weeks
 from app.server.main import _project_export_filename
 from app.server.models import ParticipantGroup, ProductLine, ProjectFile, ScheduleBlock, TrainingProject
 
@@ -52,6 +52,12 @@ def test_project_file_roundtrip_preserves_planning_state():
     assert restored.project.manual_weeks == [1, 2]
 
 
+
+
+def test_service_days_count_trainer_days_for_parallel_trainers():
+    project = sample_project()
+    assert _service_day_count(project) == 2
+
 def test_pdf_starts_with_overview_and_omits_weeks_without_training_blocks():
     project = sample_project()
     reader = PdfReader(BytesIO(export_pdf(project)))
@@ -67,6 +73,8 @@ def test_pdf_starts_with_overview_and_omits_weeks_without_training_blocks():
     assert "Berlin" in first_text
     assert "Kunde: Musterklinik" in first_text
     assert "Standort: Berlin" in first_text
+    assert "Dienstleistungstage" in first_text
+    assert "2 Tage" in first_text
     assert "Seite 1 · Uebersicht" not in first_text
     text = "\n".join(page.extract_text() or "" for page in reader.pages)
     assert "Trainer A" in text

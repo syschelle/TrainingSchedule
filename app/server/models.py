@@ -43,6 +43,8 @@ class TrainingTopic(BaseModel):
     title: str
     description: str = ""
     duration_minutes: int = Field(gt=0)
+    catalog_duration_minutes: int | None = Field(default=None, gt=0)
+    duration_overridden: bool = False
     priority: int = 3
     preferred_day: str | None = None
     preferred_order: int | None = None

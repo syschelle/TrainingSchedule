@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.3.1"' in html
+    assert 'src="calendar.js?v=0.3.2"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -70,7 +70,7 @@ def test_plan_overview_uses_service_days_instead_of_break_metrics() -> None:
     assert 'metric("Anreise"' not in overview
     assert 'metric("Abreise"' not in overview
     assert '.filter((block) => block.type === "training")' in overview
-    assert '.map((block) => `${Number(block.week || 1)}::${block.day}`)' in overview
+    assert '.map((block) => `${Number(block.week || 1)}::${block.day}::${String(block.trainer || "").trim()}`)' in overview
     assert 'count === 1 ? "Tag" : "Tage"' in overview
 
 
@@ -116,17 +116,15 @@ def test_frontend_normalizes_manual_and_imported_block_starts_to_quarter_hours()
     assert "normalizeBlockStart(block);" in javascript
 
 
-def test_validation_warnings_are_separate_from_calendar_page() -> None:
+def test_planning_validation_page_is_removed_from_user_interface() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
-    plan_page = html.split('id="plan-page"', 1)[1].split('id="validation-page"', 1)[0]
-    validation_page = html.split('id="validation-page"', 1)[1].split('id="markdownEditorModal"', 1)[0]
-    assert 'id="warnings"' not in plan_page
-    assert 'id="warnings"' in validation_page
-    assert 'id="validationNavButton"' in html
-    assert 'id="validationCount"' in validation_page
-    assert 'Planungsprüfung' in html
-    assert 'nav.textContent = warnings.length ? `Planungsprüfung (${warnings.length})`' in javascript
+    assert 'id="validation-page"' not in html
+    assert 'id="validationNavButton"' not in html
+    assert 'id="validationCount"' not in html
+    assert 'id="warnings"' not in html
+    assert 'Planungsprüfung' not in html
+    assert 'function renderWarnings()' not in javascript
 
 
 def test_calendar_block_editor_is_embedded_and_replaces_prompt_editing() -> None:
@@ -390,7 +388,7 @@ def test_v030_project_menu_separates_project_workflow_from_administration() -> N
     admin_part = html.split('<p class="menu-section-label menu-section-spaced">Verwaltung</p>', 1)[1].split('</aside>', 1)[0]
     assert 'data-page="input"' in project_part
     assert 'data-page="plan"' in project_part
-    assert 'data-page="validation"' in project_part
+    assert 'data-page="validation"' not in project_part
     assert 'data-page="products"' in admin_part
     assert 'data-page="contents"' in admin_part
 
@@ -410,7 +408,26 @@ def test_v031_participant_count_input_supports_multi_digit_entry() -> None:
     assert 'data-key="participant_count" type="number" min="0" step="1" inputmode="numeric"' in editor
 
 
-def test_v031_review_uses_clear_duration_label_instead_of_basisdauer() -> None:
+def test_v032_selection_duration_summary_is_removed() -> None:
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     assert "Basisdauer" not in javascript
-    assert "Dauer der Auswahl" in javascript
+    assert "Dauer der Auswahl" not in javascript
+    assert 'Schulungsinhalte ausgewählt' in javascript
+
+
+def test_v032_training_selection_supports_project_specific_duration_without_catalog_overwrite() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    assert 'Dauer im Projekt' in javascript
+    assert 'data-project-training-duration=' in javascript
+    assert 'function updateProjectTrainingDuration(event)' in javascript
+    duration_handler = javascript.split('function updateProjectTrainingDuration(event)', 1)[1].split('function selectedTrainingContentIds()', 1)[0]
+    assert 'renderTrainingWorkflow();' not in duration_handler
+    assert 'item.duration_overridden = true;' in javascript
+    assert 'topic.catalog_duration_minutes = Number(content.duration_minutes' in javascript
+    assert 'if (!topic.duration_overridden) topic.duration_minutes = topic.catalog_duration_minutes;' in javascript
+
+
+def test_v032_project_menu_has_no_planning_validation_entry() -> None:
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    assert 'Planungsprüfung' not in html
+    assert 'data-page="validation"' not in html
