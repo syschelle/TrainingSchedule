@@ -93,6 +93,9 @@ def test_pdf_calendar_hides_participant_group_name_but_keeps_generated_split_lab
     project.blocks[0].title = "DU Viewer - Webviewer Gruppe 4/6"
     reader = PdfReader(BytesIO(export_pdf(project)))
     calendar_text = "\n".join(page.extract_text() or "" for page in reader.pages[1:])
-    assert "DU Viewer - Gruppe 4/6" in calendar_text
+    assert "DU Viewer" in calendar_text
+    assert "Gruppe 4/6" in calendar_text
+    assert "DU Viewer - Gruppe 4/6" not in calendar_text
     assert "DU Viewer - Webviewer Gruppe 4/6" not in calendar_text
+    assert "10:00-11:30 · 1,5 h" in calendar_text
 

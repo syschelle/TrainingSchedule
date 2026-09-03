@@ -1341,3 +1341,16 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Bei nicht aufgeteilten Schulungen wird nur der eigentliche Schulungstitel angezeigt.
 - Intern gespeicherte Blocktitel bleiben unveraendert; Browser-Kalender, Vorschau und PDF-Kalenderseiten verwenden dieselbe kompakte Darstellung. Strukturierte Exportdaten bleiben unveraendert.
 - Version auf `v0.2.45` erhoeht.
+
+## Erweiterung v0.2.46 - Dreizeilige Kalenderkacheln fuer Schulungsbloecke
+
+- Zeile 1 einer Schulungskachel zeigt ausschliesslich den Titel des zugeordneten Schulungsinhalts.
+- Wenn die automatische Planung mehrere Sitzungen erzeugt, zeigt Zeile 2 ausschliesslich die Kennzeichnung `Gruppe x/y`.
+- Ohne automatisch erzeugte Gruppenteilung entfaellt die zweite Zeile.
+- Die Teilnehmergruppenbezeichnung selbst darf nicht im sichtbaren Kalendertext erscheinen.
+- Die letzte sichtbare Zeile zeigt `Start-Ende · Dauer in Stunden`, z. B. `08:30-10:30 · 2,0 h`.
+- Der Schulungsinhalt-Titel soll bevorzugt ueber `topic_id` aus dem Projektmodell bezogen werden; der intern gespeicherte Blocktitel bleibt unveraendert.
+- Browser-Kalender, Kalender-Vorschau und PDF-Kalenderseiten sollen die gleiche Informationsstruktur verwenden.
+- Strukturierte Projekt-/XLSX-Exportdaten bleiben unveraendert.
+- Version auf `v0.2.46` erhoeht.
+

@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.2.46 - 2026-09-03
+
+- Kalenderkacheln zeigen Schulungsbloecke jetzt strukturiert in bis zu drei Zeilen: Schulungsinhalt-Titel, optionale automatisch erzeugte Gruppennummer und Zeitbereich mit Gesamtdauer in Stunden.
+- Die allgemeine Teilnehmergruppenbezeichnung bleibt aus der Kalenderkachel entfernt.
+- `Gruppe x/y` wird bei aufgeteilten Schulungen als eigene zweite Zeile angezeigt und nicht mehr an den Titel angehaengt.
+- Kalender-Vorschau und PDF-Kalenderseiten verwenden die gleiche Darstellungslogik; strukturierte Exportdaten bleiben unveraendert.
+- Keine Datenbankmigration erforderlich.
+
 ## v0.2.45 - 2026-09-03
 
 - Kalenderkacheln zeigen bei Schulungsbloecken nicht mehr die Teilnehmergruppenbezeichnung im Titel.

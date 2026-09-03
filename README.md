@@ -1,6 +1,14 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.2.45**
+Aktuelle Version: **v0.2.46**
+
+## Aenderungen v0.2.46
+
+- Kalenderkacheln verwenden fuer Schulungsbloecke jetzt eine klare Zeilenstruktur: Zeile 1 = Schulungsinhalt-Titel, Zeile 2 = nur bei Aufteilung `Gruppe x/y`, Zeile 3 = Start-/Endzeit und Gesamtdauer in Stunden.
+- Die Teilnehmergruppenbezeichnung bleibt weiterhin ausgeblendet; nur die automatisch erzeugte Gruppennummer wird separat dargestellt.
+- Der Schulungsinhalt-Titel wird ueber die `topic_id` aus den hinterlegten Schulungsinhalten ermittelt, damit die erste Zeile nicht aus einem zusammengesetzten Blocktitel abgeleitet werden muss.
+- Kalender-Vorschau und PDF-Kalenderseiten verwenden dieselbe Titel-/Gruppen-/Zeitstruktur; strukturierte Projekt- und XLSX-Daten bleiben unveraendert.
+- Keine Datenbankmigration erforderlich.
 
 ## Aenderungen v0.2.45
 
@@ -252,7 +260,7 @@ Erwartet:
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.2.45` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.2.46` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -260,7 +268,7 @@ Bei einem Release-Tag wie `v0.2.45` baut `.github/workflows/release-image.yml` n
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.45
+ghcr.io/syschelle/schulungsplantool:0.2.46
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -282,7 +290,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.2.45` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.2.46` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -290,7 +298,7 @@ Bei einem Release-Tag wie `v0.2.45` baut der Workflow `.github/workflows/release
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.45
+ghcr.io/syschelle/schulungsplantool:0.2.46
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 

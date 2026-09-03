@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.2.45"' in html
+    assert 'src="calendar.js?v=0.2.46"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -206,20 +206,34 @@ def test_add_week_button_uses_correct_german_umlaut() -> None:
 
 def test_arrival_calendar_tile_uses_compact_display_title_only() -> None:
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
-    assert 'block.type === "arrival" ? "Anreise" : block.title' in javascript
+    assert 'block.type === "arrival" ? "Anreise" : String(block.title || "").trim()' in javascript
     assert 'monday_arrival_label: "Anreise / Eintreffen der Teilnehmer"' in javascript
 
 
 def test_calendar_hides_participant_group_name_but_keeps_generated_split_group() -> None:
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
-    assert "function calendarDisplayTitle(block)" in javascript
-    display_helper = javascript.split("function calendarDisplayTitle(block)", 1)[1].split("function blockHtml", 1)[0]
+    assert "function calendarDisplayParts(block)" in javascript
+    display_helper = javascript.split("function calendarDisplayParts(block)", 1)[1].split("function calendarDisplayTitle", 1)[0]
     assert "participant_groups" in display_helper
     assert 'const marker = ` - ${groupName}`;' in display_helper
     assert 'suffix.startsWith("Gruppe ")' in display_helper
-    assert 'suffix ? ` - ${suffix}` : ""' in display_helper
+    assert 'groupLabel = suffix.startsWith("Gruppe ") ? suffix : "";' in display_helper
+    assert '(project.topics || []).find((item) => item.id === block.topic_id)' in display_helper
     block_html = javascript.split("function blockHtml", 1)[1].split("function startBlockResize", 1)[0]
-    assert "const displayTitle = calendarDisplayTitle(block);" in block_html
+    assert "const displayParts = calendarDisplayParts(block);" in block_html
+
+
+def test_training_calendar_tile_uses_three_line_title_group_and_time_structure() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    css = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
+    block_html = javascript.split("function blockHtml", 1)[1].split("function startBlockResize", 1)[0]
+    assert 'class="block-title">${escapeHtml(displayTitle)}</strong>' in block_html
+    assert 'class="block-group">${escapeHtml(displayParts.groupLabel)}</span>' in block_html
+    assert 'class="block-meta">${block.start}-${block.end} · ${formatHours(blockDuration)}</span>' in block_html
+    assert block_html.index('class="block-title"') < block_html.index('class="block-group"') < block_html.index('class="block-meta"')
+    assert ".calendar-block .block-title" in css
+    assert ".calendar-block .block-group" in css
+    assert "white-space: nowrap;" in css
 
 
 
@@ -248,7 +262,9 @@ def test_short_calendar_blocks_use_compact_non_clipping_layout() -> None:
     assert ".calendar-block.is-compact .icon" in css
     assert "height: 17px;" in css
     assert ".calendar-block.is-compact .block-content > span" in css
-    assert "-webkit-line-clamp: 2;" in css
+    assert ".calendar-block.is-compact .block-title" in css
+    assert "white-space: nowrap;" in css
+    assert "text-overflow: ellipsis;" in css
 
 
 def test_training_blocks_support_live_quarter_hour_resize_and_hour_duration_label() -> None:

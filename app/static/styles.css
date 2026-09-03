@@ -941,6 +941,26 @@ textarea:focus {
   font-variant-numeric: tabular-nums;
 }
 
+.calendar-block .block-title {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.calendar-block .block-group {
+  display: block;
+  overflow: hidden;
+  margin-top: 1px;
+  color: var(--text);
+  font-size: var(--calendar-group-size, 0.72rem);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transition: font-size 90ms linear;
+}
+
 .calendar-block .icon {
   width: 22px;
   min-width: 22px;
@@ -967,13 +987,13 @@ textarea:focus {
   min-width: 0;
 }
 
-.calendar-block.is-compact strong {
-  display: -webkit-box;
+.calendar-block.is-compact .block-title {
+  display: block;
   overflow: hidden;
   font-size: var(--calendar-title-size, 0.72rem);
   line-height: var(--calendar-title-line-height, 1.02);
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .calendar-block.is-compact .block-content > span {
@@ -1069,6 +1089,25 @@ textarea:focus {
 .calendar-block .block-meta {
   font-size: var(--calendar-meta-size, 0.78rem);
   transition: font-size 90ms linear;
+}
+
+.calendar-block .block-group {
+  margin-top: 2px;
+  color: var(--text);
+  font-size: var(--calendar-group-size, 0.72rem);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.calendar-block.is-compact .block-group,
+.calendar-block.is-compact .block-meta {
+  margin-top: 1px;
+  line-height: 1;
+}
+
+.calendar-block.is-compact .block-content > .block-group {
+  font-size: var(--calendar-group-size, 0.58rem);
+  font-weight: 700;
 }
 
 .preview-page {

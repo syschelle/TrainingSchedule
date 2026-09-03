@@ -254,18 +254,16 @@ def _draw_overview_page(pdf: canvas.Canvas, project: TrainingProject, page_width
     pdf.showPage()
 
 
-def _calendar_display_title(project: TrainingProject, block: ScheduleBlock) -> str:
-    """Return the compact visual title used by calendar-style output.
-
-    Participant-group names remain in the stored block title, but are omitted
-    from the visible calendar title. Automatically generated split labels such
-    as ``Gruppe 2/4`` remain visible.
-    """
+def _calendar_display_parts(project: TrainingProject, block: ScheduleBlock) -> tuple[str, str]:
+    """Return visual calendar title and optional generated split-group label."""
     if block.type == BlockType.arrival:
-        return "Anreise"
+        return "Anreise", ""
     if block.type != BlockType.training:
-        return block.title
+        return block.title, ""
 
+    topic = next((item for item in project.topics if item.id == block.topic_id), None)
+    title = (topic.title if topic else block.title).strip()
+    group_label = ""
     group_names = sorted(
         {
             group.name.strip()
@@ -284,8 +282,23 @@ def _calendar_display_title(project: TrainingProject, block: ScheduleBlock) -> s
         suffix = block.title[marker_index + len(marker):].lstrip()
         if suffix and not suffix.startswith("Gruppe "):
             continue
-        return f"{block.title[:marker_index]}{f' - {suffix}' if suffix else ''}"
-    return block.title
+        if topic is None:
+            title = block.title[:marker_index].strip()
+        group_label = suffix if suffix.startswith("Gruppe ") else ""
+        break
+    return title, group_label
+
+
+def _calendar_display_title(project: TrainingProject, block: ScheduleBlock) -> str:
+    """Return a compact one-line title for contexts that cannot show three lines."""
+    title, group_label = _calendar_display_parts(project, block)
+    return f"{title} - {group_label}" if group_label else title
+
+
+def _format_hours(minutes: int) -> str:
+    hours = max(0, minutes) / 60
+    value = f"{hours:.1f}" if hours.is_integer() else f"{hours:.2f}".rstrip("0").rstrip(".")
+    return f"{value.replace('.', ',')} h"
 
 
 def export_pdf(project: TrainingProject) -> bytes:
@@ -405,9 +418,14 @@ def export_pdf(project: TrainingProject) -> bytes:
                     pdf.roundRect(x + 3, y_bottom + 2, day_width - 6, block_height - 4, 3, fill=1, stroke=1)
                     text_color = _contrast_text(bg)
                     pdf.setFillColor(text_color)
-                    _draw_wrapped_text(pdf, _calendar_display_title(project, block), x + 7, y_top - 10, day_width - 14, "Helvetica-Bold", 6.8, 3)
+                    display_title, group_label = _calendar_display_parts(project, block)
+                    _draw_wrapped_text(pdf, display_title, x + 7, y_top - 10, day_width - 14, "Helvetica-Bold", 6.8, 1)
+                    if group_label:
+                        pdf.setFont("Helvetica-Bold", 5.9)
+                        pdf.drawString(x + 7, y_top - 21, group_label)
                     pdf.setFont("Helvetica", 5.8)
-                    pdf.drawString(x + 7, y_bottom + 6, f"{block.start}-{block.end}")
+                    duration_minutes = max(0, parse_time(block.end) - parse_time(block.start))
+                    pdf.drawString(x + 7, y_bottom + 6, f"{block.start}-{block.end} · {_format_hours(duration_minutes)}")
 
             pdf.setFillColor(colors.HexColor("#64748b"))
             pdf.setFont("Helvetica", 6)

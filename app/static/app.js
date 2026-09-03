@@ -1294,6 +1294,7 @@ function calendarBlockTypography(height) {
   const progress = Math.max(0, Math.min(1, (height - minHeight) / (fullSizeHeight - minHeight)));
   return {
     titleSize: 0.70 + (0.18 * progress),
+    groupSize: 0.58 + (0.16 * progress),
     metaSize: 0.56 + (0.22 * progress),
     titleLineHeight: 1.02 + (0.10 * progress),
   };
@@ -1302,14 +1303,18 @@ function calendarBlockTypography(height) {
 function applyCalendarBlockTypography(element, height) {
   const typography = calendarBlockTypography(height);
   element.style.setProperty("--calendar-title-size", `${typography.titleSize.toFixed(3)}rem`);
+  element.style.setProperty("--calendar-group-size", `${typography.groupSize.toFixed(3)}rem`);
   element.style.setProperty("--calendar-meta-size", `${typography.metaSize.toFixed(3)}rem`);
   element.style.setProperty("--calendar-title-line-height", typography.titleLineHeight.toFixed(3));
 }
 
-function calendarDisplayTitle(block) {
-  const displayTitle = block.type === "arrival" ? "Anreise" : block.title;
-  if (block.type !== "training") return displayTitle;
+function calendarDisplayParts(block) {
+  const displayTitle = block.type === "arrival" ? "Anreise" : String(block.title || "").trim();
+  if (block.type !== "training") return { title: displayTitle, groupLabel: "" };
 
+  const topic = (project.topics || []).find((item) => item.id === block.topic_id);
+  let title = String(topic?.title || displayTitle).trim();
+  let groupLabel = "";
   const groupNames = (project.product_lines || [])
     .flatMap((product) => product.participant_groups || [])
     .map((group) => String(group.name || "").trim())
@@ -1322,13 +1327,21 @@ function calendarDisplayTitle(block) {
     if (markerIndex < 0) continue;
     const suffix = displayTitle.slice(markerIndex + marker.length).trimStart();
     if (suffix && !suffix.startsWith("Gruppe ")) continue;
-    return `${displayTitle.slice(0, markerIndex)}${suffix ? ` - ${suffix}` : ""}`;
+    if (!topic?.title) title = displayTitle.slice(0, markerIndex).trim();
+    groupLabel = suffix.startsWith("Gruppe ") ? suffix : "";
+    break;
   }
-  return displayTitle;
+  return { title, groupLabel };
+}
+
+function calendarDisplayTitle(block) {
+  const parts = calendarDisplayParts(block);
+  return parts.groupLabel ? `${parts.title} - ${parts.groupLabel}` : parts.title;
 }
 
 function blockHtml(block, dayStart, calendarHeight, interactive = true) {
-  const displayTitle = calendarDisplayTitle(block);
+  const displayParts = calendarDisplayParts(block);
+  const displayTitle = displayParts.title;
   const start = toMinutes(block.start);
   const blockDuration = Math.max(calendarSnapMinutes, duration(block.start, block.end));
   const top = Math.max(0, ((start - dayStart) / 60) * calendarHourHeight);
@@ -1336,14 +1349,15 @@ function blockHtml(block, dayStart, calendarHeight, interactive = true) {
   const cappedHeight = Math.min(height, Math.max(44, calendarHeight - top));
   const compactClass = interactive && blockDuration <= 30 ? " is-compact" : "";
   const typography = calendarBlockTypography(cappedHeight);
-  const blockTooltip = `${displayTitle} · ${block.start}-${block.end} · ${formatHours(blockDuration)}`;
+  const blockTooltip = [displayTitle, displayParts.groupLabel, `${block.start}-${block.end} · ${formatHours(blockDuration)}`].filter(Boolean).join(" · ");
   const resizeHandles = interactive && block.type === "training" ? `
     <button type="button" class="calendar-resize-handle resize-start" draggable="false" aria-label="Startzeit ziehen" title="Startzeit in 15-Minuten-Schritten ziehen" onpointerdown="startBlockResize(event, '${block.id}', 'start')" ondragstart="event.preventDefault(); event.stopPropagation()"></button>
     <button type="button" class="calendar-resize-handle resize-end" draggable="false" aria-label="Endzeit ziehen" title="Endzeit in 15-Minuten-Schritten ziehen" onpointerdown="startBlockResize(event, '${block.id}', 'end')" ondragstart="event.preventDefault(); event.stopPropagation()"></button>` : "";
-  return `<article class="block calendar-block${compactClass} ${block.type} ${block.id === cutBlockId ? "is-cut" : ""}" data-block-id="${escapeHtml(block.id)}" title="${escapeHtml(blockTooltip)}" ${interactive ? `draggable="true" ondragstart="dragBlock(event, '${block.id}')"` : ""} style="top:${top}px;height:${cappedHeight}px;--block-bg:${escapeHtml(block.background_color || "#ffffff")};--calendar-title-size:${typography.titleSize.toFixed(3)}rem;--calendar-meta-size:${typography.metaSize.toFixed(3)}rem;--calendar-title-line-height:${typography.titleLineHeight.toFixed(3)}">
+  return `<article class="block calendar-block${compactClass} ${block.type} ${block.id === cutBlockId ? "is-cut" : ""}" data-block-id="${escapeHtml(block.id)}" title="${escapeHtml(blockTooltip)}" ${interactive ? `draggable="true" ondragstart="dragBlock(event, '${block.id}')"` : ""} style="top:${top}px;height:${cappedHeight}px;--block-bg:${escapeHtml(block.background_color || "#ffffff")};--calendar-title-size:${typography.titleSize.toFixed(3)}rem;--calendar-group-size:${typography.groupSize.toFixed(3)}rem;--calendar-meta-size:${typography.metaSize.toFixed(3)}rem;--calendar-title-line-height:${typography.titleLineHeight.toFixed(3)}">
     ${resizeHandles}
     <div class="block-content">
-      <strong>${escapeHtml(displayTitle)}</strong>
+      <strong class="block-title">${escapeHtml(displayTitle)}</strong>
+      ${displayParts.groupLabel ? `<span class="block-group">${escapeHtml(displayParts.groupLabel)}</span>` : ""}
       <span class="block-meta">${block.start}-${block.end} · ${formatHours(blockDuration)}</span>
     </div>
     ${interactive ? `<div class="block-actions">
@@ -1404,12 +1418,13 @@ function updateResizedBlockElement(block, element, calendarHeight) {
   const top = Math.max(0, ((toMinutes(block.start) - dayStart) / 60) * calendarHourHeight);
   const height = Math.max(44, (blockDuration / 60) * calendarHourHeight);
   const cappedHeight = Math.min(height, Math.max(44, calendarHeight - top));
-  const displayTitle = block.type === "arrival" ? "Anreise" : block.title;
+  const displayParts = calendarDisplayParts(block);
+  const displayTitle = displayParts.title;
   element.style.top = `${top}px`;
   element.style.height = `${cappedHeight}px`;
   applyCalendarBlockTypography(element, cappedHeight);
   element.classList.toggle("is-compact", blockDuration <= 30);
-  element.title = `${displayTitle} · ${block.start}-${block.end} · ${formatHours(blockDuration)}`;
+  element.title = [displayTitle, displayParts.groupLabel, `${block.start}-${block.end} · ${formatHours(blockDuration)}`].filter(Boolean).join(" · ");
   const meta = element.querySelector(".block-meta");
   if (meta) meta.textContent = `${block.start}-${block.end} · ${formatHours(blockDuration)}`;
 }
