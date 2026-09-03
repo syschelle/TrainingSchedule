@@ -1367,3 +1367,13 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Bestehende Projektdateien ohne diese Felder bleiben durch Defaults kompatibel.
 - Die Katalogeinstellung wird persistent als `split_enabled` gespeichert; bestehende Datenbanken werden beim Start automatisch erweitert.
 - Version auf `v0.2.47` erhoeht.
+
+
+## Erweiterung v0.2.48 - Produktkopf vereinfachen und Standarddaten-Reset entfernen
+
+- Im Anwendungsheader wird nur noch der Name des aktuell ausgewaehlten Produkts angezeigt, z. B. `DeepUnity PACS`. Der Praefix `Aktives Produkt:` entfaellt.
+- Der Button `Standarddaten` wird aus dem Header entfernt, da er die aktuellen Eingaben komplett durch Standardwerte ersetzt.
+- Die zugehoerige Reset-Ereignisbehandlung wird aus dem Frontend entfernt, sodass dieser Komplett-Reset nicht mehr versehentlich ueber die Benutzeroberflaeche ausgeloest werden kann.
+- `makeDefaultProject()` bleibt als interne Initialisierung fuer einen neuen Browserzustand bestehen.
+- Keine Datenbankmigration erforderlich.
+- Version auf `v0.2.48` erhoeht.

@@ -95,13 +95,6 @@ const $ = (selector) => document.querySelector(selector);
 document.addEventListener("DOMContentLoaded", () => {
   $("#openMenu").addEventListener("click", openSideMenu);
   $("#autoPlan").addEventListener("click", createPlan);
-  $("#resetDemo").addEventListener("click", () => {
-    project = makeDefaultProject();
-    transientManualWeeks = new Set();
-    activeTab = "overview";
-    currentPage = "input";
-    render();
-  });
   $("#backToInput").addEventListener("click", () => {
     currentPage = "input";
     renderPages();
@@ -173,7 +166,7 @@ function renderHeader() {
   const product = currentProduct();
   const headerProduct = $("#headerProduct");
   const headerContext = $("#headerContext");
-  if (headerProduct) headerProduct.textContent = `Aktives Produkt: ${product.name}`;
+  if (headerProduct) headerProduct.textContent = product.name;
   if (headerContext) headerContext.textContent = `${project.title || "Schulungsplan"} - Mehrtaegige Trainings planen, pruefen und exportieren.`;
 }
 

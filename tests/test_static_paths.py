@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.2.47"' in html
+    assert 'src="calendar.js?v=0.2.48"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -308,3 +308,14 @@ def test_training_content_editor_exposes_split_toggle_and_syncs_it_to_planning()
     assert 'topic.split_enabled = Boolean(content.split_enabled);' in javascript
     assert 'event.target.type === "checkbox"' in javascript
     assert '.split-training-option {' in css
+
+
+def test_header_shows_only_product_name_and_has_no_standard_data_reset() -> None:
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    assert '<p id="headerProduct" class="eyebrow">DeepUnity PACS</p>' in html
+    assert 'headerProduct.textContent = product.name;' in javascript
+    assert 'Aktives Produkt: ${product.name}' not in javascript
+    assert 'id="resetDemo"' not in html
+    assert '>Standarddaten<' not in html
+    assert '$("#resetDemo")' not in javascript

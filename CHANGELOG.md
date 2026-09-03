@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.2.48 - 2026-09-03
+
+- Der Produktkopf zeigt nur noch den Produktnamen; `Aktives Produkt:` wird nicht mehr vorangestellt.
+- Der Button `Standarddaten` wurde entfernt, um ein versehentliches Zuruecksetzen aller aktuellen Eingaben auf Standardwerte zu verhindern.
+- Die zugehoerige Frontend-Reset-Ereignisbehandlung wurde entfernt; die Standardprojektdefinition bleibt ausschliesslich fuer die initiale Projektanlage erhalten.
+- Keine Datenbankmigration erforderlich.
+
 ## v0.2.47 - 2026-09-03
 
 - Schulungsinhalte besitzen jetzt die Option `Schulungsblock teilen`.
