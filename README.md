@@ -1,6 +1,14 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.2.42**
+Aktuelle Version: **v0.2.43**
+
+## Aenderungen v0.2.43
+
+- Schulungsbloecke koennen jetzt direkt im Kalender an Ober- und Unterkante in 15-Minuten-Schritten skaliert werden.
+- Beim Ziehen werden Start-/Endzeit und Kachelhoehe live aktualisiert; danach laeuft die bestehende Planungsvalidierung.
+- Die Kachel-Metazeile zeigt statt des technischen Blocktyps `training` jetzt die Dauer in Stunden, z. B. `08:30-10:30 · 2,0 h`.
+- Auch kompakte 15-/30-Minuten-Kacheln zeigen die Zeit-/Dauerzeile in verkleinerter Form.
+- Verschieben kompletter Bloecke zwischen Zeit, Tag, Woche und Trainer bleibt unveraendert verfuegbar.
 
 ## Aenderungen v0.2.42
 
@@ -230,7 +238,7 @@ Erwartet:
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.2.42` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.2.43` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -238,7 +246,7 @@ Bei einem Release-Tag wie `v0.2.42` baut `.github/workflows/release-image.yml` n
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.42
+ghcr.io/syschelle/schulungsplantool:0.2.43
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -260,7 +268,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.2.42` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.2.43` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -268,7 +276,7 @@ Bei einem Release-Tag wie `v0.2.42` baut der Workflow `.github/workflows/release
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.42
+ghcr.io/syschelle/schulungsplantool:0.2.43
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 

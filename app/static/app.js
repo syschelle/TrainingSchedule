@@ -23,6 +23,7 @@ let activeTab = "overview";
 let currentPage = "input";
 let draggedBlockId = null;
 let draggedBlockOffsetMinutes = 0;
+let resizingBlock = null;
 let cutBlockId = null;
 const calendarHourHeight = 76;
 const calendarSnapMinutes = 15;
@@ -1205,7 +1206,7 @@ function renderWeek() {
   const trainers = calendarTrainers();
   $("#tab-week").innerHTML = `
     <div class="calendar-toolbar">
-      <div class="calendar-help">Bloecke koennen zwischen Tagen, Wochen und Trainern verschoben werden. Jeder Trainer besitzt pro Kalenderwoche eine eigene Wochenansicht.</div>
+      <div class="calendar-help">Schulungsblöcke können verschoben werden. Mit den Griffen an Ober- und Unterkante lassen sich Start- und Endzeit live im 15-Minuten-Raster anpassen. Jeder Trainer besitzt pro Kalenderwoche eine eigene Wochenansicht.</div>
       <button type="button" class="button button-secondary" onclick="addManualWeek()">Woche hinzufügen</button>
     </div>
     ${cutBlockId ? `<div class="cut-notice">Ausgeschnitten: ${escapeHtml(cutBlockTitle())}. Zieltag und Zieltrainer waehlen und Einfuegen klicken.</div>` : ""}
@@ -1295,11 +1296,15 @@ function blockHtml(block, dayStart, calendarHeight, interactive = true) {
   const height = Math.max(44, (blockDuration / 60) * calendarHourHeight);
   const cappedHeight = Math.min(height, Math.max(44, calendarHeight - top));
   const compactClass = interactive && blockDuration <= 30 ? " is-compact" : "";
-  const blockTooltip = `${displayTitle} · ${block.start}-${block.end}`;
-  return `<article class="block calendar-block${compactClass} ${block.type} ${block.id === cutBlockId ? "is-cut" : ""}" title="${escapeHtml(blockTooltip)}" ${interactive ? `draggable="true" ondragstart="dragBlock(event, '${block.id}')"` : ""} style="top:${top}px;height:${cappedHeight}px;--block-bg:${escapeHtml(block.background_color || "#ffffff")}">
-    <div>
+  const blockTooltip = `${displayTitle} · ${block.start}-${block.end} · ${formatHours(blockDuration)}`;
+  const resizeHandles = interactive && block.type === "training" ? `
+    <button type="button" class="calendar-resize-handle resize-start" draggable="false" aria-label="Startzeit ziehen" title="Startzeit in 15-Minuten-Schritten ziehen" onpointerdown="startBlockResize(event, '${block.id}', 'start')" ondragstart="event.preventDefault(); event.stopPropagation()"></button>
+    <button type="button" class="calendar-resize-handle resize-end" draggable="false" aria-label="Endzeit ziehen" title="Endzeit in 15-Minuten-Schritten ziehen" onpointerdown="startBlockResize(event, '${block.id}', 'end')" ondragstart="event.preventDefault(); event.stopPropagation()"></button>` : "";
+  return `<article class="block calendar-block${compactClass} ${block.type} ${block.id === cutBlockId ? "is-cut" : ""}" data-block-id="${escapeHtml(block.id)}" title="${escapeHtml(blockTooltip)}" ${interactive ? `draggable="true" ondragstart="dragBlock(event, '${block.id}')"` : ""} style="top:${top}px;height:${cappedHeight}px;--block-bg:${escapeHtml(block.background_color || "#ffffff")}">
+    ${resizeHandles}
+    <div class="block-content">
       <strong>${escapeHtml(displayTitle)}</strong>
-      <span>${block.start}-${block.end} · ${block.type}</span>
+      <span class="block-meta">${block.start}-${block.end} · ${formatHours(blockDuration)}</span>
     </div>
     ${interactive ? `<div class="block-actions">
       <button type="button" class="icon" onclick="cutBlock('${block.id}')" title="Ausschneiden">✂</button>
@@ -1308,6 +1313,77 @@ function blockHtml(block, dayStart, calendarHeight, interactive = true) {
       <button type="button" class="icon danger" onclick="removeBlock('${block.id}')" title="Loeschen">×</button>
     </div>` : ""}
   </article>`;
+}
+
+function startBlockResize(event, id, edge) {
+  if (event.button !== undefined && event.button !== 0) return;
+  const block = project.blocks.find((item) => item.id === id);
+  const element = event.currentTarget.closest(".calendar-block");
+  const dayBody = element?.closest(".calendar-day-body");
+  if (!block || block.type !== "training" || !element || !dayBody) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+  resizingBlock = { id, edge, element, dayBody, pointerId: event.pointerId };
+  element.classList.add("is-resizing");
+  element.setAttribute("draggable", "false");
+  document.body.classList.add("calendar-resizing");
+  if (event.currentTarget.setPointerCapture && event.pointerId !== undefined) {
+    try { event.currentTarget.setPointerCapture(event.pointerId); } catch (_) { /* no-op */ }
+  }
+  document.addEventListener("pointermove", resizeBlockPointerMove, { passive: false });
+  document.addEventListener("pointerup", finishBlockResize);
+  document.addEventListener("pointercancel", finishBlockResize);
+}
+
+function resizeBlockPointerMove(event) {
+  if (!resizingBlock || (resizingBlock.pointerId !== undefined && event.pointerId !== resizingBlock.pointerId)) return;
+  const block = project.blocks.find((item) => item.id === resizingBlock.id);
+  if (!block) return;
+
+  event.preventDefault();
+  const rect = resizingBlock.dayBody.getBoundingClientRect();
+  const dayStart = toMinutes(project.settings.day_start);
+  const dayEnd = toMinutes(project.settings.day_end);
+  const rawMinutes = dayStart + ((event.clientY - rect.top) / calendarHourHeight) * 60;
+  const pointerMinutes = Math.min(dayEnd, Math.max(dayStart, snapMinutes(rawMinutes)));
+  const currentStart = toMinutes(block.start);
+  const currentEnd = toMinutes(block.end);
+
+  if (resizingBlock.edge === "start") {
+    block.start = formatTime(Math.min(pointerMinutes, currentEnd - calendarSnapMinutes));
+  } else {
+    block.end = formatTime(Math.max(pointerMinutes, currentStart + calendarSnapMinutes));
+  }
+  updateResizedBlockElement(block, resizingBlock.element, rect.height);
+}
+
+function updateResizedBlockElement(block, element, calendarHeight) {
+  const dayStart = toMinutes(project.settings.day_start);
+  const blockDuration = Math.max(calendarSnapMinutes, duration(block.start, block.end));
+  const top = Math.max(0, ((toMinutes(block.start) - dayStart) / 60) * calendarHourHeight);
+  const height = Math.max(44, (blockDuration / 60) * calendarHourHeight);
+  const cappedHeight = Math.min(height, Math.max(44, calendarHeight - top));
+  const displayTitle = block.type === "arrival" ? "Anreise" : block.title;
+  element.style.top = `${top}px`;
+  element.style.height = `${cappedHeight}px`;
+  element.classList.toggle("is-compact", blockDuration <= 30);
+  element.title = `${displayTitle} · ${block.start}-${block.end} · ${formatHours(blockDuration)}`;
+  const meta = element.querySelector(".block-meta");
+  if (meta) meta.textContent = `${block.start}-${block.end} · ${formatHours(blockDuration)}`;
+}
+
+function finishBlockResize(event) {
+  if (!resizingBlock || (event?.pointerId !== undefined && resizingBlock.pointerId !== undefined && event.pointerId !== resizingBlock.pointerId)) return;
+  const element = resizingBlock.element;
+  element.classList.remove("is-resizing");
+  element.setAttribute("draggable", "true");
+  document.body.classList.remove("calendar-resizing");
+  resizingBlock = null;
+  document.removeEventListener("pointermove", resizeBlockPointerMove);
+  document.removeEventListener("pointerup", finishBlockResize);
+  document.removeEventListener("pointercancel", finishBlockResize);
+  validateAndRender();
 }
 
 function addManualWeek() {
@@ -1344,6 +1420,10 @@ function quarterGridLines(start, endValue) {
 }
 
 function dragBlock(event, id) {
+  if (resizingBlock) {
+    event.preventDefault();
+    return;
+  }
   draggedBlockId = id;
   const rect = event.currentTarget.getBoundingClientRect();
   draggedBlockOffsetMinutes = ((event.clientY - rect.top) / calendarHourHeight) * 60;
@@ -1824,6 +1904,12 @@ function formatDuration(minutes) {
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
   return hours ? `${hours} h ${rest} min` : `${rest} min`;
+}
+
+function formatHours(minutes) {
+  const hours = Math.max(0, Number(minutes) || 0) / 60;
+  const value = Number.isInteger(hours) ? hours.toFixed(1) : String(Math.round(hours * 100) / 100);
+  return `${value.replace(".", ",")} h`;
 }
 
 function escapeHtml(value) {

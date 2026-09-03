@@ -1308,3 +1308,16 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Vollstaendiger Titel sowie Start- und Endzeit bleiben als Tooltip erreichbar.
 - Die Blockhoehe darf nicht vergroessert werden, weil sie weiterhin die reale Dauer auf der Viertelstunden-Zeitachse abbilden muss.
 - Version auf `v0.2.42` erhoeht.
+
+
+## Erweiterung v0.2.43 - Live-Resize von Kalenderbloecken
+
+- Schulungsbloecke besitzen im interaktiven Kalender einen oberen und unteren Resize-Griff.
+- Oberer Griff aendert die Startzeit, unterer Griff die Endzeit.
+- Alle Aenderungen rasten im bestehenden 15-Minuten-Raster ein und werden waehrend des Ziehens live in Hoehe und Zeitdarstellung sichtbar.
+- Mindestdauer eines Schulungsblocks bleibt 15 Minuten; Tagesgrenzen werden respektiert.
+- Nach Loslassen wird die bestehende serverseitige Planungsvalidierung ausgefuehrt.
+- Die Metazeile der Kalenderkachel zeigt `Start-Ende · Dauer in Stunden`, z. B. `08:30-10:30 · 2,0 h`; der technische Text `training` entfaellt.
+- Auch kompakte 15-/30-Minuten-Kacheln zeigen diese Zeit-/Dauerzeile in kleiner Schrift.
+- Das bestehende Verschieben kompletter Bloecke zwischen Zeiten, Tagen, Wochen und Trainern bleibt erhalten.
+- Version auf `v0.2.43` erhoeht.

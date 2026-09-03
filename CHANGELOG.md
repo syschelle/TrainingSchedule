@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.2.43 - 2026-09-03
+
+- Schulungsbloecke im Kalender erhalten obere und untere Resize-Griffe fuer direkte Start-/Endzeit-Anpassung.
+- Resize arbeitet live auf dem bestehenden 15-Minuten-Raster und aktualisiert die Kachelhoehe sofort.
+- Nach Abschluss des Resize wird die bestehende Planungsvalidierung erneut ausgefuehrt.
+- Kalender-Metazeile zeigt Blockdauer in Stunden statt des technischen Labels `training`.
+- Auch kompakte 15-/30-Minuten-Kacheln zeigen die Zeit-/Dauerzeile in verkleinerter Form.
+- Bestehendes Drag-and-drop zum Verschieben kompletter Bloecke bleibt erhalten.
+- Keine Datenbankmigration erforderlich.
+
+
 ## v0.2.42 - 2026-09-03
 
 ### Kompakte Darstellung kurzer Kalenderbloecke

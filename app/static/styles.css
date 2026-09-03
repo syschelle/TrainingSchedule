@@ -879,6 +879,68 @@ textarea:focus {
   gap: 3px;
 }
 
+.calendar-resize-handle {
+  position: absolute;
+  left: 4px;
+  right: 58px;
+  z-index: 5;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.calendar-resize-handle::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  width: 34px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(49, 87, 213, 0.38);
+  opacity: 0;
+  transform: translateX(-50%);
+  transition: opacity 120ms ease;
+}
+
+.calendar-resize-handle.resize-start {
+  top: 0;
+}
+
+.calendar-resize-handle.resize-start::after {
+  top: 1px;
+}
+
+.calendar-resize-handle.resize-end {
+  bottom: 0;
+}
+
+.calendar-resize-handle.resize-end::after {
+  bottom: 1px;
+}
+
+.calendar-block:hover .calendar-resize-handle::after,
+.calendar-block.is-resizing .calendar-resize-handle::after {
+  opacity: 1;
+}
+
+.calendar-block.is-resizing {
+  z-index: 8;
+  box-shadow: 0 12px 28px rgba(26, 43, 74, 0.2);
+}
+
+.calendar-resizing,
+.calendar-resizing * {
+  user-select: none !important;
+}
+
+.calendar-block .block-meta {
+  font-variant-numeric: tabular-nums;
+}
+
 .calendar-block .icon {
   width: 22px;
   min-width: 22px;
@@ -901,21 +963,27 @@ textarea:focus {
   padding: 5px 44px 4px 8px;
 }
 
-.calendar-block.is-compact > div:first-child {
+.calendar-block.is-compact .block-content {
   min-width: 0;
 }
 
 .calendar-block.is-compact strong {
   display: -webkit-box;
   overflow: hidden;
-  font-size: 0.78rem;
-  line-height: 1.08;
+  font-size: 0.72rem;
+  line-height: 1.02;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
 
-.calendar-block.is-compact > div:first-child > span {
-  display: none;
+.calendar-block.is-compact .block-content > span {
+  display: block;
+  overflow: hidden;
+  margin-top: 1px;
+  font-size: 0.56rem;
+  line-height: 1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .calendar-block.is-compact .block-actions {
@@ -923,6 +991,16 @@ textarea:focus {
   right: 3px;
   grid-template-columns: repeat(2, 17px);
   gap: 2px;
+}
+
+.calendar-block.is-compact .calendar-resize-handle {
+  right: 44px;
+  height: 6px;
+}
+
+.calendar-block.is-compact .calendar-resize-handle::after {
+  width: 24px;
+  height: 2px;
 }
 
 .calendar-block.is-compact .icon {
