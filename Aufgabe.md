@@ -1297,3 +1297,14 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Eine ueber `Woche hinzufügen` neu angelegte leere Woche darf in der laufenden Bearbeitung temporaer sichtbar sein, damit dort der erste Block erstellt oder hineingezogen werden kann.
 - Vorhandene Projektdateien bleiben kompatibel; leere historische `manual_weeks` muessen fuer die Anzeige nicht geloescht werden.
 - Version auf `v0.2.41` erhoeht.
+
+
+## Erweiterung v0.2.42 - Kompakte kurze Kalenderbloecke
+
+- Kurze interaktive Kalenderkacheln mit 15 oder 30 Minuten Dauer erhalten eine kompakte Darstellung.
+- Die Aktionsbuttons muessen auch bei minimaler Blockhoehe vollstaendig sichtbar bleiben und duerfen nicht abgeschnitten werden.
+- Fuer kompakte Bloecke werden die vier Aktionen als kleinere 2x2-Gruppe dargestellt.
+- Der Titel darf bis zu zwei Zeilen nutzen; die sonstige Zeit-/Typ-Zeile wird bei kurzen interaktiven Bloecken ausgeblendet.
+- Vollstaendiger Titel sowie Start- und Endzeit bleiben als Tooltip erreichbar.
+- Die Blockhoehe darf nicht vergroessert werden, weil sie weiterhin die reale Dauer auf der Viertelstunden-Zeitachse abbilden muss.
+- Version auf `v0.2.42` erhoeht.

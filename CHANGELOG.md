@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.2.42 - 2026-09-03
+
+### Kompakte Darstellung kurzer Kalenderbloecke
+
+- 15- und 30-Minuten-Kalenderbloecke verwenden in der interaktiven Kalenderansicht eine eigene kompakte Darstellung.
+- Die vier Aktionsbuttons werden fuer kurze Bloecke als kleinere 2x2-Gruppe dargestellt und passen vollstaendig innerhalb der Kachelhoehe.
+- Der Blocktitel kann bis zu zwei Zeilen einnehmen; die zusaetzliche Zeit-/Typ-Zeile wird bei kurzen Kacheln ausgeblendet, damit Titel und Bedienelemente nicht abgeschnitten werden.
+- Der vollstaendige Titel sowie Start- und Endzeit sind weiterhin ueber den Tooltip des Kalenderblocks verfuegbar.
+- Die visuelle Blockhoehe bleibt an die reale Dauer gekoppelt und wird nicht kuenstlich vergroessert; dadurch bleibt die Viertelstunden-Zeitachse korrekt.
+
 ## v0.2.41 - 2026-09-02
 
 ### Leere Schulungswochen automatisch ausblenden

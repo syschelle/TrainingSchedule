@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.2.41"' in html
+    assert 'src="calendar.js?v=0.2.42"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -224,3 +224,16 @@ def test_empty_training_weeks_are_hidden_from_calendar_and_preview() -> None:
     assert '${scheduledWeeks().map((week)' in preview
     assert 'Wochen ohne Schulungsblöcke werden automatisch ausgeblendet.' in javascript
     assert 'hideEmptyTransientWeek(previousWeek);' in javascript
+
+
+def test_short_calendar_blocks_use_compact_non_clipping_layout() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    css = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
+    assert 'interactive && blockDuration <= 30 ? " is-compact" : ""' in javascript
+    assert 'title="${escapeHtml(blockTooltip)}"' in javascript
+    assert ".calendar-block.is-compact .block-actions" in css
+    assert "grid-template-columns: repeat(2, 17px);" in css
+    assert ".calendar-block.is-compact .icon" in css
+    assert "height: 17px;" in css
+    assert ".calendar-block.is-compact > div:first-child > span" in css
+    assert "-webkit-line-clamp: 2;" in css

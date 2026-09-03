@@ -896,6 +896,45 @@ textarea:focus {
   background: var(--danger-soft);
 }
 
+/* Short 15/30-minute calendar blocks need a denser action layout so controls stay visible. */
+.calendar-block.is-compact {
+  padding: 5px 44px 4px 8px;
+}
+
+.calendar-block.is-compact > div:first-child {
+  min-width: 0;
+}
+
+.calendar-block.is-compact strong {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.78rem;
+  line-height: 1.08;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.calendar-block.is-compact > div:first-child > span {
+  display: none;
+}
+
+.calendar-block.is-compact .block-actions {
+  top: 3px;
+  right: 3px;
+  grid-template-columns: repeat(2, 17px);
+  gap: 2px;
+}
+
+.calendar-block.is-compact .icon {
+  width: 17px;
+  min-width: 17px;
+  height: 17px;
+  min-height: 17px;
+  padding: 0;
+  border-radius: 4px;
+  font-size: 0.56rem;
+}
+
 .calendar-block:hover {
   border-color: rgba(49, 87, 213, 0.42);
   box-shadow: 0 10px 22px rgba(26, 43, 74, 0.15);

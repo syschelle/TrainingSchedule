@@ -1,6 +1,10 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.2.41**
+Aktuelle Version: **v0.2.42**
+
+## Aenderungen v0.2.42
+
+Kurze Kalenderbloecke (15/30 Minuten) verwenden jetzt eine kompakte Darstellung. Die vier Aktionsbuttons werden verkleinert und passen vollstaendig in die Kachel; der Titel kann bis zu zwei Zeilen nutzen. Die zusaetzliche Zeit-/Typ-Zeile wird bei kurzen interaktiven Kacheln ausgeblendet, damit nichts abgeschnitten wird. Der vollstaendige Titel sowie Start- und Endzeit bleiben als Tooltip am Block verfuegbar. Die zeitliche Hoehe des Blocks wird nicht vergroessert, damit die Kalenderachse weiterhin korrekt bleibt.
 
 ## Aenderungen v0.2.41
 
@@ -221,12 +225,12 @@ curl http://127.0.0.1:18083/api/health
 Erwartet:
 
 ```json
-{"status":"ok","version":"0.2.41"}
+{"status":"ok","version":"0.2.42"}
 ```
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.2.41` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.2.42` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -234,7 +238,7 @@ Bei einem Release-Tag wie `v0.2.41` baut `.github/workflows/release-image.yml` n
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.41
+ghcr.io/syschelle/schulungsplantool:0.2.42
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -256,7 +260,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.2.41` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.2.42` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -264,7 +268,7 @@ Bei einem Release-Tag wie `v0.2.41` baut der Workflow `.github/workflows/release
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.41
+ghcr.io/syschelle/schulungsplantool:0.2.42
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 

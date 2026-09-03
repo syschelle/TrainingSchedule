@@ -1294,7 +1294,9 @@ function blockHtml(block, dayStart, calendarHeight, interactive = true) {
   const top = Math.max(0, ((start - dayStart) / 60) * calendarHourHeight);
   const height = Math.max(44, (blockDuration / 60) * calendarHourHeight);
   const cappedHeight = Math.min(height, Math.max(44, calendarHeight - top));
-  return `<article class="block calendar-block ${block.type} ${block.id === cutBlockId ? "is-cut" : ""}" ${interactive ? `draggable="true" ondragstart="dragBlock(event, '${block.id}')"` : ""} style="top:${top}px;height:${cappedHeight}px;--block-bg:${escapeHtml(block.background_color || "#ffffff")}">
+  const compactClass = interactive && blockDuration <= 30 ? " is-compact" : "";
+  const blockTooltip = `${displayTitle} · ${block.start}-${block.end}`;
+  return `<article class="block calendar-block${compactClass} ${block.type} ${block.id === cutBlockId ? "is-cut" : ""}" title="${escapeHtml(blockTooltip)}" ${interactive ? `draggable="true" ondragstart="dragBlock(event, '${block.id}')"` : ""} style="top:${top}px;height:${cappedHeight}px;--block-bg:${escapeHtml(block.background_color || "#ffffff")}">
     <div>
       <strong>${escapeHtml(displayTitle)}</strong>
       <span>${block.start}-${block.end} · ${block.type}</span>
