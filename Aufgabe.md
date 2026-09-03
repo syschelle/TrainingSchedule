@@ -1377,3 +1377,20 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - `makeDefaultProject()` bleibt als interne Initialisierung fuer einen neuen Browserzustand bestehen.
 - Keine Datenbankmigration erforderlich.
 - Version auf `v0.2.48` erhoeht.
+
+## Erweiterung v0.3.0 - Gefuehrter Projektworkflow
+
+- Der normale Planungsablauf wird in sechs klar getrennte Schritte gegliedert: `Produkt`, `Projekt`, `Personen`, `Schulungen`, `Zeiten`, `Pruefen`.
+- Der Workflow-Fortschritt wird dauerhaft kompakt im Sticky-Header angezeigt; Schritte bleiben direkt erreichbar.
+- Die Produktwahl findet vor allen Projektstammdaten statt. Produktpflege und Schulungsinhalte bleiben eigenstaendige Verwaltungsbereiche.
+- Projektstammdaten zeigen primaer nur Kunde, Standort und Startdatum; selten benoetigte Angaben liegen unter `Weitere Angaben`.
+- Trainer und Teilnehmergruppen werden gemeinsam im Schritt `Personen` erfasst und durch eine kompakte Summenzeile zusammengefasst.
+- Projektbezogene Schulungen werden aus dem bestehenden Schulungsinhalte-Katalog ausgewaehlt und nicht mehr als zweite Stammdatenkopie editiert.
+- Der Schritt `Zeiten` zeigt haeufig benoetigte Einstellungen direkt und verschiebt seltene Regeln unter `Weitere Planungsregeln`.
+- `Pruefen` fasst die Eingaben kompakt zusammen und ist der einzige Workflow-Schritt mit `Plan erstellen`.
+- Navigation zwischen `Eingabe` und `Schulungsplan` darf keine automatische Neuplanung ausloesen.
+- Werden Eingaben nach einer vorhandenen Planung geaendert, bleiben alle Kalenderbloecke erhalten und der Zustand wird als `Eingaben geaendert` markiert. Erst der explizite Klick auf `Plan neu erstellen` ersetzt den Kalender.
+- Das Seitenmenue trennt `Projekt` von `Verwaltung`, damit neue Anwender Produkt-/Inhaltspflege nicht mit der aktuellen Projektplanung verwechseln.
+- Neue Projekte starten ohne Beispiel-Teilnehmerzahlen, ohne Startdatum und ohne automatisch ausgewaehlte Schulungsinhalte.
+- Keine Datenbankmigration erforderlich.
+- Version auf `v0.3.0` erhoeht.

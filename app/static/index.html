@@ -6,98 +6,149 @@
   <meta name="referrer" content="no-referrer">
   <meta name="robots" content="noindex, nofollow">
   <title>Schulungsplantool</title>
-  <link rel="stylesheet" href="styles.css?v=0.2.48">
-  <script defer src="calendar.js?v=0.2.48"></script>
-  <script defer src="app.js?v=0.2.48"></script>
+  <link rel="stylesheet" href="styles.css?v=0.3.0">
+  <script defer src="calendar.js?v=0.3.0"></script>
+  <script defer src="app.js?v=0.3.0"></script>
 </head>
 <body>
   <header class="topbar">
-    <div class="header-main">
-      <button type="button" id="openMenu" class="menu-toggle" aria-label="Navigation umschalten">☰</button>
-      <div class="topbar-title">
-        <p id="headerProduct" class="eyebrow">DeepUnity PACS</p>
-        <h1>Schulungsplantool</h1>
-        <p id="headerContext" class="subtitle">DeepUnity Schulungsplan - Mehrtaegige Trainings planen, pruefen und exportieren.</p>
+    <div class="topbar-row">
+      <div class="header-main">
+        <button type="button" id="openMenu" class="menu-toggle" aria-label="Navigation umschalten">☰</button>
+        <div class="topbar-title">
+          <p id="headerProduct" class="eyebrow">DeepUnity PACS</p>
+          <h1>Schulungsplantool</h1>
+          <p id="headerContext" class="subtitle">Neues Schulungsprojekt</p>
+        </div>
+      </div>
+      <div class="header-workspace-switch" aria-label="Projektansicht">
+        <button type="button" id="headerInputView" class="header-view-button active">Eingabe</button>
+        <button type="button" id="headerPlanView" class="header-view-button">Schulungsplan</button>
+      </div>
+      <div class="topbar-actions">
+        <span id="planSyncStatus" class="plan-sync-status" hidden></span>
+        <span class="version">v0.3.0</span>
       </div>
     </div>
-    <button type="button" id="autoPlan" class="feedback-link header-button">Plan erstellen</button>
-    <div class="topbar-actions">
-      <span class="version">v0.2.48</span>
-    </div>
+    <nav id="workflowProgress" class="workflow-progress" aria-label="Fortschritt der Planung"></nav>
   </header>
 
   <main class="layout">
     <aside id="sideMenu" class="side-menu" aria-label="Seitennavigation">
-      <p class="eyebrow">Navigation</p>
+      <p class="menu-section-label">Projekt</p>
       <nav class="menu-nav">
         <button type="button" data-page="input" class="menu-nav-button active">Eingabe</button>
+        <button type="button" data-page="plan" class="menu-nav-button">Schulungsplan</button>
+        <button type="button" id="validationNavButton" data-page="validation" class="menu-nav-button">Planungsprüfung</button>
+      </nav>
+      <p class="menu-section-label menu-section-spaced">Verwaltung</p>
+      <nav class="menu-nav">
         <button type="button" data-page="products" class="menu-nav-button">Produktdaten</button>
         <button type="button" data-page="contents" class="menu-nav-button">Schulungsinhalte</button>
-        <button type="button" data-page="plan" class="menu-nav-button">Schulungsplan</button>
-        <button type="button" id="validationNavButton" data-page="validation" class="menu-nav-button">Planungspruefung</button>
       </nav>
     </aside>
 
     <div class="main-content">
       <section id="input-page" class="workspace app-page active">
-        <form id="planner-form" autocomplete="off" novalidate>
-        <div class="card">
-          <div class="card-heading">
-            <div>
-              <p class="step">1</p>
-              <h2>Grunddaten</h2>
-            </div>
-            <div class="card-heading-actions">
-              <button type="button" data-page="plan" id="showExistingPlan" class="button button-ghost" title="Vorhandenen Schulungsplan anzeigen, ohne neu zu planen">Schulungsplan</button>
-              <button type="button" id="importProject" class="button button-secondary">Planung importieren</button>
-              <input type="file" id="projectImportInput" accept=".json,application/json" hidden>
-            </div>
+        <div class="workflow-shell">
+          <div class="workflow-top-actions">
+            <button type="button" id="importProject" class="button button-ghost">Planung öffnen</button>
+            <input type="file" id="projectImportInput" accept=".json,application/json" hidden>
+            <button type="button" data-page="plan" id="showExistingPlan" class="button button-ghost">Schulungsplan anzeigen</button>
           </div>
-          <div id="base-fields" class="field-grid"></div>
-        </div>
 
-        <div class="card">
-          <div class="card-heading">
-            <div>
-              <p class="step">2</p>
-              <h2>Planungsregeln</h2>
-            </div>
-          </div>
-          <div id="settings-fields" class="field-grid"></div>
-        </div>
+          <form id="planner-form" autocomplete="off" novalidate>
+            <section class="workflow-panel active" data-workflow-panel="product" aria-labelledby="workflow-product-title">
+              <div class="workflow-panel-heading">
+                <span class="workflow-number">1</span>
+                <div><p class="eyebrow workflow-kicker">Start</p><h2 id="workflow-product-title">Produkt wählen</h2></div>
+              </div>
+              <div id="workflow-product-options" class="product-choice-grid"></div>
+              <div class="workflow-actions workflow-actions-end">
+                <button type="button" class="button button-primary" data-workflow-next="project">Weiter</button>
+              </div>
+            </section>
 
-        <div class="card">
-          <div class="card-heading">
-            <div>
-              <p class="step">3</p>
-              <h2>Teilnehmergruppen</h2>
-            </div>
-            <button type="button" id="addGroup" class="button button-ghost">Gruppe</button>
-          </div>
-          <div id="participant-group-panel" class="participant-groups"></div>
-        </div>
+            <section class="workflow-panel" data-workflow-panel="project" aria-labelledby="workflow-project-title">
+              <div class="workflow-panel-heading">
+                <span class="workflow-number">2</span>
+                <div><p class="eyebrow workflow-kicker">Stammdaten</p><h2 id="workflow-project-title">Projekt</h2></div>
+              </div>
+              <div id="base-fields" class="field-grid workflow-field-grid"></div>
+              <details class="workflow-disclosure">
+                <summary>Weitere Angaben</summary>
+                <div id="project-advanced-fields" class="field-grid workflow-field-grid"></div>
+              </details>
+              <div class="workflow-actions">
+                <button type="button" class="button button-ghost" data-workflow-back="product">Zurück</button>
+                <button type="button" class="button button-primary" data-workflow-next="people">Weiter</button>
+              </div>
+            </section>
 
-        <div class="card">
-          <div class="card-heading">
-            <div>
-              <p class="step">4</p>
-              <h2>Schulungsthemen</h2>
-            </div>
-            <button type="button" id="addTopic" class="button button-ghost">Thema</button>
-          </div>
-          <div id="topic-list" class="topic-list"></div>
-        </div>
-        </form>
+            <section class="workflow-panel" data-workflow-panel="people" aria-labelledby="workflow-people-title">
+              <div class="workflow-panel-heading">
+                <span class="workflow-number">3</span>
+                <div><p class="eyebrow workflow-kicker">Personen</p><h2 id="workflow-people-title">Trainer & Teilnehmer</h2></div>
+              </div>
+              <div id="trainer-workflow-panel"></div>
+              <div class="workflow-subsection">
+                <div class="workflow-subheading"><h3>Teilnehmergruppen</h3><button type="button" id="addGroup" class="button button-ghost button-small">+ Gruppe</button></div>
+                <div id="participant-group-panel" class="participant-groups"></div>
+              </div>
+              <div id="people-summary" class="workflow-inline-summary"></div>
+              <div class="workflow-actions">
+                <button type="button" class="button button-ghost" data-workflow-back="project">Zurück</button>
+                <button type="button" class="button button-primary" data-workflow-next="training">Weiter</button>
+              </div>
+            </section>
 
+            <section class="workflow-panel" data-workflow-panel="training" aria-labelledby="workflow-training-title">
+              <div class="workflow-panel-heading">
+                <span class="workflow-number">4</span>
+                <div><p class="eyebrow workflow-kicker">Auswahl</p><h2 id="workflow-training-title">Schulungen</h2></div>
+              </div>
+              <div id="training-selection" class="training-choice-list"></div>
+              <div id="training-summary" class="workflow-inline-summary"></div>
+              <div class="workflow-actions">
+                <button type="button" class="button button-ghost" data-workflow-back="people">Zurück</button>
+                <button type="button" class="button button-primary" data-workflow-next="time">Weiter</button>
+              </div>
+            </section>
+
+            <section class="workflow-panel" data-workflow-panel="time" aria-labelledby="workflow-time-title">
+              <div class="workflow-panel-heading">
+                <span class="workflow-number">5</span>
+                <div><p class="eyebrow workflow-kicker">Rahmen</p><h2 id="workflow-time-title">Zeiten</h2></div>
+              </div>
+              <div id="settings-fields" class="time-settings"></div>
+              <details class="workflow-disclosure">
+                <summary>Weitere Planungsregeln</summary>
+                <div id="advanced-settings-fields" class="field-grid workflow-field-grid"></div>
+              </details>
+              <div class="workflow-actions">
+                <button type="button" class="button button-ghost" data-workflow-back="training">Zurück</button>
+                <button type="button" class="button button-primary" data-workflow-next="review">Weiter</button>
+              </div>
+            </section>
+
+            <section class="workflow-panel" data-workflow-panel="review" aria-labelledby="workflow-review-title">
+              <div class="workflow-panel-heading">
+                <span class="workflow-number">6</span>
+                <div><p class="eyebrow workflow-kicker">Abschluss</p><h2 id="workflow-review-title">Prüfen</h2></div>
+              </div>
+              <div id="workflow-review" class="workflow-review"></div>
+              <div class="workflow-actions">
+                <button type="button" class="button button-ghost" data-workflow-back="time">Zurück</button>
+                <button type="button" id="autoPlan" class="button button-primary button-plan">Plan erstellen</button>
+              </div>
+            </section>
+          </form>
+        </div>
       </section>
 
       <section id="products-page" class="workspace app-page">
         <div class="card">
-          <div class="card-heading">
-            <div>
-              <h2>Produktdaten</h2>
-            </div>
-          </div>
+          <div class="card-heading"><div><h2>Produktdaten</h2></div></div>
           <div id="product-menu-panel" class="input-product-panel"></div>
         </div>
       </section>
@@ -105,13 +156,11 @@
       <section id="contents-page" class="workspace app-page">
         <div class="card">
           <div class="card-heading">
-          <div>
-            <h2>Hinterlegte Schulungsinhalte</h2>
-          </div>
-          <div class="card-heading-actions">
-            <button type="button" id="addTrainingContent" class="button button-secondary">Inhalt anlegen</button>
-            <span id="catalog-status" class="muted">Katalog wird geladen.</span>
-          </div>
+            <div><h2>Hinterlegte Schulungsinhalte</h2></div>
+            <div class="card-heading-actions">
+              <button type="button" id="addTrainingContent" class="button button-secondary">Inhalt anlegen</button>
+              <span id="catalog-status" class="muted">Katalog wird geladen.</span>
+            </div>
           </div>
           <div class="content-manager">
             <nav id="content-link-list" class="content-link-list" aria-label="Schulungsinhalte"></nav>
@@ -122,39 +171,35 @@
 
       <section id="plan-page" class="workspace app-page">
         <aside class="card output-card plan-card" aria-live="polite">
-        <div class="card-heading">
-          <div>
-            <p class="step">5</p>
-            <h2>Schulungsplan</h2>
+          <div class="card-heading">
+            <div><h2>Schulungsplan</h2></div>
+            <div class="card-heading-actions">
+              <button type="button" id="backToInput" class="button button-ghost">Eingabe</button>
+              <button type="button" id="exportProject" class="button button-secondary">Planung exportieren</button>
+              <button type="button" id="exportPdf" class="button button-primary">PDF</button>
+              <button type="button" id="exportXlsx" class="button button-primary">XLSX</button>
+            </div>
           </div>
-          <div class="card-heading-actions">
-            <button type="button" id="backToInput" class="button button-ghost">Eingabe</button>
-            <button type="button" id="exportProject" class="button button-secondary">Planung exportieren</button>
-            <button type="button" id="exportPdf" class="button button-primary">PDF</button>
-            <button type="button" id="exportXlsx" class="button button-primary">XLSX</button>
+          <div id="planDirtyBanner" class="plan-dirty-banner" hidden>
+            <span>Eingaben wurden geändert. Der Kalender bleibt unverändert, bis du neu planst.</span>
+            <button type="button" id="reviewChangedInputs" class="button button-secondary">Plan neu erstellen</button>
           </div>
-        </div>
-
-        <div class="button-row">
-          <button type="button" data-tab="overview" class="button button-secondary active">Uebersicht</button>
-          <button type="button" data-tab="week" class="button button-secondary">Woche</button>
-          <button type="button" data-tab="preview" class="button button-secondary">Vorschau</button>
-        </div>
-
-        <div id="status-line" class="status">Bereit.</div>
-        <div id="tab-overview" class="tab-panel active"></div>
-        <div id="tab-week" class="tab-panel"></div>
-        <div id="tab-preview" class="tab-panel"></div>
+          <div class="button-row">
+            <button type="button" data-tab="overview" class="button button-secondary active">Übersicht</button>
+            <button type="button" data-tab="week" class="button button-secondary">Woche</button>
+            <button type="button" data-tab="preview" class="button button-secondary">Vorschau</button>
+          </div>
+          <div id="status-line" class="status">Bereit.</div>
+          <div id="tab-overview" class="tab-panel active"></div>
+          <div id="tab-week" class="tab-panel"></div>
+          <div id="tab-preview" class="tab-panel"></div>
         </aside>
       </section>
 
       <section id="validation-page" class="workspace app-page">
         <div class="card validation-card">
           <div class="card-heading">
-            <div>
-              <h2>Planungspruefung</h2>
-              <p class="muted">Konflikte und Hinweise werden hier getrennt vom Kalender angezeigt. Beim Verschieben von Bloecken bleibt die Kalenderposition dadurch stabil.</p>
-            </div>
+            <div><h2>Planungsprüfung</h2></div>
             <span id="validationCount" class="validation-count">0 Hinweise</span>
           </div>
           <div id="warnings" class="warnings validation-warnings"></div>
@@ -258,7 +303,7 @@
   </div>
 
   <footer>
-    <span>Schulungsplantool v0.2.48</span>
+    <span>Schulungsplantool v0.3.0</span>
   </footer>
 </body>
 </html>

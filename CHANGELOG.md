@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.3.0 - 2026-09-03
+
+### Gefuehrter Planungsworkflow
+
+- Die Stammdateneingabe wurde fuer neue Anwender grundlegend als gefuehrter Workflow neu aufgebaut: `Produkt -> Projekt -> Personen -> Schulungen -> Zeiten -> Pruefen`.
+- Der Fortschritt ist dauerhaft kompakt im Sticky-Header sichtbar; erledigte und aktuelle Schritte sind klar unterscheidbar und direkt erreichbar.
+- Das Produkt wird vor allen projektspezifischen Eingaben ausgewaehlt. Produktpflege und Schulungsinhalte-Verwaltung bleiben bewusst ausserhalb des Projektworkflows.
+- Projektstammdaten wurden auf Kunde, Standort und Startdatum reduziert; selten benoetigte Angaben liegen unter `Weitere Angaben`.
+- Trainer und Teilnehmergruppen befinden sich gemeinsam im Schritt `Personen` und zeigen eine laufende Zusammenfassung von Trainern, Teilnehmern und Gruppen.
+- Im Schritt `Schulungen` werden vorhandene Schulungsinhalte nur noch ausgewaehlt statt im Projekt erneut bearbeitet. Dauer, Teilnehmerzuordnung, Kapazitaet und Split-Status werden kompakt angezeigt.
+- Haufige Zeitvorgaben sind direkt sichtbar; selten benoetigte Regeln liegen unter `Weitere Planungsregeln`.
+- Der neue Schritt `Pruefen` fasst Projekt, Personen, Schulungen und Zeiten kompakt zusammen und ist der einzige Ort fuer `Plan erstellen`.
+- Eingaben erzeugen oder ersetzen keinen Kalender. Nach Aenderungen an einem bestehenden Projekt bleibt der manuell bearbeitete Kalender bestehen und wird als `Eingaben geaendert` markiert, bis der Anwender explizit neu plant.
+- `Eingabe` und `Schulungsplan` sind im Header als direkte Projektansichten erreichbar; ein Planwechsel loest keine automatische Neuplanung aus.
+- Die Navigation ist in `Projekt` und `Verwaltung` gegliedert, damit Produkt-/Inhaltspflege klar vom aktuellen Schulungsprojekt getrennt bleibt.
+- Neue Projekte starten ohne vorgefuellte Teilnehmerzahlen, ohne Startdatum und ohne automatisch ausgewaehlte Schulungsinhalte.
+- Keine Datenbankmigration erforderlich.
+
 ## v0.2.48 - 2026-09-03
 
 - Der Produktkopf zeigt nur noch den Produktnamen; `Aktives Produkt:` wird nicht mehr vorangestellt.

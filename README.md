@@ -1,6 +1,20 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.2.48**
+Aktuelle Version: **v0.3.0**
+
+## Aenderungen v0.3.0
+
+- Neue gefuehrte Projekteingabe mit sechs klaren Schritten: `Produkt`, `Projekt`, `Personen`, `Schulungen`, `Zeiten`, `Pruefen`.
+- Kompakter Sticky-Fortschrittsbalken im Header mit direkt erreichbaren Schritten.
+- Produkt wird zuerst ausgewaehlt; Produktdaten und Schulungsinhalte bleiben separate Verwaltungsbereiche.
+- Projektstammdaten sind auf die wesentlichen Eingaben reduziert. Selten benoetigte Angaben und Regeln sind aufklappbar.
+- Trainer und Teilnehmergruppen werden gemeinsam erfasst und sofort zusammengefasst.
+- Schulungsinhalte werden im Projekt nur noch aus dem hinterlegten Katalog ausgewaehlt; ihre Stammdaten werden nicht doppelt gepflegt.
+- `Plan erstellen` befindet sich ausschliesslich im abschliessenden Pruefschritt. Navigation zwischen Eingabe und Kalender erzeugt niemals automatisch einen neuen Plan.
+- Nach Aenderungen an Eingaben bleibt ein vorhandener manuell bearbeiteter Kalender bestehen und wird sichtbar als nicht mehr synchron markiert.
+- Neue Projekte starten ohne vorgefuellte Teilnehmerzahlen, Startdatum oder automatisch gewaehlte Schulungen.
+- Navigation trennt `Projekt` und `Verwaltung` deutlicher voneinander.
+- Keine Datenbankmigration erforderlich.
 
 ## Aenderungen v0.2.48
 
@@ -270,12 +284,12 @@ curl http://127.0.0.1:18083/api/health
 Erwartet:
 
 ```json
-{"status":"ok","version":"0.2.48"}
+{"status":"ok","version":"0.3.0"}
 ```
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.2.48` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.3.0` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -283,7 +297,7 @@ Bei einem Release-Tag wie `v0.2.48` baut `.github/workflows/release-image.yml` n
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.48
+ghcr.io/syschelle/schulungsplantool:0.3.0
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -305,7 +319,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.2.48` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.3.0` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -313,7 +327,7 @@ Bei einem Release-Tag wie `v0.2.48` baut der Workflow `.github/workflows/release
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.48
+ghcr.io/syschelle/schulungsplantool:0.3.0
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 

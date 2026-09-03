@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.2.48"' in html
+    assert 'src="calendar.js?v=0.3.0"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -125,8 +125,8 @@ def test_validation_warnings_are_separate_from_calendar_page() -> None:
     assert 'id="warnings"' in validation_page
     assert 'id="validationNavButton"' in html
     assert 'id="validationCount"' in validation_page
-    assert 'Planungspruefung' in html
-    assert 'nav.textContent = warnings.length ? `Planungspruefung (${warnings.length})`' in javascript
+    assert 'Planungsprüfung' in html
+    assert 'nav.textContent = warnings.length ? `Planungsprüfung (${warnings.length})`' in javascript
 
 
 def test_calendar_block_editor_is_embedded_and_replaces_prompt_editing() -> None:
@@ -319,3 +319,77 @@ def test_header_shows_only_product_name_and_has_no_standard_data_reset() -> None
     assert 'id="resetDemo"' not in html
     assert '>Standarddaten<' not in html
     assert '$("#resetDemo")' not in javascript
+
+
+def test_v030_guided_workflow_has_six_header_steps_and_sticky_progress() -> None:
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    css = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
+    assert 'id="workflowProgress"' in html
+    assert 'const workflowSteps = [' in javascript
+    for step in ['"product", label: "Produkt"', '"project", label: "Projekt"', '"people", label: "Personen"', '"training", label: "Schulungen"', '"time", label: "Zeiten"', '"review", label: "Prüfen"']:
+        assert step in javascript
+    assert ".topbar {" in css
+    assert "position: sticky;" in css
+    assert ".workflow-progress-step.current" in css
+
+
+def test_v030_product_selection_is_first_and_catalog_editing_stays_separate() -> None:
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    product_panel = html.split('data-workflow-panel="product"', 1)[1].split('data-workflow-panel="project"', 1)[0]
+    assert "Produkt wählen" in product_panel
+    assert 'id="workflow-product-options"' in product_panel
+    assert 'data-workflow-product=' in javascript
+    assert 'id="products-page"' in html
+    assert "Produktdaten" in html
+
+
+def test_v030_plan_is_created_only_from_review_and_navigation_preserves_calendar() -> None:
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    review_panel = html.split('data-workflow-panel="review"', 1)[1].split('</section>', 1)[0]
+    assert 'id="autoPlan"' in review_panel
+    assert javascript.count('fetch("api/plan"') == 1
+    assert "function markPlanningInputsChanged()" in javascript
+    assert "if (project.blocks.length) planInputsDirty = true;" in javascript
+    assert 'id="planDirtyBanner"' in html
+    navigation = javascript.split("function navigatePage(page)", 1)[1].split("function contentCard", 1)[0]
+    assert "createPlan(" not in navigation
+
+
+def test_v030_workflow_uses_selection_not_topic_editing_for_project_schools() -> None:
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    training_panel = html.split('data-workflow-panel="training"', 1)[1].split('data-workflow-panel="time"', 1)[0]
+    assert 'id="training-selection"' in training_panel
+    assert 'id="topic-list"' not in training_panel
+    assert 'data-training-choice=' in javascript
+    assert "function toggleTrainingContent(event)" in javascript
+    assert 'id="contents-page"' in html
+
+
+def test_v030_common_time_settings_are_visible_and_advanced_rules_are_disclosed() -> None:
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    time_panel = html.split('data-workflow-panel="time"', 1)[1].split('data-workflow-panel="review"', 1)[0]
+    assert 'id="settings-fields"' in time_panel
+    assert "Weitere Planungsregeln" in time_panel
+    assert 'id="advanced-settings-fields"' in time_panel
+    assert "Montag · Anreise" in javascript
+    assert "Donnerstag · Abreise" in javascript
+    assert "Pause min." in javascript
+    assert "Freitag für Schulung nutzen" in javascript
+
+
+def test_v030_project_menu_separates_project_workflow_from_administration() -> None:
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    assert '<p class="menu-section-label">Projekt</p>' in html
+    assert '<p class="menu-section-label menu-section-spaced">Verwaltung</p>' in html
+    project_part = html.split('<p class="menu-section-label">Projekt</p>', 1)[1].split('<p class="menu-section-label menu-section-spaced">Verwaltung</p>', 1)[0]
+    admin_part = html.split('<p class="menu-section-label menu-section-spaced">Verwaltung</p>', 1)[1].split('</aside>', 1)[0]
+    assert 'data-page="input"' in project_part
+    assert 'data-page="plan"' in project_part
+    assert 'data-page="validation"' in project_part
+    assert 'data-page="products"' in admin_part
+    assert 'data-page="contents"' in admin_part

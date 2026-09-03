@@ -35,6 +35,17 @@ let markdownPendingChangeType = "saved";
 let blockEditorBlockId = null;
 let transientManualWeeks = new Set();
 let project = makeDefaultProject();
+const workflowSteps = [
+  { id: "product", label: "Produkt", number: 1 },
+  { id: "project", label: "Projekt", number: 2 },
+  { id: "people", label: "Personen", number: 3 },
+  { id: "training", label: "Schulungen", number: 4 },
+  { id: "time", label: "Zeiten", number: 5 },
+  { id: "review", label: "Prüfen", number: 6 }
+];
+let currentWorkflowStep = "product";
+let planInputsDirty = false;
+let workflowErrors = {};
 
 function makeDefaultProject() {
   return {
@@ -46,8 +57,8 @@ function makeDefaultProject() {
     product_id: "deepunity-pacs",
     trainer: "",
     trainers: [],
-    participant_group: "Radiologen, Radiologen Keyuser, MFA, Kliniker, Webviewer und Administratoren",
-    start_date: "2026-09-07",
+    participant_group: "",
+    start_date: null,
     end_date: null,
     settings: { ...defaultSettings },
     product_lines: [
@@ -56,25 +67,16 @@ function makeDefaultProject() {
         name: "DeepUnity PACS",
         description: "PACS-Schulungen fuer Radiologie, Keyuser, MFA, Kliniker, Webviewer und Administration.",
         participant_groups: [
-          participantGroup("radiologen", "Radiologen", 12),
-          participantGroup("radiologen-keyuser", "Radiologen Keyuser", 4),
-          participantGroup("mfa", "MFA", 8),
-          participantGroup("kliniker", "Kliniker", 15),
-          participantGroup("webviewer", "Webviewer", 20),
-          participantGroup("administratoren", "Administratoren", 3)
+          participantGroup("radiologen", "Radiologen", 0),
+          participantGroup("radiologen-keyuser", "Radiologen Keyuser", 0),
+          participantGroup("mfa", "MFA", 0),
+          participantGroup("kliniker", "Kliniker", 0),
+          participantGroup("webviewer", "Webviewer", 0),
+          participantGroup("administratoren", "Administratoren", 0)
         ]
       }
     ],
-    topics: [
-      topic("pacs-admin", "PACS-Administration", 360, 1, "Uebersicht, Installation, Rechte, Rollen und Webinterface."),
-      topic("diagnost-basic", "DU Diagnost Basic", 90, 1, "Grundlagen im Umgang mit der DeepUnity DIAGNOST Anwendung."),
-      topic("diagnost-erweitert", "DU Diagnost erweitert", 120, 2, "Erweiterte Funktionen der Befundungsworkstation.", "diagnost-basic"),
-      topic("diagnost-keyuser", "DU Diagnost KeyUser", 180, 2, "Konfigurationsoberflaeche und Verteilung der Client Software.", "diagnost-erweitert"),
-      topic("review-kliniker", "DU Review Kliniker", 60, 3, "Grundlagen der Review Betrachtungsworkstation."),
-      topic("viewer", "DU Viewer", 45, 3, "Grundfunktionen des DeepUnity Viewers."),
-      topic("xchange", "DU XChange", 60, 3, "Import und Export von Patientenstudien."),
-      topic("review-mtra", "DU Review MTRA", 60, 3, "Review- und XChange-Funktionen fuer MTRA.")
-    ],
+    topics: [],
     blocks: [],
     manual_weeks: [],
     unscheduled_topics: [],
@@ -95,11 +97,13 @@ const $ = (selector) => document.querySelector(selector);
 document.addEventListener("DOMContentLoaded", () => {
   $("#openMenu").addEventListener("click", openSideMenu);
   $("#autoPlan").addEventListener("click", createPlan);
-  $("#backToInput").addEventListener("click", () => {
-    currentPage = "input";
-    renderPages();
+  $("#backToInput").addEventListener("click", () => navigatePage("input"));
+  $("#headerInputView").addEventListener("click", () => navigatePage("input"));
+  $("#headerPlanView").addEventListener("click", () => {
+    if (project.blocks.length) navigatePage("plan");
+    else setWorkflowStep("review");
   });
-  $("#addTopic").addEventListener("click", addTopic);
+  $("#reviewChangedInputs").addEventListener("click", () => setWorkflowStep("review"));
   $("#addTrainingContent").addEventListener("click", addTrainingContent);
   $("#closeMarkdownEditor").addEventListener("click", closeMarkdownEditor);
   $("#cancelMarkdownEditor").addEventListener("click", closeMarkdownEditor);
@@ -139,6 +143,12 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("[data-page]").forEach((button) => {
     button.addEventListener("click", () => navigatePage(button.dataset.page));
   });
+  document.querySelectorAll("[data-workflow-next]").forEach((button) => {
+    button.addEventListener("click", () => advanceWorkflow(button.dataset.workflowNext));
+  });
+  document.querySelectorAll("[data-workflow-back]").forEach((button) => {
+    button.addEventListener("click", () => setWorkflowStep(button.dataset.workflowBack));
+  });
   render();
   loadProducts();
   loadTrainingContents();
@@ -150,16 +160,21 @@ function setStatus(text) {
 
 function render() {
   renderHeader();
+  renderWorkflowProgress();
+  renderProductWorkflow();
   renderBaseFields();
+  renderPeopleWorkflow();
+  renderTrainingWorkflow();
   renderSettingsFields();
-  renderParticipantGroups();
-  renderTopics();
+  renderWorkflowReview();
   renderProductMenu();
   renderContentCatalog();
   renderWarnings();
   renderTabs();
   renderPages();
   renderNavigation();
+  renderWorkflowPanels();
+  renderPlanDirtyState();
 }
 
 function renderHeader() {
@@ -167,27 +182,44 @@ function renderHeader() {
   const headerProduct = $("#headerProduct");
   const headerContext = $("#headerContext");
   if (headerProduct) headerProduct.textContent = product.name;
-  if (headerContext) headerContext.textContent = `${project.title || "Schulungsplan"} - Mehrtaegige Trainings planen, pruefen und exportieren.`;
+  const contextParts = [project.customer_name, project.location].filter(Boolean);
+  if (headerContext) headerContext.textContent = contextParts.length ? contextParts.join(" · ") : "Neues Schulungsprojekt";
+  const inputButton = $("#headerInputView");
+  const planButton = $("#headerPlanView");
+  if (inputButton) inputButton.classList.toggle("active", currentPage === "input");
+  if (planButton) {
+    planButton.classList.toggle("active", currentPage === "plan");
+    planButton.disabled = !project.blocks.length;
+    planButton.title = project.blocks.length ? "Vorhandenen Schulungsplan anzeigen" : "Noch kein Schulungsplan erstellt";
+  }
+  const existingPlanButton = $("#showExistingPlan");
+  if (existingPlanButton) existingPlanButton.disabled = !project.blocks.length;
+  const status = $("#planSyncStatus");
+  if (status) {
+    status.hidden = !project.blocks.length;
+    status.textContent = planInputsDirty ? "● Eingaben geändert" : "✓ Plan aktuell";
+    status.classList.toggle("is-dirty", planInputsDirty);
+  }
 }
 
 function renderBaseFields() {
   const customerDisabled = project.project_mode === "service_calculation";
-  $("#base-fields").innerHTML = [
-    modeSelector(),
-    field("title", "Schulungsbezeichnung", project.title, "text", true),
+  const base = $("#base-fields");
+  const advanced = $("#project-advanced-fields");
+  if (!base || !advanced) return;
+  base.innerHTML = [
     customerDisabled ? "" : field("customer_name", "Kunde", project.customer_name),
     customerDisabled ? "" : field("location", "Standort", project.location),
-    trainerEditor(),
     field("start_date", "Startdatum", project.start_date || "", "date")
   ].join("");
-  $("#projectMode").addEventListener("change", updateProjectMode);
-  $("#base-fields").querySelectorAll("input[data-field-name]").forEach((input) => input.addEventListener("input", updateProjectField));
-  $("#base-fields").querySelectorAll("input[data-trainer-index]").forEach((input) => {
-    input.addEventListener("change", updateTrainerField);
-    input.addEventListener("keydown", handleTrainerKeydown);
-  });
-  const addTrainerButton = $("#addTrainer");
-  if (addTrainerButton) addTrainerButton.addEventListener("click", () => addTrainer(true));
+  advanced.innerHTML = [
+    field("title", "Schulungsbezeichnung", project.title, "text", true),
+    modeSelector()
+  ].join("");
+  document.querySelectorAll("#base-fields input[data-field-name], #project-advanced-fields input[data-field-name]").forEach((input) => input.addEventListener("input", updateProjectField));
+  const mode = $("#projectMode");
+  if (mode) mode.addEventListener("change", updateProjectMode);
+  applyWorkflowFieldErrors();
 }
 
 function trainerEditor() {
@@ -195,7 +227,6 @@ function trainerEditor() {
   return `<div class="field field-wide trainer-editor">
     <div class="trainer-editor-heading">
       <span>Trainer</span>
-      <small>Enter speichert und fuegt den naechsten Trainer hinzu.</small>
     </div>
     <div class="trainer-list" role="group" aria-label="Trainer">
       ${values.map((name, index) => `<div class="trainer-row">
@@ -205,6 +236,114 @@ function trainerEditor() {
       <button type="button" id="addTrainer" class="trainer-add-button" title="Weiteren Trainer hinzufuegen"><span aria-hidden="true">＋</span> Trainer</button>
     </div>
   </div>`;
+}
+
+function renderPeopleWorkflow() {
+  const trainerPanel = $("#trainer-workflow-panel");
+  if (trainerPanel) {
+    trainerPanel.innerHTML = trainerEditor();
+    trainerPanel.querySelectorAll("input[data-trainer-index]").forEach((input) => {
+      input.addEventListener("change", updateTrainerField);
+      input.addEventListener("keydown", handleTrainerKeydown);
+    });
+    const addTrainerButton = $("#addTrainer");
+    if (addTrainerButton) addTrainerButton.addEventListener("click", () => addTrainer(true));
+  }
+  renderParticipantGroups();
+  const summary = $("#people-summary");
+  if (summary) {
+    const trainers = activeTrainers();
+    const groups = currentProduct().participant_groups || [];
+    const participants = groups.reduce((sum, group) => sum + Math.max(0, Number(group.participant_count || 0)), 0);
+    summary.innerHTML = `<strong>${trainers.length} ${trainers.length === 1 ? "Trainer" : "Trainer"}</strong><span>·</span><strong>${participants} Teilnehmer</strong><span>·</span><strong>${groups.length} ${groups.length === 1 ? "Gruppe" : "Gruppen"}</strong>`;
+  }
+  applyWorkflowFieldErrors();
+}
+
+function activeTrainers() {
+  return (project.trainers || []).map((name) => String(name || "").trim()).filter(Boolean);
+}
+
+function renderProductWorkflow() {
+  const container = $("#workflow-product-options");
+  if (!container) return;
+  const products = project.product_lines || [];
+  container.innerHTML = products.length ? products.map((item) => {
+    const selected = item.id === project.product_id;
+    return `<button type="button" class="product-choice ${selected ? "selected" : ""}" data-workflow-product="${escapeHtml(item.id)}" aria-pressed="${selected ? "true" : "false"}">
+      <span class="product-choice-check" aria-hidden="true">${selected ? "✓" : ""}</span>
+      <strong>${escapeHtml(item.name)}</strong>
+      ${item.description ? `<span>${escapeHtml(item.description)}</span>` : ""}
+    </button>`;
+  }).join("") : `<div class="workflow-empty"><strong>Keine Produkte vorhanden.</strong><span>Lege zuerst ein Produkt unter Produktdaten an.</span></div>`;
+  container.querySelectorAll("[data-workflow-product]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const nextId = button.dataset.workflowProduct;
+      if (nextId === project.product_id) return;
+      selectProjectProduct(nextId);
+      markPlanningInputsChanged();
+      render();
+    });
+  });
+}
+
+function renderTrainingWorkflow() {
+  const container = $("#training-selection");
+  const summary = $("#training-summary");
+  if (!container || !summary) return;
+  const product = currentProduct();
+  const items = trainingContents.filter((item) => item.product_id === product.id);
+  const selectedIds = selectedTrainingContentIds();
+  container.innerHTML = items.length ? items.map((item) => {
+    const selected = selectedIds.has(item.id);
+    const groupNames = (item.participant_group_ids || []).map((id) => product.participant_groups.find((group) => group.id === id)?.name).filter(Boolean);
+    const details = [formatDuration(Number(item.duration_minutes || 0)), groupNames.length ? groupNames.join(", ") : "Keine feste Teilnehmergruppe", item.max_participants ? `max. ${Number(item.max_participants)} Teilnehmer` : ""].filter(Boolean);
+    return `<label class="training-choice ${selected ? "selected" : ""}">
+      <input type="checkbox" data-training-choice="${escapeHtml(item.id)}" ${selected ? "checked" : ""}>
+      <span class="training-choice-body">
+        <strong>${escapeHtml(item.title)}</strong>
+        <span>${escapeHtml(details.join(" · "))}</span>
+        ${item.split_enabled ? `<em>Geteilter Schulungsblock</em>` : ""}
+      </span>
+    </label>`;
+  }).join("") : `<div class="workflow-empty"><strong>Keine Schulungsinhalte für ${escapeHtml(product.name)}.</strong><span>Schulungsinhalte werden in der Verwaltung gepflegt.</span></div>`;
+  container.querySelectorAll("[data-training-choice]").forEach((input) => input.addEventListener("change", toggleTrainingContent));
+  const selectedCount = items.filter((item) => selectedIds.has(item.id)).length;
+  const selectedMinutes = items.filter((item) => selectedIds.has(item.id)).reduce((sum, item) => sum + Number(item.duration_minutes || 0), 0);
+  summary.innerHTML = `<strong>${selectedCount} ${selectedCount === 1 ? "Schulungsinhalt" : "Schulungsinhalte"}</strong><span>·</span><strong>${formatDuration(selectedMinutes)} Basisdauer</strong>`;
+  applyWorkflowFieldErrors();
+}
+
+function selectedTrainingContentIds() {
+  const productId = currentProduct().id;
+  return new Set((project.topics || []).filter((item) => (item.product_id || productId) === productId).map((item) => item.catalog_content_id || item.id));
+}
+
+function topicFromTrainingContent(content) {
+  const productId = content.product_id || currentProduct().id;
+  return {
+    ...topic(content.id, content.title, Number(content.duration_minutes || 60), 3, content.goals || "", content.dependency_content_id || null, productId, content.background_color || "#eaf8f2"),
+    catalog_content_id: content.id,
+    participant_group_ids: content.participant_group_ids || [],
+    participants_per_session: content.max_participants ? Number(content.max_participants) : null,
+    split_enabled: Boolean(content.split_enabled)
+  };
+}
+
+function toggleTrainingContent(event) {
+  const contentId = event.target.dataset.trainingChoice;
+  const content = trainingContents.find((item) => item.id === contentId);
+  if (!content) return;
+  const selectedIds = selectedTrainingContentIds();
+  if (event.target.checked && !selectedIds.has(contentId)) {
+    project.topics = [...(project.topics || []), topicFromTrainingContent(content)];
+  } else if (!event.target.checked) {
+    project.topics = (project.topics || []).filter((item) => (item.catalog_content_id || item.id) !== contentId);
+  }
+  markPlanningInputsChanged();
+  renderTrainingWorkflow();
+  renderWorkflowProgress();
+  renderWorkflowReview();
 }
 
 function syncTrainerLegacy() {
@@ -226,12 +365,13 @@ function updateTrainerField(event) {
   }
   project.trainers = project.trainers.filter((name, position, all) => name || position === index).filter((name, position, all) => !name || all.indexOf(name) === position);
   syncTrainerLegacy();
+  markPlanningInputsChanged();
   render();
 }
 
 function focusTrainerInput(index) {
   requestAnimationFrame(() => {
-    const input = $(`#base-fields input[data-trainer-index="${index}"]`);
+    const input = $(`#trainer-workflow-panel input[data-trainer-index="${index}"]`);
     if (input) {
       input.focus();
       input.select();
@@ -246,7 +386,10 @@ function addTrainer(focusNew = false) {
     project.trainers.push("");
     index = project.trainers.length - 1;
   }
-  renderBaseFields();
+  markPlanningInputsChanged();
+  renderPeopleWorkflow();
+  renderWorkflowProgress();
+  renderWorkflowReview();
   if (focusNew) focusTrainerInput(index);
 }
 
@@ -271,6 +414,7 @@ function deleteTrainer(index) {
     });
   }
   syncTrainerLegacy();
+  markPlanningInputsChanged();
   validateAndRender();
 }
 
@@ -307,28 +451,47 @@ function productEditor() {
 
 function groupEditor(group) {
   return `<div class="participant-row">
-    <input data-group="${group.id}" data-key="name" value="${escapeHtml(group.name)}" aria-label="Teilnehmergruppe">
-    <input data-group="${group.id}" data-key="participant_count" type="number" min="0" value="${Number(group.participant_count)}" aria-label="Teilnehmerzahl">
-    <button type="button" class="icon danger" title="Loeschen" onclick="deleteParticipantGroup('${group.id}')">×</button>
+    <label><span>Gruppe</span><input data-group="${group.id}" data-key="name" value="${escapeHtml(group.name)}" aria-label="Teilnehmergruppe"></label>
+    <label><span>Teilnehmer</span><input data-group="${group.id}" data-key="participant_count" type="number" min="0" value="${Number(group.participant_count)}" aria-label="Teilnehmerzahl"></label>
+    <button type="button" class="icon danger participant-remove" title="Löschen" onclick="deleteParticipantGroup('${group.id}')">×</button>
   </div>`;
 }
 
 function renderSettingsFields() {
   const s = project.settings;
-  $("#settings-fields").innerHTML = [
-    setting("day_start", "Tagesbeginn", s.day_start, "time"),
-    setting("day_end", "Tagesende", s.day_end, "time"),
+  const container = $("#settings-fields");
+  const advanced = $("#advanced-settings-fields");
+  if (!container || !advanced) return;
+  container.innerHTML = `
+    <div class="time-setting-card">
+      <div class="time-setting-heading"><strong>Schulungstag</strong><span>Montag bis Donnerstag</span></div>
+      <div class="time-pair">${setting("day_start", "Beginn", s.day_start, "time")}${setting("day_end", "Ende", s.day_end, "time")}</div>
+    </div>
+    <div class="time-setting-card">
+      <div class="time-setting-heading"><strong>Montag · Anreise</strong>${inlineToggle("monday_arrival_enabled", s.monday_arrival_enabled, "Aktiv")}</div>
+      <div class="time-pair ${s.monday_arrival_enabled ? "" : "is-disabled"}">${setting("monday_arrival_start", "Von", s.monday_arrival_start, "time")}${setting("monday_arrival_end", "Bis", s.monday_arrival_end, "time")}</div>
+    </div>
+    <div class="time-setting-card">
+      <div class="time-setting-heading"><strong>Donnerstag · Abreise</strong>${inlineToggle("thursday_departure_enabled", s.thursday_departure_enabled, "Aktiv")}</div>
+      <div class="time-pair ${s.thursday_departure_enabled ? "" : "is-disabled"}">${setting("thursday_departure_start", "Von", s.thursday_departure_start, "time")}${setting("thursday_departure_end", "Bis", s.thursday_departure_end, "time")}</div>
+    </div>
+    <div class="time-setting-card">
+      <div class="time-setting-heading"><strong>Pausen</strong><span>Standardwerte</span></div>
+      <div class="time-pair">${numberSetting("break_preferred_minutes", "Zwischen Schulungen", s.break_preferred_minutes)}${numberSetting("lunch_minutes", "Mittagspause", s.lunch_minutes)}</div>
+    </div>`;
+  advanced.innerHTML = [
     numberSetting("break_min_minutes", "Pause min.", s.break_min_minutes),
     numberSetting("break_max_minutes", "Pause max.", s.break_max_minutes),
-    numberSetting("break_preferred_minutes", "Pause bevorzugt", s.break_preferred_minutes),
-    numberSetting("lunch_minutes", "Mittag", s.lunch_minutes),
-    setting("monday_arrival_start", "Anreise Beginn", s.monday_arrival_start, "time"),
-    setting("monday_arrival_end", "Anreise Ende", s.monday_arrival_end, "time"),
-    setting("thursday_departure_start", "Abreise Beginn", s.thursday_departure_start, "time"),
-    setting("thursday_departure_end", "Abreise Ende", s.thursday_departure_end, "time"),
-    checkboxSetting("friday_training_enabled", "Freitag fuer Schulung nutzen", s.friday_training_enabled)
+    setting("lunch_window_start", "Mittagsfenster von", s.lunch_window_start, "time"),
+    setting("lunch_window_end", "Mittagsfenster bis", s.lunch_window_end, "time"),
+    checkboxSetting("friday_training_enabled", "Freitag für Schulung nutzen", s.friday_training_enabled)
   ].join("");
-  $("#settings-fields").querySelectorAll("input").forEach((input) => input.addEventListener("input", updateSettingField));
+  document.querySelectorAll("#settings-fields input, #advanced-settings-fields input").forEach((input) => input.addEventListener("input", updateSettingField));
+  applyWorkflowFieldErrors();
+}
+
+function inlineToggle(name, value, label) {
+  return `<label class="inline-toggle"><input data-setting-name="${name}" type="checkbox" ${value ? "checked" : ""}><span>${label}</span></label>`;
 }
 
 function field(name, label, value, type = "text", wide = false) {
@@ -359,8 +522,169 @@ function checkboxSetting(name, label, value) {
   </label>`;
 }
 
+function markPlanningInputsChanged() {
+  if (project.blocks.length) planInputsDirty = true;
+  renderHeader();
+  renderPlanDirtyState();
+}
+
+function renderWorkflowProgress() {
+  const progress = $("#workflowProgress");
+  if (!progress) return;
+  progress.hidden = !["input", "plan"].includes(currentPage);
+  const currentIndex = workflowSteps.findIndex((step) => step.id === currentWorkflowStep);
+  progress.innerHTML = workflowSteps.map((step, index) => {
+    const complete = workflowStepIsComplete(step.id);
+    const current = currentPage === "input" && step.id === currentWorkflowStep;
+    const stateClass = current ? "current" : complete ? "complete" : index < currentIndex ? "visited" : "pending";
+    const marker = complete && !current ? "✓" : String(step.number);
+    return `<button type="button" class="workflow-progress-step ${stateClass}" data-workflow-step="${step.id}" aria-current="${current ? "step" : "false"}">
+      <span class="workflow-progress-marker">${marker}</span>
+      <span class="workflow-progress-label">${step.label}</span>
+    </button>${index < workflowSteps.length - 1 ? `<span class="workflow-progress-line ${complete ? "complete" : ""}" aria-hidden="true"></span>` : ""}`;
+  }).join("");
+  progress.querySelectorAll("[data-workflow-step]").forEach((button) => button.addEventListener("click", () => setWorkflowStep(button.dataset.workflowStep)));
+}
+
+function renderWorkflowPanels() {
+  document.querySelectorAll("[data-workflow-panel]").forEach((panel) => {
+    const active = panel.dataset.workflowPanel === currentWorkflowStep;
+    panel.classList.toggle("active", active);
+    panel.hidden = !active;
+    panel.querySelectorAll(".workflow-step-error").forEach((node) => node.remove());
+    const message = workflowErrors[panel.dataset.workflowPanel];
+    if (message && active) {
+      const heading = panel.querySelector(".workflow-panel-heading");
+      const error = document.createElement("div");
+      error.className = "workflow-step-error";
+      error.textContent = message;
+      heading?.insertAdjacentElement("afterend", error);
+    }
+  });
+}
+
+function setWorkflowStep(step) {
+  if (!workflowSteps.some((item) => item.id === step)) return;
+  currentWorkflowStep = step;
+  currentPage = "input";
+  delete workflowErrors[step];
+  renderHeader();
+  renderPages();
+  renderWorkflowProgress();
+  renderWorkflowPanels();
+  if (step === "review") renderWorkflowReview();
+  requestAnimationFrame(() => document.querySelector(`[data-workflow-panel="${step}"]`)?.scrollIntoView({ block: "start", behavior: "smooth" }));
+}
+
+function advanceWorkflow(nextStep) {
+  if (!validateWorkflowStep(currentWorkflowStep, true)) return;
+  setWorkflowStep(nextStep);
+}
+
+function workflowStepIsComplete(step) {
+  if (step === "product") return Boolean(project.product_id && (project.product_lines || []).some((item) => item.id === project.product_id));
+  if (step === "project") {
+    if (!project.start_date) return false;
+    if (project.project_mode === "service_calculation") return true;
+    return Boolean(String(project.customer_name || "").trim() && String(project.location || "").trim());
+  }
+  if (step === "people") {
+    const participants = (currentProduct().participant_groups || []).reduce((sum, group) => sum + Math.max(0, Number(group.participant_count || 0)), 0);
+    return activeTrainers().length > 0 && participants > 0;
+  }
+  if (step === "training") return selectedTrainingContentIds().size > 0;
+  if (step === "time") {
+    const start = toMinutes(project.settings.day_start || "00:00");
+    const end = toMinutes(project.settings.day_end || "00:00");
+    return Number.isFinite(start) && Number.isFinite(end) && start < end;
+  }
+  if (step === "review") return ["product", "project", "people", "training", "time"].every(workflowStepIsComplete);
+  return false;
+}
+
+function validateWorkflowStep(step, focus = false) {
+  let message = "";
+  let focusSelector = "";
+  if (step === "product" && !workflowStepIsComplete("product")) {
+    message = "Bitte ein Produkt auswählen.";
+    focusSelector = "[data-workflow-product]";
+  } else if (step === "project" && !workflowStepIsComplete("project")) {
+    if (!project.start_date) { message = "Bitte ein Startdatum auswählen."; focusSelector = '[data-field="start_date"] input'; }
+    else if (project.project_mode !== "service_calculation" && !String(project.customer_name || "").trim()) { message = "Bitte den Kunden eintragen."; focusSelector = '[data-field="customer_name"] input'; }
+    else { message = "Bitte den Standort eintragen."; focusSelector = '[data-field="location"] input'; }
+  } else if (step === "people" && !workflowStepIsComplete("people")) {
+    if (!activeTrainers().length) { message = "Bitte mindestens einen Trainer eintragen."; focusSelector = ".trainer-name-input"; }
+    else { message = "Bitte Teilnehmerzahlen eintragen."; focusSelector = "#participant-group-panel input[type=number]"; }
+  } else if (step === "training" && !workflowStepIsComplete("training")) {
+    message = "Bitte mindestens einen Schulungsinhalt auswählen.";
+    focusSelector = "#training-selection input";
+  } else if (step === "time" && !workflowStepIsComplete("time")) {
+    message = "Der Tagesbeginn muss vor dem Tagesende liegen.";
+    focusSelector = '[data-setting-name="day_start"]';
+  }
+  if (message) {
+    workflowErrors[step] = message;
+    renderWorkflowPanels();
+    if (focus) requestAnimationFrame(() => document.querySelector(focusSelector)?.focus());
+    return false;
+  }
+  delete workflowErrors[step];
+  return true;
+}
+
+function applyWorkflowFieldErrors() {
+  document.querySelectorAll(".workflow-input-error").forEach((node) => node.classList.remove("workflow-input-error"));
+}
+
+function renderWorkflowReview() {
+  const container = $("#workflow-review");
+  if (!container) return;
+  const product = currentProduct();
+  const trainers = activeTrainers();
+  const groups = product.participant_groups || [];
+  const participants = groups.reduce((sum, group) => sum + Math.max(0, Number(group.participant_count || 0)), 0);
+  const trainingCount = (project.topics || []).length;
+  const trainingMinutes = (project.topics || []).reduce((sum, item) => sum + Number(item.duration_minutes || 0), 0);
+  const ready = workflowStepIsComplete("review");
+  const missing = workflowSteps.slice(0, 5).filter((step) => !workflowStepIsComplete(step.id));
+  const dateLabel = project.start_date ? TrainingCalendar.formatGermanDate(TrainingCalendar.parseIsoDate(project.start_date)) : "—";
+  container.innerHTML = `
+    <div class="review-hero ${ready ? "ready" : "incomplete"}">
+      <div><span>${ready ? "Bereit für die Planung" : "Noch nicht vollständig"}</span><strong>${escapeHtml(project.customer_name || product.name || "Schulungsprojekt")}</strong><small>${escapeHtml([project.location, product.name].filter(Boolean).join(" · "))}</small></div>
+      <span class="review-status-icon" aria-hidden="true">${ready ? "✓" : "!"}</span>
+    </div>
+    <div class="review-grid">
+      ${reviewCard("Projekt", [["Produkt", product.name], ["Start", dateLabel], ["Standort", project.location || "—"]], "project")}
+      ${reviewCard("Personen", [["Trainer", trainers.length ? trainers.join(", ") : "—"], ["Teilnehmer", String(participants)], ["Gruppen", String(groups.length)]], "people")}
+      ${reviewCard("Schulungen", [["Ausgewählt", String(trainingCount)], ["Basisdauer", formatDuration(trainingMinutes)]], "training")}
+      ${reviewCard("Zeiten", [["Schulungstag", `${project.settings.day_start}–${project.settings.day_end}`], ["Anreise", project.settings.monday_arrival_enabled ? `${project.settings.monday_arrival_start}–${project.settings.monday_arrival_end}` : "Aus"], ["Abreise", project.settings.thursday_departure_enabled ? `${project.settings.thursday_departure_start}–${project.settings.thursday_departure_end}` : "Aus"]], "time")}
+    </div>
+    ${missing.length ? `<div class="review-missing">${missing.map((step) => `<button type="button" data-review-step="${step.id}">${step.label} ergänzen</button>`).join("")}</div>` : ""}
+    ${planInputsDirty && project.blocks.length ? `<div class="review-replan-note"><strong>Vorhandener Kalender wird beim Neuerstellen ersetzt.</strong><span>Deine bisherigen Kalenderblöcke bleiben bis zum Klick auf „Plan erstellen“ unverändert.</span></div>` : ""}`;
+  container.querySelectorAll("[data-review-step]").forEach((button) => button.addEventListener("click", () => setWorkflowStep(button.dataset.reviewStep)));
+  const planButton = $("#autoPlan");
+  if (planButton) {
+    planButton.disabled = !ready;
+    planButton.textContent = project.blocks.length ? "Plan neu erstellen" : "Plan erstellen";
+  }
+}
+
+function reviewCard(title, rows, step) {
+  return `<section class="review-card"><div class="review-card-heading"><h3>${escapeHtml(title)}</h3><button type="button" data-review-step="${step}">Bearbeiten</button></div>${rows.map(([label, value]) => `<div class="review-row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`).join("")}</section>`;
+}
+
+function renderPlanDirtyState() {
+  const banner = $("#planDirtyBanner");
+  if (banner) banner.hidden = !(project.blocks.length && planInputsDirty);
+}
+
 function updateProjectField(event) {
   project[event.target.dataset.fieldName] = event.target.value;
+  delete workflowErrors[event.target.dataset.fieldName];
+  markPlanningInputsChanged();
+  renderHeader();
+  renderWorkflowProgress();
+  renderWorkflowReview();
   renderTabs();
 }
 
@@ -371,6 +695,7 @@ function updateProjectMode(event) {
     project.customer_name = "";
     project.location = "";
   }
+  markPlanningInputsChanged();
   render();
 }
 
@@ -391,10 +716,17 @@ function updateProductField(event) {
 }
 
 function updateProductSelection(event) {
-  project.product_id = event.target.value;
-  ensureSelectedProductExists();
-  selectedContentId = firstContentForCurrentProduct()?.id || null;
+  selectProjectProduct(event.target.value);
+  markPlanningInputsChanged();
   render();
+}
+
+function selectProjectProduct(productId) {
+  project.product_id = productId;
+  ensureSelectedProductExists();
+  const selectedProductId = currentProduct().id;
+  project.topics = (project.topics || []).filter((item) => (item.product_id || selectedProductId) === selectedProductId);
+  selectedContentId = firstContentForCurrentProduct()?.id || null;
 }
 
 function updateParticipantGroupField(event) {
@@ -403,6 +735,10 @@ function updateParticipantGroupField(event) {
   const key = event.target.dataset.key;
   group[key] = key === "participant_count" ? Number(event.target.value) : event.target.value;
   project.participant_group = currentProduct().participant_groups.map((item) => item.name).join(", ");
+  markPlanningInputsChanged();
+  renderPeopleWorkflow();
+  renderWorkflowProgress();
+  renderWorkflowReview();
   renderTabs();
 }
 
@@ -421,6 +757,7 @@ function addParticipantGroup() {
   const product = currentProduct();
   product.participant_groups.push(participantGroup(crypto.randomUUID(), "Neue Gruppe", 0, product.id));
   project.participant_group = product.participant_groups.map((item) => item.name).join(", ");
+  markPlanningInputsChanged();
   render();
 }
 
@@ -428,6 +765,7 @@ function deleteParticipantGroup(id) {
   const product = currentProduct();
   product.participant_groups = product.participant_groups.filter((item) => item.id !== id);
   project.participant_group = product.participant_groups.map((item) => item.name).join(", ");
+  markPlanningInputsChanged();
   render();
 }
 
@@ -439,6 +777,10 @@ function updateSettingField(event) {
     event.target.value = value;
   }
   project.settings[key] = value;
+  markPlanningInputsChanged();
+  if (["monday_arrival_enabled", "thursday_departure_enabled"].includes(key)) renderSettingsFields();
+  renderWorkflowProgress();
+  renderWorkflowReview();
   renderTabs();
 }
 
@@ -466,7 +808,7 @@ async function loadTrainingContents() {
     trainingContents = (await response.json()).items || [];
     syncTopicsFromCatalog();
     selectedContentId = firstContentForCurrentProduct()?.id || selectedContentId;
-    renderContentCatalog();
+    render();
   } catch (error) {
     trainingContents = [];
     const status = $("#catalog-status");
@@ -667,8 +1009,16 @@ function closeSideMenu() {
 }
 
 function navigatePage(page) {
+  if (page === "plan" && !project.blocks.length) {
+    closeSideMenu();
+    setWorkflowStep("review");
+    return;
+  }
   currentPage = page;
+  renderHeader();
   renderPages();
+  renderWorkflowProgress();
+  renderPlanDirtyState();
   closeSideMenu();
 }
 
@@ -1064,7 +1414,14 @@ function deleteTopic(id) {
 }
 
 async function createPlan() {
+  if (!["product", "project", "people", "training", "time"].every((step) => validateWorkflowStep(step, false))) {
+    const firstMissing = workflowSteps.slice(0, 5).find((step) => !workflowStepIsComplete(step.id));
+    if (firstMissing) setWorkflowStep(firstMissing.id);
+    return;
+  }
   setStatus("Planung wird berechnet...");
+  const button = $("#autoPlan");
+  if (button) button.disabled = true;
   const response = await fetch("api/plan", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -1072,11 +1429,14 @@ async function createPlan() {
   });
   if (!response.ok) {
     setStatus("Planung konnte nicht erstellt werden.");
+    if (button) button.disabled = false;
     return;
   }
   project = await response.json();
   normalizeProjectState();
   transientManualWeeks = new Set();
+  planInputsDirty = false;
+  workflowErrors = {};
   setStatus("Plan erstellt und validiert.");
   activeTab = "week";
   currentPage = "plan";
@@ -1446,6 +1806,9 @@ function addManualWeek() {
   transientManualWeeks.add(nextWeek);
   currentPage = "plan";
   activeTab = "week";
+  planInputsDirty = false;
+  currentWorkflowStep = "review";
+  workflowErrors = {};
   render();
 }
 
@@ -1899,6 +2262,9 @@ async function importProjectState(event) {
   draggedBlockId = null;
   currentPage = "plan";
   activeTab = "week";
+  planInputsDirty = false;
+  currentWorkflowStep = "review";
+  workflowErrors = {};
   render();
   setStatus(`Planungsstand geladen (${payload.app_version || "unbekannte Version"}).`);
 }
@@ -1915,7 +2281,7 @@ function renderWarnings() {
   if (count) count.textContent = `${warnings.length} ${warnings.length === 1 ? "Hinweis" : "Hinweise"}`;
   const nav = $("#validationNavButton");
   if (nav) {
-    nav.textContent = warnings.length ? `Planungspruefung (${warnings.length})` : "Planungspruefung";
+    nav.textContent = warnings.length ? `Planungsprüfung (${warnings.length})` : "Planungsprüfung";
     nav.classList.toggle("has-warnings", warnings.length > 0);
   }
 }
