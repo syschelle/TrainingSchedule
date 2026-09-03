@@ -1,6 +1,13 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.2.44**
+Aktuelle Version: **v0.2.45**
+
+## Aenderungen v0.2.45
+
+- Kalenderkacheln blenden die allgemeine Teilnehmergruppenbezeichnung aus dem sichtbaren Schulungstitel aus.
+- Von der automatischen Planung erzeugte Aufteilungen bleiben als `Gruppe 1/2`, `Gruppe 2/2` usw. sichtbar.
+- Beispiel: `DU Viewer - Webviewer Gruppe 4/6` wird im Kalender als `DU Viewer - Gruppe 4/6` dargestellt.
+- Der intern gespeicherte Blocktitel sowie Planungs-/Validierungsdaten bleiben unveraendert; Kalender-Vorschau und PDF-Kalenderseiten verwenden die kompakte Anzeige.
 
 ## Aenderungen v0.2.44
 
@@ -245,7 +252,7 @@ Erwartet:
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.2.44` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.2.45` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -253,7 +260,7 @@ Bei einem Release-Tag wie `v0.2.44` baut `.github/workflows/release-image.yml` n
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.44
+ghcr.io/syschelle/schulungsplantool:0.2.45
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -275,7 +282,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.2.44` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.2.45` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -283,7 +290,7 @@ Bei einem Release-Tag wie `v0.2.44` baut der Workflow `.github/workflows/release
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.44
+ghcr.io/syschelle/schulungsplantool:0.2.45
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.2.45 - 2026-09-03
+
+- Kalenderkacheln zeigen bei Schulungsbloecken nicht mehr die Teilnehmergruppenbezeichnung im Titel.
+- Automatisch erzeugte Untergruppen bleiben sichtbar, z. B. `DU Viewer - Gruppe 4/6`.
+- Nicht aufgeteilte Schulungen zeigen nur den eigentlichen Schulungstitel.
+- Intern gespeicherte Titel, Planungslogik und Validierung bleiben unveraendert; die PDF-Kalenderseiten verwenden dieselbe kompakte Anzeige wie die Browser-Vorschau.
+- Keine Datenbankmigration erforderlich.
+
 ## v0.2.44 - 2026-09-03
 
 - Schriftgroesse von Kalenderkacheln skaliert jetzt stufenlos mit der tatsaechlichen Kachelhoehe.

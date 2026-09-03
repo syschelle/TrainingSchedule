@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.2.44"' in html
+    assert 'src="calendar.js?v=0.2.45"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -208,6 +208,18 @@ def test_arrival_calendar_tile_uses_compact_display_title_only() -> None:
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     assert 'block.type === "arrival" ? "Anreise" : block.title' in javascript
     assert 'monday_arrival_label: "Anreise / Eintreffen der Teilnehmer"' in javascript
+
+
+def test_calendar_hides_participant_group_name_but_keeps_generated_split_group() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    assert "function calendarDisplayTitle(block)" in javascript
+    display_helper = javascript.split("function calendarDisplayTitle(block)", 1)[1].split("function blockHtml", 1)[0]
+    assert "participant_groups" in display_helper
+    assert 'const marker = ` - ${groupName}`;' in display_helper
+    assert 'suffix.startsWith("Gruppe ")' in display_helper
+    assert 'suffix ? ` - ${suffix}` : ""' in display_helper
+    block_html = javascript.split("function blockHtml", 1)[1].split("function startBlockResize", 1)[0]
+    assert "const displayTitle = calendarDisplayTitle(block);" in block_html
 
 
 

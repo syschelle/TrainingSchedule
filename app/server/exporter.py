@@ -254,6 +254,40 @@ def _draw_overview_page(pdf: canvas.Canvas, project: TrainingProject, page_width
     pdf.showPage()
 
 
+def _calendar_display_title(project: TrainingProject, block: ScheduleBlock) -> str:
+    """Return the compact visual title used by calendar-style output.
+
+    Participant-group names remain in the stored block title, but are omitted
+    from the visible calendar title. Automatically generated split labels such
+    as ``Gruppe 2/4`` remain visible.
+    """
+    if block.type == BlockType.arrival:
+        return "Anreise"
+    if block.type != BlockType.training:
+        return block.title
+
+    group_names = sorted(
+        {
+            group.name.strip()
+            for product in project.product_lines
+            for group in product.participant_groups
+            if group.name.strip()
+        },
+        key=len,
+        reverse=True,
+    )
+    for group_name in group_names:
+        marker = f" - {group_name}"
+        marker_index = block.title.rfind(marker)
+        if marker_index < 0:
+            continue
+        suffix = block.title[marker_index + len(marker):].lstrip()
+        if suffix and not suffix.startswith("Gruppe "):
+            continue
+        return f"{block.title[:marker_index]}{f' - {suffix}' if suffix else ''}"
+    return block.title
+
+
 def export_pdf(project: TrainingProject) -> bytes:
     """Export the same trainer/week calendar concept as the browser preview.
 
@@ -371,7 +405,7 @@ def export_pdf(project: TrainingProject) -> bytes:
                     pdf.roundRect(x + 3, y_bottom + 2, day_width - 6, block_height - 4, 3, fill=1, stroke=1)
                     text_color = _contrast_text(bg)
                     pdf.setFillColor(text_color)
-                    _draw_wrapped_text(pdf, block.title, x + 7, y_top - 10, day_width - 14, "Helvetica-Bold", 6.8, 3)
+                    _draw_wrapped_text(pdf, _calendar_display_title(project, block), x + 7, y_top - 10, day_width - 14, "Helvetica-Bold", 6.8, 3)
                     pdf.setFont("Helvetica", 5.8)
                     pdf.drawString(x + 7, y_bottom + 6, f"{block.start}-{block.end}")
 

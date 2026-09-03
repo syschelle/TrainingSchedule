@@ -1306,8 +1306,29 @@ function applyCalendarBlockTypography(element, height) {
   element.style.setProperty("--calendar-title-line-height", typography.titleLineHeight.toFixed(3));
 }
 
-function blockHtml(block, dayStart, calendarHeight, interactive = true) {
+function calendarDisplayTitle(block) {
   const displayTitle = block.type === "arrival" ? "Anreise" : block.title;
+  if (block.type !== "training") return displayTitle;
+
+  const groupNames = (project.product_lines || [])
+    .flatMap((product) => product.participant_groups || [])
+    .map((group) => String(group.name || "").trim())
+    .filter(Boolean)
+    .sort((left, right) => right.length - left.length);
+
+  for (const groupName of groupNames) {
+    const marker = ` - ${groupName}`;
+    const markerIndex = displayTitle.lastIndexOf(marker);
+    if (markerIndex < 0) continue;
+    const suffix = displayTitle.slice(markerIndex + marker.length).trimStart();
+    if (suffix && !suffix.startsWith("Gruppe ")) continue;
+    return `${displayTitle.slice(0, markerIndex)}${suffix ? ` - ${suffix}` : ""}`;
+  }
+  return displayTitle;
+}
+
+function blockHtml(block, dayStart, calendarHeight, interactive = true) {
+  const displayTitle = calendarDisplayTitle(block);
   const start = toMinutes(block.start);
   const blockDuration = Math.max(calendarSnapMinutes, duration(block.start, block.end));
   const top = Math.max(0, ((start - dayStart) / 60) * calendarHourHeight);

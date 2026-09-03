@@ -1331,3 +1331,13 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Die kompakten Aktionsbuttons fuer 15-/30-Minuten-Bloecke bleiben erhalten.
 - Das bestehende 15-Minuten-Raster und die Planungslogik bleiben unveraendert.
 - Version auf `v0.2.44` erhoeht.
+
+
+## Erweiterung v0.2.45 - Teilnehmergruppen im Kalender kompakt darstellen
+
+- Die Teilnehmergruppenbezeichnung selbst soll in Kalenderkacheln nicht mehr Bestandteil des sichtbaren Schulungstitels sein.
+- Wenn die automatische Planung wegen der Teilnehmerzahl mehrere Schulungsgruppen erzeugt, muss deren Kennzeichnung weiterhin sichtbar bleiben, z. B. `Gruppe 1/2`, `Gruppe 2/2`.
+- Beispiel: `DU Viewer - Webviewer Gruppe 4/6` wird im Kalender als `DU Viewer - Gruppe 4/6` angezeigt.
+- Bei nicht aufgeteilten Schulungen wird nur der eigentliche Schulungstitel angezeigt.
+- Intern gespeicherte Blocktitel bleiben unveraendert; Browser-Kalender, Vorschau und PDF-Kalenderseiten verwenden dieselbe kompakte Darstellung. Strukturierte Exportdaten bleiben unveraendert.
+- Version auf `v0.2.45` erhoeht.

@@ -5,7 +5,7 @@ from pypdf import PdfReader
 
 from app.server.exporter import export_pdf, planned_weeks
 from app.server.main import _project_export_filename
-from app.server.models import ProjectFile, ScheduleBlock, TrainingProject
+from app.server.models import ParticipantGroup, ProductLine, ProjectFile, ScheduleBlock, TrainingProject
 
 
 def sample_project() -> TrainingProject:
@@ -79,3 +79,20 @@ def test_server_project_export_filename_uses_customer_location_product_date_time
     project = sample_project()
     filename = _project_export_filename(project, datetime(2026, 9, 2, 14, 23, tzinfo=timezone.utc))
     assert filename == "Musterklinik_Berlin_deepunity-pacs_2026-09-02_1423.json"
+
+
+def test_pdf_calendar_hides_participant_group_name_but_keeps_generated_split_label():
+    project = sample_project()
+    project.product_lines = [
+        ProductLine(
+            id="deepunity-pacs",
+            name="DeepUnity PACS",
+            participant_groups=[ParticipantGroup(id="webviewer", name="Webviewer", participant_count=30)],
+        )
+    ]
+    project.blocks[0].title = "DU Viewer - Webviewer Gruppe 4/6"
+    reader = PdfReader(BytesIO(export_pdf(project)))
+    calendar_text = "\n".join(page.extract_text() or "" for page in reader.pages[1:])
+    assert "DU Viewer - Gruppe 4/6" in calendar_text
+    assert "DU Viewer - Webviewer Gruppe 4/6" not in calendar_text
+
