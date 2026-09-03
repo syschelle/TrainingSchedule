@@ -970,8 +970,8 @@ textarea:focus {
 .calendar-block.is-compact strong {
   display: -webkit-box;
   overflow: hidden;
-  font-size: 0.72rem;
-  line-height: 1.02;
+  font-size: var(--calendar-title-size, 0.72rem);
+  line-height: var(--calendar-title-line-height, 1.02);
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
@@ -980,7 +980,7 @@ textarea:focus {
   display: block;
   overflow: hidden;
   margin-top: 1px;
-  font-size: 0.56rem;
+  font-size: var(--calendar-meta-size, 0.56rem);
   line-height: 1;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -1056,6 +1056,19 @@ textarea:focus {
   margin-top: 4px;
   color: var(--muted);
   font-size: 0.78rem;
+}
+
+/* Calendar typography follows the actual tile height continuously. This avoids a
+   visible font-size jump when a block crosses the compact-layout threshold. */
+.calendar-block strong {
+  font-size: var(--calendar-title-size, 0.88rem);
+  line-height: var(--calendar-title-line-height, 1.12);
+  transition: font-size 90ms linear, line-height 90ms linear;
+}
+
+.calendar-block .block-meta {
+  font-size: var(--calendar-meta-size, 0.78rem);
+  transition: font-size 90ms linear;
 }
 
 .preview-page {

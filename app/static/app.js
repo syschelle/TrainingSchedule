@@ -1288,6 +1288,24 @@ function dayHtml(day, dayStart, calendarHeight, week, trainer, trainerIndex, int
   </section>`;
 }
 
+function calendarBlockTypography(height) {
+  const minHeight = 44;
+  const fullSizeHeight = 114;
+  const progress = Math.max(0, Math.min(1, (height - minHeight) / (fullSizeHeight - minHeight)));
+  return {
+    titleSize: 0.70 + (0.18 * progress),
+    metaSize: 0.56 + (0.22 * progress),
+    titleLineHeight: 1.02 + (0.10 * progress),
+  };
+}
+
+function applyCalendarBlockTypography(element, height) {
+  const typography = calendarBlockTypography(height);
+  element.style.setProperty("--calendar-title-size", `${typography.titleSize.toFixed(3)}rem`);
+  element.style.setProperty("--calendar-meta-size", `${typography.metaSize.toFixed(3)}rem`);
+  element.style.setProperty("--calendar-title-line-height", typography.titleLineHeight.toFixed(3));
+}
+
 function blockHtml(block, dayStart, calendarHeight, interactive = true) {
   const displayTitle = block.type === "arrival" ? "Anreise" : block.title;
   const start = toMinutes(block.start);
@@ -1296,11 +1314,12 @@ function blockHtml(block, dayStart, calendarHeight, interactive = true) {
   const height = Math.max(44, (blockDuration / 60) * calendarHourHeight);
   const cappedHeight = Math.min(height, Math.max(44, calendarHeight - top));
   const compactClass = interactive && blockDuration <= 30 ? " is-compact" : "";
+  const typography = calendarBlockTypography(cappedHeight);
   const blockTooltip = `${displayTitle} · ${block.start}-${block.end} · ${formatHours(blockDuration)}`;
   const resizeHandles = interactive && block.type === "training" ? `
     <button type="button" class="calendar-resize-handle resize-start" draggable="false" aria-label="Startzeit ziehen" title="Startzeit in 15-Minuten-Schritten ziehen" onpointerdown="startBlockResize(event, '${block.id}', 'start')" ondragstart="event.preventDefault(); event.stopPropagation()"></button>
     <button type="button" class="calendar-resize-handle resize-end" draggable="false" aria-label="Endzeit ziehen" title="Endzeit in 15-Minuten-Schritten ziehen" onpointerdown="startBlockResize(event, '${block.id}', 'end')" ondragstart="event.preventDefault(); event.stopPropagation()"></button>` : "";
-  return `<article class="block calendar-block${compactClass} ${block.type} ${block.id === cutBlockId ? "is-cut" : ""}" data-block-id="${escapeHtml(block.id)}" title="${escapeHtml(blockTooltip)}" ${interactive ? `draggable="true" ondragstart="dragBlock(event, '${block.id}')"` : ""} style="top:${top}px;height:${cappedHeight}px;--block-bg:${escapeHtml(block.background_color || "#ffffff")}">
+  return `<article class="block calendar-block${compactClass} ${block.type} ${block.id === cutBlockId ? "is-cut" : ""}" data-block-id="${escapeHtml(block.id)}" title="${escapeHtml(blockTooltip)}" ${interactive ? `draggable="true" ondragstart="dragBlock(event, '${block.id}')"` : ""} style="top:${top}px;height:${cappedHeight}px;--block-bg:${escapeHtml(block.background_color || "#ffffff")};--calendar-title-size:${typography.titleSize.toFixed(3)}rem;--calendar-meta-size:${typography.metaSize.toFixed(3)}rem;--calendar-title-line-height:${typography.titleLineHeight.toFixed(3)}">
     ${resizeHandles}
     <div class="block-content">
       <strong>${escapeHtml(displayTitle)}</strong>
@@ -1367,6 +1386,7 @@ function updateResizedBlockElement(block, element, calendarHeight) {
   const displayTitle = block.type === "arrival" ? "Anreise" : block.title;
   element.style.top = `${top}px`;
   element.style.height = `${cappedHeight}px`;
+  applyCalendarBlockTypography(element, cappedHeight);
   element.classList.toggle("is-compact", blockDuration <= 30);
   element.title = `${displayTitle} · ${block.start}-${block.end} · ${formatHours(blockDuration)}`;
   const meta = element.querySelector(".block-meta");

@@ -1,6 +1,13 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.2.43**
+Aktuelle Version: **v0.2.44**
+
+## Aenderungen v0.2.44
+
+- Titel- und Zeit-/Dauer-Schrift in Kalenderkacheln skalieren jetzt stufenlos mit der Kachelhoehe.
+- Beim Ziehen der oberen oder unteren Resize-Kante wird die Typografie live mit der Hoehe aktualisiert.
+- Der abrupte Schriftgroessenwechsel beim Uebergang von kurzen zu groesseren Bloecken entfaellt.
+- Die kompakte Bedienung kurzer 15-/30-Minuten-Bloecke und das Viertelstundenraster bleiben erhalten.
 
 ## Aenderungen v0.2.43
 
@@ -238,7 +245,7 @@ Erwartet:
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.2.43` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.2.44` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -246,7 +253,7 @@ Bei einem Release-Tag wie `v0.2.43` baut `.github/workflows/release-image.yml` n
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.43
+ghcr.io/syschelle/schulungsplantool:0.2.44
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -268,7 +275,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.2.43` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.2.44` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -276,7 +283,7 @@ Bei einem Release-Tag wie `v0.2.43` baut der Workflow `.github/workflows/release
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.2.43
+ghcr.io/syschelle/schulungsplantool:0.2.44
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 

@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.2.43"' in html
+    assert 'src="calendar.js?v=0.2.44"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -255,3 +255,17 @@ def test_training_blocks_support_live_quarter_hour_resize_and_hour_duration_labe
     assert ".calendar-resize-handle {" in css
     assert "cursor: ns-resize;" in css
     assert "touch-action: none;" in css
+
+
+def test_calendar_block_typography_scales_smoothly_with_live_height() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    css = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
+    assert "function calendarBlockTypography(height)" in javascript
+    assert "function applyCalendarBlockTypography(element, height)" in javascript
+    assert '--calendar-title-size:${typography.titleSize.toFixed(3)}rem' in javascript
+    assert '--calendar-meta-size:${typography.metaSize.toFixed(3)}rem' in javascript
+    resize_section = javascript.split("function updateResizedBlockElement", 1)[1].split("function finishBlockResize", 1)[0]
+    assert "applyCalendarBlockTypography(element, cappedHeight);" in resize_section
+    assert "font-size: var(--calendar-title-size" in css
+    assert "font-size: var(--calendar-meta-size" in css
+    assert "transition: font-size 90ms linear" in css

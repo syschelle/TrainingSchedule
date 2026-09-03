@@ -1321,3 +1321,13 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Auch kompakte 15-/30-Minuten-Kacheln zeigen diese Zeit-/Dauerzeile in kleiner Schrift.
 - Das bestehende Verschieben kompletter Bloecke zwischen Zeiten, Tagen, Wochen und Trainern bleibt erhalten.
 - Version auf `v0.2.43` erhoeht.
+
+
+## Erweiterung v0.2.44 - Dynamische Schriftgroesse in Kalenderkacheln
+
+- Titel- und Metaschrift der Kalenderkacheln muessen abhaengig von der realen Kachelhoehe stufenlos skaliert werden.
+- Beim Live-Resize muss die Schriftgroesse zusammen mit der Kachelhoehe aktualisiert werden.
+- Der bisherige sichtbare Sprung beim Wechsel der `is-compact`-Darstellung darf die Schriftgroesse nicht mehr veraendern.
+- Die kompakten Aktionsbuttons fuer 15-/30-Minuten-Bloecke bleiben erhalten.
+- Das bestehende 15-Minuten-Raster und die Planungslogik bleiben unveraendert.
+- Version auf `v0.2.44` erhoeht.

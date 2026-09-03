@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.2.44 - 2026-09-03
+
+- Schriftgroesse von Kalenderkacheln skaliert jetzt stufenlos mit der tatsaechlichen Kachelhoehe.
+- Beim Live-Resize werden Titel- und Zeit-/Dauer-Schrift bei jeder Hoehenaenderung direkt aktualisiert.
+- Der bisher sichtbare Schriftgroessensprung beim Wechsel zwischen kompakter und normaler Kacheldarstellung entfaellt.
+- Kompakte 15-/30-Minuten-Kacheln behalten weiterhin ihre platzsparenden Aktionsbuttons und das bestehende 15-Minuten-Raster.
+- Keine Datenbankmigration erforderlich.
+
 ## v0.2.43 - 2026-09-03
 
 - Schulungsbloecke im Kalender erhalten obere und untere Resize-Griffe fuer direkte Start-/Endzeit-Anpassung.
