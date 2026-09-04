@@ -1549,3 +1549,14 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Rueckimport erlaubt Positionsaenderungen derselben drei Blocktypen und prueft unveraenderte Dauer, 15-Minuten-Raster, erlaubte Woche/Trainer/Tag, Arbeitszeit, Kollisionen und Abhaengigkeiten.
 - Zeitachsen der Kundenseite beschriften jedes 15-Minuten-Intervall mit einer Uhrzeit.
 - Version auf `v0.4.2` erhoeht.
+
+
+## Erweiterung v0.4.3 - Trainer-Verfuegbarkeit
+
+- Im Workflow-Schritt **Pruefen** wird die voraussichtlich benoetigte Anzahl an Schulungswochen berechnet.
+- Pro Trainer und Woche koennen Montag bis Freitag einzeln aktiviert/deaktiviert werden.
+- Der automatische Planner darf nur aktivierte Trainer-Tage verwenden.
+- Tage vor dem Projektstart sind in Woche 1 nicht zulaessig.
+- Anreise/Abreise liegen automatisch auf dem ersten/letzten aktivierten Schulungstag je Trainer.
+- Im Offline-Kundenplaner ist Freitag immer als Park-/Verschiebetag erlaubt.
+- Version auf `v0.4.3` erhoeht.

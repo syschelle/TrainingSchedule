@@ -1,4 +1,4 @@
-from app.server.models import ParticipantGroup, PlanningSettings, ProductLine, ScheduleBlock, TrainingProject, TrainingTopic
+from app.server.models import ParticipantGroup, PlanningSettings, ProductLine, ScheduleBlock, TrainerWeekAvailability, TrainingProject, TrainingTopic
 from app.server.planner import plan_project, validate_project
 
 
@@ -386,3 +386,78 @@ def test_planner_spreads_smaller_topic_across_days_instead_of_exhausting_it_earl
         if block.type == "training" and block.source_topic_id == "few-topic"
     ]
     assert few_days == ["Montag", "Dienstag"]
+
+
+
+def test_v043_trainer_specific_availability_is_respected():
+    project = TrainingProject(
+        trainers=["Trainer A", "Trainer B"],
+        trainer_availability=[
+            TrainerWeekAvailability(trainer="Trainer A", week=1, weekdays=["Dienstag"]),
+            TrainerWeekAvailability(trainer="Trainer B", week=1, weekdays=["Mittwoch"]),
+        ],
+        topics=[topic("A", 120), topic("B", 120)],
+    )
+    planned = plan_project(project)
+    training = [block for block in planned.blocks if block.type == "training" and block.week == 1]
+    assert training
+    assert all(
+        (block.trainer == "Trainer A" and block.day == "Dienstag")
+        or (block.trainer == "Trainer B" and block.day == "Mittwoch")
+        for block in training
+    )
+
+
+def test_v043_explicit_friday_availability_overrides_default_friday_setting():
+    project = TrainingProject(
+        trainers=["Trainer A"],
+        settings=PlanningSettings(friday_training_enabled=False),
+        trainer_availability=[TrainerWeekAvailability(trainer="Trainer A", week=1, weekdays=["Freitag"])],
+        topics=[topic("Freitag", 60)],
+    )
+    planned = plan_project(project)
+    training = next(block for block in planned.blocks if block.type == "training")
+    assert training.week == 1
+    assert training.day == "Freitag"
+
+
+def test_v043_arrival_and_departure_follow_first_and_last_enabled_training_day():
+    project = TrainingProject(
+        trainers=["Trainer A"],
+        trainer_availability=[TrainerWeekAvailability(trainer="Trainer A", week=1, weekdays=["Dienstag", "Mittwoch"])],
+        topics=[topic("A", 60)],
+    )
+    planned = plan_project(project)
+    arrival = next(block for block in planned.blocks if block.type == "arrival" and block.week == 1)
+    departure = next(block for block in planned.blocks if block.type == "departure" and block.week == 1)
+    assert arrival.day == "Dienstag"
+    assert departure.day == "Mittwoch"
+    assert all(block.day in {"Dienstag", "Mittwoch"} for block in planned.blocks if block.type == "training" and block.week == 1)
+
+
+def test_v043_first_week_never_plans_before_project_start_date():
+    project = TrainingProject(
+        start_date="2026-09-08",  # Tuesday
+        trainers=["Trainer A"],
+        trainer_availability=[TrainerWeekAvailability(trainer="Trainer A", week=1, weekdays=["Montag", "Dienstag", "Mittwoch"])],
+        topics=[topic("Startdatum", 60)],
+    )
+    planned = plan_project(project)
+    training = next(block for block in planned.blocks if block.type == "training")
+    assert training.day != "Montag"
+
+
+def test_v043_unused_trainer_week_does_not_keep_arrival_or_departure_only():
+    project = TrainingProject(
+        trainers=["Trainer A", "Trainer B"],
+        trainer_availability=[
+            TrainerWeekAvailability(trainer="Trainer A", week=1, weekdays=["Dienstag"]),
+            TrainerWeekAvailability(trainer="Trainer B", week=1, weekdays=["Donnerstag", "Freitag"]),
+        ],
+        topics=[topic("A", 60)],
+    )
+    planned = plan_project(project)
+    trainers_with_training = {block.trainer for block in planned.blocks if block.type == "training"}
+    for block in planned.blocks:
+        if block.type in {"arrival", "departure"}:
+            assert block.trainer in trainers_with_training

@@ -61,7 +61,7 @@
     document.querySelectorAll('.day-body').forEach(body=>{
       body.addEventListener('dragover',event=>{event.preventDefault();body.classList.add('drop-target');}); body.addEventListener('dragleave',()=>body.classList.remove('drop-target'));
       body.addEventListener('drop',event=>{ event.preventDefault(); body.classList.remove('drop-target'); const block=blocks.find(item=>item.id===(draggedId||event.dataTransfer.getData('text/plain'))); if(!block||!MOVABLE_TYPES.has(block.type))return;
-        const week=Number(body.dataset.week), day=body.dataset.day, trainer=body.dataset.trainer; if(day==="Freitag"&&!view.settings.friday_training_enabled){setStatus("Freitag ist für die Planung nicht freigegeben.","error");return;}
+        const week=Number(body.dataset.week), day=body.dataset.day, trainer=body.dataset.trainer;
         const rect=body.getBoundingClientRect(); const length=duration(block); const dayStart=toMinutes(view.settings.day_start), dayEnd=toMinutes(view.settings.day_end); let start=snap(dayStart+((event.clientY-rect.top)/HOUR_HEIGHT)*60-dragOffsetMinutes); start=Math.max(dayStart,Math.min(start,dayEnd-length));
         const target={...block,week,day,trainer,start:formatTime(start),end:formatTime(start+length)}; const hit=conflict(block,target); if(hit){const hidden=hit.type==="break"||hit.type==="lunch";setStatus(hidden?"Der Zielbereich ist nicht verfügbar.":`Der Zielbereich ist durch „${hit.title||hit.type}“ belegt.`,"error");return;}
         Object.assign(block,target); draggedId=""; dragOffsetMinutes=0; setStatus(block.type==="training"?"Schulungsblock verschoben.":block.type==="arrival"?"Anreise verschoben.":"Abreise verschoben.","ok"); render();

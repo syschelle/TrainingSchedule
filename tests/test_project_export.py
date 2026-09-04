@@ -357,3 +357,25 @@ def test_v042_customer_return_rejects_arrival_duration_change(monkeypatch):
     }])
     with pytest.raises(ValueError, match="duration_changed"):
         apply_customer_return(payload)
+
+
+
+def test_v043_customer_return_can_park_training_on_friday_when_auto_friday_is_disabled(monkeypatch):
+    monkeypatch.setenv("CUSTOMER_EXCHANGE_SECRET", "test-secret")
+    project = sample_project()
+    project.settings.friday_training_enabled = False
+    training = next(block for block in project.blocks if block.type == "training")
+    duration = minutes_between(training.start, training.end)
+    package = build_customer_package(project)
+    payload = _customer_return_from_package(package, [{
+        "block_id": training.id,
+        "week": training.week,
+        "day": "Freitag",
+        "trainer": training.trainer,
+        "start": "09:00",
+        "end": f"{(9 * 60 + duration) // 60:02d}:{(9 * 60 + duration) % 60:02d}",
+    }])
+    updated = apply_customer_return(payload)
+    moved = next(block for block in updated.blocks if block.id == training.id)
+    assert moved.day == "Freitag"
+    assert minutes_between(moved.start, moved.end) == duration

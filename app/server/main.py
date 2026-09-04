@@ -35,7 +35,7 @@ from .rules import format_time, minutes_between, parse_time, snap_minutes_to_qua
 BASE_DIR = Path(__file__).resolve().parents[1]
 STATIC_DIR = BASE_DIR / "static"
 MAX_UPLOAD_MB = int(os.environ.get("MAX_UPLOAD_MB", "25"))
-APP_VERSION = os.environ.get("APP_VERSION", "0.4.2")
+APP_VERSION = os.environ.get("APP_VERSION", "0.4.3")
 MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
 
 app = FastAPI(title="Schulungsplantool", version=APP_VERSION)
@@ -190,6 +190,17 @@ async def import_files(files: list[UploadFile] = File(...)) -> dict:
 @app.post("/api/plan")
 def plan(project: TrainingProject) -> dict:
     return plan_project(project).model_dump(mode="json")
+
+
+@app.post("/api/plan/estimate")
+def estimate_plan(project: TrainingProject) -> dict:
+    estimated = plan_project(project.model_copy(deep=True))
+    training_weeks = sorted({int(block.week) for block in estimated.blocks if block.type.value == "training"})
+    return {
+        "weeks": max(training_weeks, default=1),
+        "training_weeks": training_weeks,
+        "unscheduled_count": len(estimated.unscheduled_topics),
+    }
 
 
 @app.post("/api/validate")

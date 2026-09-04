@@ -1,8 +1,16 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.4.2**
+Aktuelle Version: **v0.4.3**
 
 
+
+## Aenderungen v0.4.3
+
+- Trainer-spezifische Schulungstage werden im Workflow-Schritt **Pruefen** pro Kalenderwoche ueber Mo-Fr ausgewaehlt.
+- Die Zahl der benoetigten Kalenderwochen wird vor der eigentlichen Planung ueber einen separaten Planungs-Estimate berechnet und passt sich an geaenderte Trainerverfuegbarkeiten an.
+- Das Startdatum sperrt in der ersten Woche automatisch Kalendertage vor Projektbeginn.
+- Anreise und Abreise folgen bei der automatischen Planung dem ersten bzw. letzten aktivierten Schulungstag des jeweiligen Trainers.
+- Der Freitag bleibt im Offline-Kundenplaner als Park-/Verschiebetag nutzbar, auch wenn er fuer die automatische Planung nicht standardmaessig aktiviert ist.
 
 ## Aenderungen v0.4.2
 

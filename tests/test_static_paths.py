@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.4.2"' in html
+    assert 'src="calendar.js?v=0.4.3"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -374,10 +374,10 @@ def test_v030_common_time_settings_are_visible_and_advanced_rules_are_disclosed(
     assert 'id="settings-fields"' in time_panel
     assert "Weitere Planungsregeln" in time_panel
     assert 'id="advanced-settings-fields"' in time_panel
-    assert "Montag · Anreise" in javascript
-    assert "Donnerstag · Abreise" in javascript
+    assert "Anreise · erster Schulungstag" in javascript
+    assert "Abreise · letzter Schulungstag" in javascript
     assert "Pause min." in javascript
-    assert "Freitag für Schulung nutzen" in javascript
+    assert "Freitag standardmäßig aktiv" in javascript
 
 
 def test_v030_project_menu_separates_project_workflow_from_administration() -> None:
@@ -633,3 +633,20 @@ def test_v042_customer_calendar_hides_breaks_and_lunch_and_shows_quarter_labels(
     assert 'minute+=15' in javascript
     assert 'MOVABLE_TYPES.has(block.type)' in javascript
     assert "document.querySelectorAll('.block.movable')" in javascript
+
+
+
+def test_v043_review_contains_trainer_weekday_availability_and_estimate_endpoint() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    main = (STATIC_DIR.parents[1] / "app" / "server" / "main.py").read_text(encoding="utf-8")
+    assert "Schulungstage je Trainer" in javascript
+    assert 'data-availability-trainer=' in javascript
+    assert 'fetch("api/plan/estimate"' in javascript
+    assert '@app.post("/api/plan/estimate")' in main
+    assert "Voraussichtlich ${weekCount}" in javascript
+
+
+def test_v043_customer_friday_is_available_as_parking_day() -> None:
+    javascript = (STATIC_DIR.parent / "customer_assets" / "app.js").read_text(encoding="utf-8")
+    assert 'day==="Freitag"&&!view.settings.friday_training_enabled' not in javascript
+    assert "Freitag ist für die Planung nicht freigegeben." not in javascript

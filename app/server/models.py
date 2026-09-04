@@ -95,6 +95,12 @@ class ProductLine(BaseModel):
     participant_groups: list[ParticipantGroup] = Field(default_factory=list)
 
 
+class TrainerWeekAvailability(BaseModel):
+    trainer: str
+    week: int = Field(ge=1)
+    weekdays: list[Literal["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"]] = Field(default_factory=list)
+
+
 class TrainingProject(BaseModel):
     title: str = "DeepUnity Schulungsplan"
     project_mode: Literal["training_plan", "service_calculation"] = "training_plan"
@@ -112,6 +118,7 @@ class TrainingProject(BaseModel):
     topics: list[TrainingTopic] = Field(default_factory=list)
     blocks: list[ScheduleBlock] = Field(default_factory=list)
     manual_weeks: list[int] = Field(default_factory=list)
+    trainer_availability: list[TrainerWeekAvailability] = Field(default_factory=list)
     unscheduled_topics: list[TrainingTopic] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
 

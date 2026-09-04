@@ -47,6 +47,10 @@ const workflowSteps = [
 let currentWorkflowStep = "product";
 let planInputsDirty = false;
 let workflowErrors = {};
+let availabilityEstimatedWeeks = 1;
+let availabilityEstimateTimer = null;
+let availabilityEstimateToken = 0;
+let availabilityEstimateUnscheduled = 0;
 
 function makeDefaultProject() {
   return {
@@ -80,6 +84,7 @@ function makeDefaultProject() {
     topics: [],
     blocks: [],
     manual_weeks: [],
+    trainer_availability: [],
     unscheduled_topics: [],
     warnings: []
   };
@@ -412,6 +417,9 @@ function updateTrainerField(event) {
     project.blocks.forEach((block) => {
       if (block.trainer === previous) block.trainer = next;
     });
+    (project.trainer_availability || []).forEach((item) => {
+      if (item.trainer === previous) item.trainer = next;
+    });
   }
   syncTrainerLegacy();
   markPlanningInputsChanged();
@@ -463,6 +471,7 @@ function deleteTrainer(index) {
     project.blocks.forEach((block) => {
       if (block.trainer === removed) block.trainer = replacement;
     });
+    project.trainer_availability = (project.trainer_availability || []).filter((item) => item.trainer !== removed);
   }
   syncTrainerLegacy();
   markPlanningInputsChanged();
@@ -519,11 +528,11 @@ function renderSettingsFields() {
       <div class="time-pair">${setting("day_start", "Beginn", s.day_start, "time")}${setting("day_end", "Ende", s.day_end, "time")}</div>
     </div>
     <div class="time-setting-card">
-      <div class="time-setting-heading"><strong>Montag · Anreise</strong>${inlineToggle("monday_arrival_enabled", s.monday_arrival_enabled, "Aktiv")}</div>
+      <div class="time-setting-heading"><strong>Anreise · erster Schulungstag</strong>${inlineToggle("monday_arrival_enabled", s.monday_arrival_enabled, "Aktiv")}</div>
       <div class="time-pair ${s.monday_arrival_enabled ? "" : "is-disabled"}">${setting("monday_arrival_start", "Von", s.monday_arrival_start, "time")}${setting("monday_arrival_end", "Bis", s.monday_arrival_end, "time")}</div>
     </div>
     <div class="time-setting-card">
-      <div class="time-setting-heading"><strong>Donnerstag · Abreise</strong>${inlineToggle("thursday_departure_enabled", s.thursday_departure_enabled, "Aktiv")}</div>
+      <div class="time-setting-heading"><strong>Abreise · letzter Schulungstag</strong>${inlineToggle("thursday_departure_enabled", s.thursday_departure_enabled, "Aktiv")}</div>
       <div class="time-pair ${s.thursday_departure_enabled ? "" : "is-disabled"}">${setting("thursday_departure_start", "Von", s.thursday_departure_start, "time")}${setting("thursday_departure_end", "Bis", s.thursday_departure_end, "time")}</div>
     </div>
     <div class="time-setting-card">
@@ -535,7 +544,7 @@ function renderSettingsFields() {
     numberSetting("break_max_minutes", "Pause max.", s.break_max_minutes),
     setting("lunch_window_start", "Mittagsfenster von", s.lunch_window_start, "time"),
     setting("lunch_window_end", "Mittagsfenster bis", s.lunch_window_end, "time"),
-    checkboxSetting("friday_training_enabled", "Freitag für Schulung nutzen", s.friday_training_enabled)
+    checkboxSetting("friday_training_enabled", "Freitag standardmäßig aktiv", s.friday_training_enabled)
   ].join("");
   document.querySelectorAll("#settings-fields input, #advanced-settings-fields input").forEach((input) => input.addEventListener("input", updateSettingField));
   applyWorkflowFieldErrors();
@@ -623,7 +632,10 @@ function setWorkflowStep(step) {
   renderPages();
   renderWorkflowProgress();
   renderWorkflowPanels();
-  if (step === "review") renderWorkflowReview();
+  if (step === "review") {
+    renderWorkflowReview();
+    scheduleAvailabilityEstimate(0);
+  }
   requestAnimationFrame(() => document.querySelector(`[data-workflow-panel="${step}"]`)?.scrollIntoView({ block: "start", behavior: "smooth" }));
 }
 
@@ -687,6 +699,146 @@ function applyWorkflowFieldErrors() {
   document.querySelectorAll(".workflow-input-error").forEach((node) => node.classList.remove("workflow-input-error"));
 }
 
+
+function availabilityDayIsOnOrAfterStart(week, day) {
+  if (!project.start_date) return true;
+  const calendarDate = TrainingCalendar.dateForCalendarDay(project.start_date, Number(week || 1), day);
+  const startDate = TrainingCalendar.parseIsoDate(project.start_date);
+  if (!calendarDate || !startDate) return true;
+  return calendarDate.getTime() >= startDate.getTime();
+}
+
+function defaultTrainerAvailabilityDays(week = 1) {
+  const defaults = project.settings?.friday_training_enabled ? [...days] : days.slice(0, 4);
+  return defaults.filter((day) => availabilityDayIsOnOrAfterStart(week, day));
+}
+
+function normalizeTrainerAvailabilityRecords() {
+  project.trainer_availability = Array.isArray(project.trainer_availability) ? project.trainer_availability : [];
+  project.trainer_availability = project.trainer_availability
+    .map((item) => ({
+      trainer: String(item?.trainer || "").trim(),
+      week: Math.max(1, Number(item?.week || 1)),
+      weekdays: [...new Set((Array.isArray(item?.weekdays) ? item.weekdays : []).filter((day) => days.includes(day)))]
+    }))
+    .filter((item) => item.trainer && Number.isFinite(item.week));
+}
+
+function trainerAvailabilityRecord(trainer, week, create = false) {
+  normalizeTrainerAvailabilityRecords();
+  const name = String(trainer || "").trim();
+  const weekNumber = Number(week || 1);
+  let record = project.trainer_availability.find((item) => item.trainer === name && Number(item.week) === weekNumber);
+  if (!record && create && name) {
+    record = { trainer: name, week: weekNumber, weekdays: defaultTrainerAvailabilityDays(weekNumber) };
+    project.trainer_availability.push(record);
+  }
+  return record || null;
+}
+
+function ensureTrainerAvailabilityWeeks(weekCount) {
+  const trainers = activeTrainers();
+  const maxWeek = Math.max(1, Number(weekCount || 1));
+  for (let week = 1; week <= maxWeek; week += 1) {
+    trainers.forEach((trainer) => trainerAvailabilityRecord(trainer, week, true));
+  }
+}
+
+function availabilityWeekCount() {
+  const scheduledMax = Math.max(0, ...scheduledWeeks());
+  return Math.max(1, Number(availabilityEstimatedWeeks || 1), scheduledMax);
+}
+
+function availabilityDateLabel(week, day) {
+  const date = TrainingCalendar.dateForCalendarDay(project.start_date, week, day);
+  if (!date) return day.slice(0, 2);
+  const formatted = TrainingCalendar.formatGermanDate(date);
+  return `${day.slice(0, 2)} ${formatted.slice(0, 5)}`;
+}
+
+function trainerAvailabilityReviewHtml() {
+  const trainers = activeTrainers();
+  if (!trainers.length) return "";
+  const weekCount = availabilityWeekCount();
+  ensureTrainerAvailabilityWeeks(weekCount);
+  const weekCards = [];
+  for (let week = 1; week <= weekCount; week += 1) {
+    const first = TrainingCalendar.dateForCalendarDay(project.start_date, week, "Montag");
+    const last = TrainingCalendar.dateForCalendarDay(project.start_date, week, "Freitag");
+    const range = first && last ? `${TrainingCalendar.formatGermanDate(first)}–${TrainingCalendar.formatGermanDate(last)}` : `Woche ${week}`;
+    const rows = trainers.map((trainer) => {
+      const record = trainerAvailabilityRecord(trainer, week, true);
+      const selected = new Set(record?.weekdays || []);
+      return `<div class="availability-trainer-row">
+        <strong>${escapeHtml(trainerLabel(trainer))}</strong>
+        <div class="availability-day-grid" role="group" aria-label="Verfügbarkeit ${escapeHtml(trainerLabel(trainer))} Woche ${week}">
+          ${days.map((day) => {
+            const allowedByStart = availabilityDayIsOnOrAfterStart(week, day);
+            return `<label class="availability-day ${selected.has(day) ? "selected" : ""} ${allowedByStart ? "" : "disabled"}">
+              <input type="checkbox" data-availability-trainer="${escapeHtml(trainer)}" data-availability-week="${week}" data-availability-day="${day}" ${selected.has(day) ? "checked" : ""} ${allowedByStart ? "" : "disabled"}>
+              <span>${escapeHtml(availabilityDateLabel(week, day))}</span>
+            </label>`;
+          }).join("")}
+        </div>
+      </div>`;
+    }).join("");
+    weekCards.push(`<section class="availability-week-card"><div class="availability-week-heading"><strong>Woche ${week}</strong><span>${escapeHtml(range)}</span></div>${rows}</section>`);
+  }
+  return `<section class="review-availability">
+    <div class="review-availability-heading"><div><h3>Schulungstage je Trainer</h3><span>Voraussichtlich ${weekCount} ${weekCount === 1 ? "Woche" : "Wochen"}</span></div></div>
+    <div class="availability-weeks">${weekCards.join("")}</div>
+    ${availabilityEstimateUnscheduled ? `<div class="availability-warning">Mit der aktuellen Verfügbarkeit bleiben voraussichtlich ${availabilityEstimateUnscheduled} Schulung${availabilityEstimateUnscheduled === 1 ? "" : "en"} ungeplant.</div>` : ""}
+  </section>`;
+}
+
+function bindTrainerAvailabilityControls(container) {
+  container.querySelectorAll("[data-availability-trainer]").forEach((input) => {
+    input.addEventListener("change", (event) => {
+      const trainer = event.currentTarget.dataset.availabilityTrainer;
+      const week = Number(event.currentTarget.dataset.availabilityWeek);
+      const day = event.currentTarget.dataset.availabilityDay;
+      const record = trainerAvailabilityRecord(trainer, week, true);
+      const selected = new Set(record.weekdays || []);
+      if (event.currentTarget.checked) selected.add(day); else selected.delete(day);
+      record.weekdays = days.filter((name) => selected.has(name));
+      event.currentTarget.closest(".availability-day")?.classList.toggle("selected", event.currentTarget.checked);
+      markPlanningInputsChanged();
+      scheduleAvailabilityEstimate(120);
+    });
+  });
+}
+
+function scheduleAvailabilityEstimate(delay = 120) {
+  if (availabilityEstimateTimer) window.clearTimeout(availabilityEstimateTimer);
+  availabilityEstimateTimer = window.setTimeout(refreshAvailabilityEstimate, delay);
+}
+
+async function refreshAvailabilityEstimate() {
+  availabilityEstimateTimer = null;
+  if (currentWorkflowStep !== "review" || currentPage !== "input" || !workflowStepIsComplete("training") || !workflowStepIsComplete("time")) return;
+  const token = ++availabilityEstimateToken;
+  ensureTrainerAvailabilityWeeks(availabilityWeekCount());
+  try {
+    const response = await fetch("api/plan/estimate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(project)
+    });
+    if (!response.ok || token !== availabilityEstimateToken) return;
+    const payload = await response.json();
+    if (token !== availabilityEstimateToken) return;
+    const nextWeeks = Math.max(1, Number(payload.weeks || 1));
+    const nextUnscheduled = Math.max(0, Number(payload.unscheduled_count || 0));
+    const changed = nextWeeks !== availabilityEstimatedWeeks || nextUnscheduled !== availabilityEstimateUnscheduled;
+    availabilityEstimatedWeeks = nextWeeks;
+    availabilityEstimateUnscheduled = nextUnscheduled;
+    ensureTrainerAvailabilityWeeks(nextWeeks);
+    if (changed) renderWorkflowReview();
+  } catch (_) {
+    // The final Plan erstellen action remains authoritative if the estimate is unavailable.
+  }
+}
+
 function renderWorkflowReview() {
   const container = $("#workflow-review");
   if (!container) return;
@@ -709,9 +861,11 @@ function renderWorkflowReview() {
       ${reviewCard("Schulungen", [["Ausgewählt", `${trainingCount} ${trainingCount === 1 ? "Schulungsinhalt" : "Schulungsinhalte"}`]], "training")}
       ${reviewCard("Zeiten", [["Schulungstag", `${project.settings.day_start}–${project.settings.day_end}`], ["Anreise", project.settings.monday_arrival_enabled ? `${project.settings.monday_arrival_start}–${project.settings.monday_arrival_end}` : "Aus"], ["Abreise", project.settings.thursday_departure_enabled ? `${project.settings.thursday_departure_start}–${project.settings.thursday_departure_end}` : "Aus"]], "time")}
     </div>
+    ${trainerAvailabilityReviewHtml()}
     ${missing.length ? `<div class="review-missing">${missing.map((step) => `<button type="button" data-review-step="${step.id}">${step.label} ergänzen</button>`).join("")}</div>` : ""}
     ${planInputsDirty && project.blocks.length ? `<div class="review-replan-note"><strong>Vorhandener Kalender wird beim Neuerstellen ersetzt.</strong><span>Deine bisherigen Kalenderblöcke bleiben bis zum Klick auf „Plan erstellen“ unverändert.</span></div>` : ""}`;
   container.querySelectorAll("[data-review-step]").forEach((button) => button.addEventListener("click", () => setWorkflowStep(button.dataset.reviewStep)));
+  bindTrainerAvailabilityControls(container);
   const planButton = $("#autoPlan");
   if (planButton) {
     planButton.disabled = !ready;
@@ -1490,6 +1644,8 @@ async function createPlan() {
   }
   project = await response.json();
   normalizeProjectState();
+  availabilityEstimatedWeeks = Math.max(1, ...scheduledWeeks());
+  availabilityEstimateUnscheduled = 0;
   transientManualWeeks = new Set();
   planInputsDirty = false;
   workflowErrors = {};
@@ -2492,6 +2648,7 @@ function renderPreview() {
 function normalizeProjectState() {
   project.blocks = Array.isArray(project.blocks) ? project.blocks : [];
   project.manual_weeks = Array.isArray(project.manual_weeks) ? project.manual_weeks : [];
+  project.trainer_availability = Array.isArray(project.trainer_availability) ? project.trainer_availability : [];
   project.settings = project.settings || { ...defaultSettings };
   ["day_start", "lunch_window_start", "monday_arrival_start", "thursday_departure_start"].forEach((key) => {
     if (project.settings[key]) project.settings[key] = snapTimeValue(project.settings[key]);
@@ -2508,6 +2665,7 @@ function normalizeProjectState() {
       if (!String(block.trainer || "").trim()) block.trainer = project.trainers[0];
     });
   }
+  normalizeTrainerAvailabilityRecords();
   syncTrainerLegacy();
 }
 
@@ -2577,6 +2735,8 @@ async function importProjectState(event) {
   }
   project = payload.project;
   normalizeProjectState();
+  availabilityEstimatedWeeks = Math.max(1, ...scheduledWeeks());
+  availabilityEstimateUnscheduled = 0;
   transientManualWeeks = new Set();
   cutBlockId = null;
   draggedBlockId = null;
@@ -2632,6 +2792,8 @@ async function importCustomerPlan(event) {
   }
   project = payload.project;
   normalizeProjectState();
+  availabilityEstimatedWeeks = Math.max(1, ...scheduledWeeks());
+  availabilityEstimateUnscheduled = 0;
   transientManualWeeks = new Set();
   hiddenTransientTrainerWeeks = new Set();
   cutBlockId = null;

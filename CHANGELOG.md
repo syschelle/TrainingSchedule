@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.4.3 - 2026-09-04
+
+- Trainer-spezifische Verfuegbarkeit pro Woche und Wochentag im Workflow-Schritt **Pruefen**.
+- Separater Planungs-Estimate fuer die voraussichtlich benoetigte Wochenanzahl, ohne einen Schulungsplan zu erzeugen.
+- Automatische Planung respektiert die aktivierten Tage pro Trainer.
+- Tage vor dem Projekt-Startdatum werden in Woche 1 nicht fuer Schulungen verwendet.
+- Anreise/Abreise werden auf den ersten/letzten aktivierten Schulungstag des Trainers gelegt.
+- Freitag im Offline-Kundenplaner als freier Park-/Verschiebetag freigegeben; Rueckimport akzeptiert Freitag unabhaengig von der automatischen Freitag-Einstellung.
+
 ## v0.4.2 - 2026-09-04
 
 ### Kundenplanung-Workflow und Offline-Kalender verbessert

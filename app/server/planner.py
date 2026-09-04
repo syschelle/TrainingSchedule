@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from datetime import timedelta
 from math import ceil
 from uuid import uuid4
 
@@ -48,6 +49,24 @@ def project_trainers(project: TrainingProject) -> list[str]:
     # A project without a named trainer remains planable. The empty name is
     # rendered as "Nicht zugewiesen" in the calendar.
     return trainers or [""]
+
+
+def trainer_available_days(project: TrainingProject, trainer: str, week: int) -> set[str]:
+    for availability in project.trainer_availability:
+        if availability.trainer == trainer and int(availability.week) == int(week):
+            return {day for day in availability.weekdays if day in DISPLAY_WEEKDAYS}
+    return set(training_days(project))
+
+
+def trainer_is_available(project: TrainingProject, trainer: str, week: int, day: str) -> bool:
+    if day not in trainer_available_days(project, trainer, week):
+        return False
+    if project.start_date is not None:
+        monday = project.start_date - timedelta(days=project.start_date.weekday())
+        calendar_day = monday + timedelta(days=(int(week) - 1) * 7 + DISPLAY_WEEKDAYS.index(day))
+        if calendar_day < project.start_date:
+            return False
+    return True
 
 
 def absolute_day_index(week: int, day: str) -> int:
@@ -195,10 +214,19 @@ def balanced_topic_order(
     return ordered
 
 
+def _trainer_week_days(project: TrainingProject, trainer: str, week: int) -> list[str]:
+    allowed = trainer_available_days(project, trainer, week)
+    return [day for day in DISPLAY_WEEKDAYS if day in allowed]
+
+
 def _add_fixed_blocks(project: TrainingProject, day: str, week: int, trainer: str) -> list[ScheduleBlock]:
     settings = project.settings
     blocks: list[ScheduleBlock] = []
-    if day == "Montag" and settings.monday_arrival_enabled:
+    week_days = _trainer_week_days(project, trainer, week)
+    if not week_days:
+        return blocks
+    first_day, last_day = week_days[0], week_days[-1]
+    if day == first_day and settings.monday_arrival_enabled:
         blocks.append(ScheduleBlock(
             id=f"arrival-{uuid4().hex[:8]}",
             type=BlockType.arrival,
@@ -209,7 +237,7 @@ def _add_fixed_blocks(project: TrainingProject, day: str, week: int, trainer: st
             end=settings.monday_arrival_end,
             trainer=trainer,
         ))
-    if day == "Donnerstag" and settings.thursday_departure_enabled and not settings.friday_training_enabled:
+    if day == last_day and settings.thursday_departure_enabled:
         blocks.append(ScheduleBlock(
             id=f"departure-{uuid4().hex[:8]}",
             type=BlockType.departure,
@@ -223,9 +251,10 @@ def _add_fixed_blocks(project: TrainingProject, day: str, week: int, trainer: st
     return blocks
 
 
-def _latest_training_end(project: TrainingProject, day: str) -> int:
+def _latest_training_end(project: TrainingProject, day: str, week: int, trainer: str) -> int:
     settings = project.settings
-    if day == "Donnerstag" and settings.thursday_departure_enabled and not settings.friday_training_enabled:
+    week_days = _trainer_week_days(project, trainer, week)
+    if week_days and day == week_days[-1] and settings.thursday_departure_enabled:
         return min(parse_time(settings.day_end), parse_time(settings.thursday_departure_start))
     return parse_time(settings.day_end)
 
@@ -241,7 +270,7 @@ def plan_project(project: TrainingProject) -> TrainingProject:
     topic_placement: dict[str, int] = {}
     split_placement: dict[str, dict] = {}
     lane_has_training: set[tuple[int, str, str]] = set()
-    available_days = training_days(project)
+    available_days = list(DISPLAY_WEEKDAYS)
 
     def ensure_week(week: int) -> None:
         if week in initialized_weeks:
@@ -250,15 +279,18 @@ def plan_project(project: TrainingProject) -> TrainingProject:
             for trainer in trainers:
                 scheduled.extend(_add_fixed_blocks(project, day, week, trainer))
                 cursor = snap_minutes_to_quarter(parse_time(settings.day_start), "ceil")
-                if day == "Montag" and settings.monday_arrival_enabled:
+                week_days = _trainer_week_days(project, trainer, week)
+                if week_days and day == week_days[0] and settings.monday_arrival_enabled:
                     cursor = snap_minutes_to_quarter(max(cursor, parse_time(settings.monday_arrival_end)), "ceil")
                 cursor_by_lane[(week, day, trainer)] = cursor
         initialized_weeks.add(week)
 
     def candidate_for(topic: TrainingTopic, week: int, day: str, trainer: str) -> dict | None:
+        if not trainer_is_available(project, trainer, week, day):
+            return None
         key = (week, day, trainer)
         cursor = cursor_by_lane[key]
-        day_end = _latest_training_end(project, day)
+        day_end = _latest_training_end(project, day, week, trainer)
         lunch: tuple[int, int] | None = None
 
         if cursor >= parse_time(settings.lunch_window_start) and key not in used_lunch:
@@ -412,7 +444,7 @@ def plan_project(project: TrainingProject) -> TrainingProject:
                 cursor = cursor_by_lane[key]
                 lunch_start = snap_minutes_to_quarter(max(parse_time(settings.lunch_window_start), min(cursor, parse_time(settings.lunch_window_end))), "ceil")
                 lunch_end = lunch_start + settings.lunch_minutes
-                if lunch_end <= _latest_training_end(project, day):
+                if lunch_end <= _latest_training_end(project, day, week, trainer):
                     scheduled.append(ScheduleBlock(
                         id=f"lunch-{uuid4().hex[:8]}",
                         type=BlockType.lunch,
@@ -424,6 +456,13 @@ def plan_project(project: TrainingProject) -> TrainingProject:
                         trainer=trainer,
                     ))
                     used_lunch.add(key)
+
+    active_trainer_weeks = {(block.week, block.trainer) for block in scheduled if block.type == BlockType.training}
+    scheduled = [
+        block for block in scheduled
+        if block.type not in {BlockType.arrival, BlockType.departure}
+        or (block.week, block.trainer) in active_trainer_weeks
+    ]
 
     trainer_order = {name: index for index, name in enumerate(trainers)}
     training_weeks = {block.week for block in scheduled if block.type == BlockType.training}

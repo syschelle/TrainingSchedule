@@ -204,8 +204,6 @@ def apply_customer_return(payload: CustomerPlanningReturn) -> TrainingProject:
             raise ValueError("week_not_allowed")
         if move.day not in DISPLAY_WEEKDAYS:
             raise ValueError("day_not_allowed")
-        if move.day == "Freitag" and not updated.settings.friday_training_enabled:
-            raise ValueError("friday_not_allowed")
         if move.trainer not in allowed_trainers:
             raise ValueError("trainer_not_allowed")
         if not _is_quarter(move.start) or not _is_quarter(move.end):
