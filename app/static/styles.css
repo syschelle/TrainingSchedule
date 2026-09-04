@@ -2761,3 +2761,31 @@ body.modal-open {
     grid-column: auto;
   }
 }
+
+/* v0.3.8: compact trainer-week actions and safe deletion of empty trainer weeks. */
+.trainer-week-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 4px 6px 2px;
+}
+
+.trainer-week-title > div {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.trainer-week-title > div > span {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.trainer-week-delete {
+  flex: 0 0 auto;
+  padding: 5px 9px;
+  font-size: 0.74rem;
+}

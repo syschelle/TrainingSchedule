@@ -34,6 +34,7 @@ let markdownEditorContentId = null;
 let markdownPendingChangeType = "saved";
 let blockEditorBlockId = null;
 let transientManualWeeks = new Set();
+let hiddenTransientTrainerWeeks = new Set();
 let project = makeDefaultProject();
 const workflowSteps = [
   { id: "product", label: "Produkt", number: 1 },
@@ -242,6 +243,7 @@ function renderPeopleWorkflow() {
   if (trainerPanel) {
     trainerPanel.innerHTML = trainerEditor();
     trainerPanel.querySelectorAll("input[data-trainer-index]").forEach((input) => {
+      input.addEventListener("input", updateTrainerDraft);
       input.addEventListener("change", updateTrainerField);
       input.addEventListener("keydown", handleTrainerKeydown);
     });
@@ -263,7 +265,7 @@ function renderPeopleSummary() {
 }
 
 function activeTrainers() {
-  return (project.trainers || []).map((name) => String(name || "").trim()).filter(Boolean);
+  return [...new Set((project.trainers || []).map((name) => String(name || "").trim()).filter(Boolean))];
 }
 
 function renderProductWorkflow() {
@@ -382,22 +384,38 @@ function syncTrainerLegacy() {
   project.trainer = cleaned[0] || "";
 }
 
-function updateTrainerField(event) {
+function updateTrainerDraft(event) {
   const index = Number(event.target.dataset.trainerIndex);
-  const previous = event.target.dataset.originalTrainer || "";
+  if (!Number.isInteger(index) || index < 0) return;
   project.trainers = Array.isArray(project.trainers) ? [...project.trainers] : [];
   while (project.trainers.length <= index) project.trainers.push("");
+  project.trainers[index] = event.target.value;
+  syncTrainerLegacy();
+  markPlanningInputsChanged();
+  renderPeopleSummary();
+  renderWorkflowProgress();
+  renderWorkflowReview();
+}
+
+function updateTrainerField(event) {
+  const index = Number(event.target.dataset.trainerIndex);
+  const previous = String(event.target.dataset.originalTrainer || "").trim();
   const next = event.target.value.trim();
+  project.trainers = Array.isArray(project.trainers) ? [...project.trainers] : [];
+  while (project.trainers.length <= index) project.trainers.push("");
   project.trainers[index] = next;
+  event.target.value = next;
+  event.target.dataset.originalTrainer = next;
   if (previous && previous !== next) {
     project.blocks.forEach((block) => {
       if (block.trainer === previous) block.trainer = next;
     });
   }
-  project.trainers = project.trainers.filter((name, position, all) => name || position === index).filter((name, position, all) => !name || all.indexOf(name) === position);
   syncTrainerLegacy();
   markPlanningInputsChanged();
-  render();
+  renderPeopleSummary();
+  renderWorkflowProgress();
+  renderWorkflowReview();
 }
 
 function focusTrainerInput(index) {
@@ -1707,7 +1725,7 @@ function renderWeek() {
   const trainers = calendarTrainers();
   $("#tab-week").innerHTML = `
     <div class="calendar-toolbar">
-      <div class="calendar-help">Schulungsblöcke können verschoben werden. Mit den Griffen an Ober- und Unterkante lassen sich Start- und Endzeit live im 15-Minuten-Raster anpassen. Jeder Trainer besitzt pro Kalenderwoche eine eigene Wochenansicht.</div>
+      <div class="calendar-help">Blöcke können verschoben und an Ober- bzw. Unterkante im 15-Minuten-Raster angepasst werden – auch Anreise und Abreise. Jeder Trainer besitzt pro Kalenderwoche eine eigene Wochenansicht. Leere Trainer-Wochen lassen sich löschen.</div>
       <button type="button" class="button button-secondary" onclick="addManualWeek()">Woche hinzufügen</button>
     </div>
     ${cutBlockId ? `<div class="cut-notice">Ausgeschnitten: ${escapeHtml(cutBlockTitle())}. Zieltag und Zieltrainer waehlen und Einfuegen klicken.</div>` : ""}
@@ -1716,14 +1734,22 @@ function renderWeek() {
       <div class="calendar-week-wrap">
         <h3>${weekHeading(week)}</h3>
         <div class="trainer-weeks">
-          ${trainers.map((trainer, trainerIndex) => `
+          ${trainers.map((trainer, trainerIndex) => ({ trainer, trainerIndex }))
+            .filter(({ trainer }) => shouldShowTrainerWeek(week, trainer))
+            .map(({ trainer, trainerIndex }) => {
+              const hasTraining = trainerWeekHasTraining(week, trainer);
+              return `
             <section class="trainer-week">
-              <div class="trainer-week-title"><span>Trainer</span><strong>${escapeHtml(trainerLabel(trainer))}</strong></div>
+              <div class="trainer-week-title">
+                <div><span>Trainer</span><strong>${escapeHtml(trainerLabel(trainer))}</strong></div>
+                <button type="button" class="button button-ghost trainer-week-delete" onclick="deleteTrainerWeek(${week}, ${trainerIndex})" ${hasTraining ? "disabled" : ""} title="${hasTraining ? "Woche enthält noch Schulungsblöcke" : "Leere Trainer-Woche löschen"}">Woche löschen</button>
+              </div>
               <div class="calendar-week" style="--calendar-height:${height}px">
                 ${days.map((day) => dayHtml(day, start, height, week, trainer, trainerIndex)).join("")}
               </div>
             </section>
-          `).join("")}
+          `;
+            }).join("")}
         </div>
       </div>
       `).join("") : `<div class="calendar-empty-state"><strong>Keine Schulungswochen vorhanden.</strong><span>Wochen ohne Schulungsblöcke werden automatisch ausgeblendet. Bei Bedarf kann eine neue Woche manuell hinzugefügt werden.</span></div>`}
@@ -1735,6 +1761,48 @@ function weekHeading(week) {
   const last = TrainingCalendar.dateForCalendarDay(project.start_date, week, "Freitag");
   if (!first || !last) return `Woche ${week}`;
   return `Woche ${week} · ${TrainingCalendar.formatGermanDate(first)}–${TrainingCalendar.formatGermanDate(last)}`;
+}
+
+function trainerWeekKey(week, trainer) {
+  return `${Number(week)}::${String(trainer || "")}`;
+}
+
+function trainerWeekBlocks(week, trainer) {
+  return (project.blocks || []).filter(
+    (block) => Number(block.week || 1) === Number(week) && String(block.trainer || "") === String(trainer || "")
+  );
+}
+
+function trainerWeekHasTraining(week, trainer) {
+  return trainerWeekBlocks(week, trainer).some((block) => block.type === "training");
+}
+
+function trainerWeekHasVisibleBlocks(week, trainer) {
+  return trainerWeekBlocks(week, trainer).some((block) => !["break", "lunch"].includes(block.type));
+}
+
+function shouldShowTrainerWeek(week, trainer) {
+  if (trainerWeekHasVisibleBlocks(week, trainer)) return true;
+  return transientManualWeeks.has(Number(week)) && !hiddenTransientTrainerWeeks.has(trainerWeekKey(week, trainer));
+}
+
+function revealTrainerWeek(week, trainer) {
+  hiddenTransientTrainerWeeks.delete(trainerWeekKey(week, trainer));
+}
+
+function deleteTrainerWeek(week, trainerIndex) {
+  const trainer = calendarTrainers()[trainerIndex] || "";
+  if (trainerWeekHasTraining(week, trainer)) return;
+  project.blocks = (project.blocks || []).filter(
+    (block) => !(Number(block.week || 1) === Number(week) && String(block.trainer || "") === String(trainer || ""))
+  );
+  hiddenTransientTrainerWeeks.add(trainerWeekKey(week, trainer));
+  const anyVisibleLane = calendarTrainers().some((name) => shouldShowTrainerWeek(week, name));
+  if (!anyVisibleLane) {
+    transientManualWeeks.delete(Number(week));
+    project.manual_weeks = (project.manual_weeks || []).filter((value) => Number(value) !== Number(week));
+  }
+  validateAndRender();
 }
 
 function scheduledWeeks() {
@@ -1851,7 +1919,7 @@ function blockHtml(block, dayStart, calendarHeight, interactive = true) {
   const compactClass = interactive && blockDuration <= 30 ? " is-compact" : "";
   const typography = calendarBlockTypography(cappedHeight);
   const blockTooltip = [displayTitle, displayParts.groupLabel, `${block.start}-${block.end} · ${formatHours(blockDuration)}`].filter(Boolean).join(" · ");
-  const resizeHandles = interactive && block.type === "training" ? `
+  const resizeHandles = interactive && ["training", "arrival", "departure"].includes(block.type) ? `
     <button type="button" class="calendar-resize-handle resize-start" draggable="false" aria-label="Startzeit ziehen" title="Startzeit in 15-Minuten-Schritten ziehen" onpointerdown="startBlockResize(event, '${block.id}', 'start')" ondragstart="event.preventDefault(); event.stopPropagation()"></button>
     <button type="button" class="calendar-resize-handle resize-end" draggable="false" aria-label="Endzeit ziehen" title="Endzeit in 15-Minuten-Schritten ziehen" onpointerdown="startBlockResize(event, '${block.id}', 'end')" ondragstart="event.preventDefault(); event.stopPropagation()"></button>` : "";
   return `<article class="block calendar-block${compactClass} ${block.type} ${block.id === cutBlockId ? "is-cut" : ""}" data-block-id="${escapeHtml(block.id)}" title="${escapeHtml(blockTooltip)}" ${interactive ? `draggable="true" ondragstart="dragBlock(event, '${block.id}')"` : ""} style="top:${top}px;height:${cappedHeight}px;--block-bg:${escapeHtml(block.background_color || "#ffffff")};--calendar-title-size:${typography.titleSize.toFixed(3)}rem;--calendar-group-size:${typography.groupSize.toFixed(3)}rem;--calendar-meta-size:${typography.metaSize.toFixed(3)}rem;--calendar-title-line-height:${typography.titleLineHeight.toFixed(3)}">
@@ -1875,7 +1943,7 @@ function startBlockResize(event, id, edge) {
   const block = project.blocks.find((item) => item.id === id);
   const element = event.currentTarget.closest(".calendar-block");
   const dayBody = element?.closest(".calendar-day-body");
-  if (!block || block.type !== "training" || !element || !dayBody) return;
+  if (!block || !["training", "arrival", "departure"].includes(block.type) || !element || !dayBody) return;
 
   event.preventDefault();
   event.stopPropagation();
@@ -2007,6 +2075,7 @@ function dropBlock(event, day, week = 1, trainerIndex = 0) {
     block.day = day;
     block.week = week;
     block.trainer = calendarTrainers()[trainerIndex] || "";
+    revealTrainerWeek(week, block.trainer);
     block.start = formatTime(start);
     block.end = formatTime(start + blockDuration);
     hideEmptyTransientWeek(previousWeek);
@@ -2048,6 +2117,7 @@ function calendarOffset(minute, start) {
 
 function addBlock(day, week = 1, trainerIndex = 0) {
   const trainer = calendarTrainers()[trainerIndex] || "";
+  revealTrainerWeek(week, trainer);
   project.blocks.push({ id: crypto.randomUUID(), type: "training", week, day, title: "Neuer Block", start: "10:00", end: "11:00", topic_id: null, source_topic_id: null, split_part: null, split_parts: null, description: "", trainer, room: "", notes: "", background_color: "#ffffff" });
   validateAndRender();
 }
@@ -2071,6 +2141,7 @@ function pasteCutBlock(day, week = 1, trainerIndex = 0) {
   block.day = day;
   block.week = week;
   block.trainer = trainer;
+  revealTrainerWeek(week, trainer);
   block.start = formatTime(start);
   block.end = formatTime(start + blockDuration);
   hideEmptyTransientWeek(previousWeek);
@@ -2212,6 +2283,7 @@ async function saveBlockEditor() {
   block.week = week;
   block.day = $("#blockEditorDay").value;
   block.trainer = $("#blockEditorTrainer").value || "";
+  revealTrainerWeek(week, block.trainer);
   block.start = startValue;
   block.end = endValue;
   block.room = $("#blockEditorRoom").value.trim();
@@ -2294,7 +2366,9 @@ function renderPreview() {
         </div>
       </section>
       ${topicSchedulePreviewPages(customer, location)}
-      ${scheduledWeeks().map((week) => trainers.map((trainer, trainerIndex) => `
+      ${scheduledWeeks().map((week) => trainers.map((trainer, trainerIndex) => ({ trainer, trainerIndex }))
+        .filter(({ trainer }) => trainerWeekHasVisibleBlocks(week, trainer))
+        .map(({ trainer, trainerIndex }) => `
         <section class="pdf-preview-sheet">
           <div class="pdf-preview-header">
             <div>

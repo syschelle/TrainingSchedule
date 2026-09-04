@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.3.7"' in html
+    assert 'src="calendar.js?v=0.3.8"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -498,3 +498,43 @@ def test_v036_overview_training_durations_are_single_minute_values() -> None:
     assert "formatHours(Number(item.duration_minutes || 0))" not in topic_summary
     assert 'f"{topic.duration_minutes} min"' in exporter
     assert 'planned_minutes} / {topic.duration_minutes} min' not in exporter
+
+
+def test_v038_trainer_name_is_committed_while_typing_without_second_add_click() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    people = javascript.split("function renderPeopleWorkflow()", 1)[1].split("function renderPeopleSummary()", 1)[0]
+    assert 'input.addEventListener("input", updateTrainerDraft);' in people
+    assert "function updateTrainerDraft(event)" in javascript
+    draft = javascript.split("function updateTrainerDraft(event)", 1)[1].split("function updateTrainerField(event)", 1)[0]
+    assert "project.trainers[index] = event.target.value;" in draft
+    assert "renderPeopleWorkflow();" not in draft
+    commit = javascript.split("function updateTrainerField(event)", 1)[1].split("function focusTrainerInput", 1)[0]
+    assert "render();" not in commit
+
+
+def test_v038_empty_trainer_week_can_be_deleted_but_training_week_cannot() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    css = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
+    assert "Woche löschen" in javascript
+    assert "function trainerWeekHasTraining(week, trainer)" in javascript
+    assert "function deleteTrainerWeek(week, trainerIndex)" in javascript
+    delete_section = javascript.split("function deleteTrainerWeek(week, trainerIndex)", 1)[1].split("function scheduledWeeks()", 1)[0]
+    assert "if (trainerWeekHasTraining(week, trainer)) return;" in delete_section
+    assert "project.blocks = (project.blocks || []).filter" in delete_section
+    assert 'hasTraining ? "disabled" : ""' in javascript
+    assert ".trainer-week-delete" in css
+
+
+def test_v038_arrival_and_departure_support_live_resize() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    block_html = javascript.split("function blockHtml", 1)[1].split("function startBlockResize", 1)[0]
+    resize_start = javascript.split("function startBlockResize", 1)[1].split("function resizeBlockPointerMove", 1)[0]
+    assert '["training", "arrival", "departure"].includes(block.type)' in block_html
+    assert '["training", "arrival", "departure"].includes(block.type)' in resize_start
+    assert "snapMinutes(rawMinutes)" in javascript
+
+
+def test_v038_preview_hides_trainer_week_without_visible_blocks() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    preview = javascript.split("function renderPreview()", 1)[1].split("function normalizeProjectState()", 1)[0]
+    assert ".filter(({ trainer }) => trainerWeekHasVisibleBlocks(week, trainer))" in preview

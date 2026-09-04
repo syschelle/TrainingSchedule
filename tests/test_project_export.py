@@ -167,3 +167,31 @@ def test_xlsx_creates_one_worksheet_per_planned_week_only():
     shared = _xlsx_shared_strings(data)
     assert "Woche 2" in shared
     assert "Thema C" in shared
+
+
+def test_pdf_omits_empty_trainer_week_calendar_page():
+    project = TrainingProject(
+        title="Leere Trainerwoche",
+        customer_name="Musterklinik",
+        location="Berlin",
+        trainers=["Trainer A", "Trainer B"],
+        start_date="2026-09-07",
+        blocks=[
+            ScheduleBlock(
+                id="training-a",
+                type="training",
+                week=1,
+                day="Dienstag",
+                title="Thema A",
+                start="09:00",
+                end="10:00",
+                trainer="Trainer A",
+            ),
+        ],
+    )
+    reader = PdfReader(BytesIO(export_pdf(project)))
+    # Overview + chronological appointment page + one visible trainer/week calendar.
+    assert len(reader.pages) == 3
+    calendar_text = reader.pages[-1].extract_text() or ""
+    assert "Trainer: Trainer A" in calendar_text
+    assert "Trainer: Trainer B" not in calendar_text

@@ -137,6 +137,15 @@ def _training_minutes(project: TrainingProject) -> int:
     return sum(max(0, minutes_between(block.start, block.end)) for block in project.blocks if block.type == BlockType.training)
 
 
+def _trainer_week_has_visible_blocks(project: TrainingProject, week: int, trainer: str) -> bool:
+    return any(
+        block.week == week
+        and block.trainer == trainer
+        and block.type not in {BlockType.break_block, BlockType.lunch}
+        for block in project.blocks
+    )
+
+
 def _unscheduled_minutes(project: TrainingProject) -> int:
     return sum(max(0, item.duration_minutes) for item in project.unscheduled_topics)
 
@@ -440,6 +449,8 @@ def export_pdf(project: TrainingProject) -> bytes:
 
     for week in planned_weeks(project):
         for trainer in trainers:
+            if not _trainer_week_has_visible_blocks(project, week, trainer):
+                continue
             pdf.setFillColor(colors.HexColor("#0f1b2d"))
             pdf.rect(0, page_height - 66, page_width, 66, fill=1, stroke=0)
             pdf.setFillColor(colors.white)
@@ -740,12 +751,7 @@ def _xlsx_write_week(workbook: xlsxwriter.Workbook, project: TrainingProject, we
     all_trainers = project_trainers(project)
     visible_trainers = [
         trainer for trainer in all_trainers
-        if any(
-            block.week == week
-            and block.trainer == trainer
-            and block.type not in {BlockType.break_block, BlockType.lunch}
-            for block in project.blocks
-        )
+        if _trainer_week_has_visible_blocks(project, week, trainer)
     ]
     if not visible_trainers:
         visible_trainers = all_trainers

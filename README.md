@@ -1,6 +1,14 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.3.7**
+Aktuelle Version: **v0.3.8**
+
+## Aenderungen v0.3.8
+
+- `Woche löschen` pro Trainer-Woche: nur aktiv, wenn keine Schulungsbloecke mehr vorhanden sind. Anreise/Abreise und andere organisatorische Bloecke duerfen dabei entfernt werden.
+- Leere Trainer-Wochen werden nach dem Loeschen auch in Vorschau, PDF und XLSX nicht mehr dargestellt.
+- Trainer-Namen werden beim Tippen direkt uebernommen; `＋ Trainer` wird nur noch benoetigt, um einen weiteren Trainer anzulegen.
+- Anreise und Abreise koennen im Kalender ueber die Resize-Griffe live im 15-Minuten-Raster angepasst werden.
+
 
 ## Aenderungen v0.3.7
 

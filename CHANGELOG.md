@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.3.8 - 2026-09-04
+
+### Bedienung von Trainer-Wochen und Zeitbloecken verbessert
+
+- Jede Trainer-Woche besitzt einen Button `Woche löschen`. Er ist nur aktiv, wenn in dieser Trainer-Woche keine echten Schulungsbloecke mehr vorhanden sind.
+- Anreise, Abreise, Pausen und Mittag verhindern das Loeschen nicht. Beim Loeschen werden diese organisatorischen Restbloecke der Trainer-Woche entfernt.
+- Trainer-Wochen ohne sichtbare Bloecke werden anschliessend auch in Vorschau, PDF und XLSX nicht mehr ausgegeben.
+- Trainer-Namen werden bereits waehrend der Eingabe in den Projektzustand uebernommen. Ein zweiter Klick auf `＋ Trainer` ist nicht mehr notwendig; der Button legt nur noch ein weiteres Trainerfeld an.
+- Anreise und Abreise besitzen im Kalender jetzt ebenfalls obere und untere Resize-Griffe und koennen live im 15-Minuten-Raster in Start- und Endzeit veraendert werden.
+- Regressionstests fuer Trainer-Eingabe, Loeschen leerer Trainer-Wochen, Resize von An-/Abreise und PDF-Ausblendung leerer Trainer-Wochen ergaenzt.
+- Keine PostgreSQL-Migration erforderlich.
+
+
 ## v0.3.7 - 2026-09-04
 
 ### Chronologische Schulungstermine und Vorschau erweitert

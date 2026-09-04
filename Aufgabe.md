@@ -1469,3 +1469,14 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Im Workflow wird `Planung öffnen` in `Planung importieren` umbenannt.
 - Keine PostgreSQL-Migration erforderlich.
 - Version auf `v0.3.7` erhoeht.
+
+
+## Erweiterung v0.3.8 - Trainer-Wochen, Trainer-Eingabe und An-/Abreise-Resize
+
+- In der Wochenansicht besitzt jede Trainer-Woche einen Button `Woche löschen`.
+- Der Button ist deaktiviert, solange mindestens ein Block vom Typ `training` in dieser Trainer-Woche vorhanden ist.
+- Anreise, Abreise, Pause und Mittag gelten nicht als Schulungsbloecke und duerfen beim Loeschen einer sonst leeren Trainer-Woche mit entfernt werden.
+- Trainer-Wochen ohne sichtbare Bloecke werden in Kalender, Vorschau, PDF und XLSX nicht mehr ausgegeben.
+- Trainer-Namen werden live waehrend der Eingabe in den Projektzustand uebernommen; ein weiterer Klick auf `＋ Trainer` ist nur zum Anlegen eines zusaetzlichen Trainers erforderlich.
+- Kalenderbloecke vom Typ `arrival` und `departure` erhalten dieselben oberen/unteren Resize-Griffe wie Schulungsbloecke und bleiben im 15-Minuten-Raster.
+- Version auf `v0.3.8` erhoeht.
