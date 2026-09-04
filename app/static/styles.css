@@ -2822,7 +2822,7 @@ body.modal-open {
 }
 
 
-/* v0.4.3 trainer-specific planning availability */
+/* v0.4.4 trainer-specific planning availability */
 .review-availability {
   display: grid;
   gap: 10px;
@@ -2968,4 +2968,89 @@ body.modal-open {
   opacity: 0.38;
   cursor: not-allowed;
   background: #f4f5f7;
+}
+
+/* v0.4.4 trainer availability and parking */
+.availability-day.unavailable:not(.disabled) {
+  border-color: rgba(190, 55, 55, 0.32);
+  background: #fff0f0;
+  color: #a13b3b;
+}
+
+.calendar-day.trainer-day-unavailable .calendar-day-title {
+  margin: -2px -2px 0;
+  padding: 2px 6px 7px;
+  border-radius: 8px 8px 0 0;
+  background: #fff0f0;
+}
+
+.calendar-day-body.trainer-day-unavailable {
+  border-color: rgba(190, 55, 55, 0.28);
+  background-color: #fff8f8;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(190, 55, 55, 0.025) 0,
+    rgba(190, 55, 55, 0.025) 8px,
+    rgba(190, 55, 55, 0.065) 8px,
+    rgba(190, 55, 55, 0.065) 16px
+  );
+}
+
+.calendar-availability {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 3px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.calendar-availability.is-available {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.calendar-availability.is-unavailable {
+  background: #ffe0e0;
+  color: #9e3131;
+}
+
+.calendar-block.is-parked {
+  border-color: #d16a56;
+  border-left-color: #c44235;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.4) 0,
+    rgba(255, 255, 255, 0.4) 7px,
+    rgba(196, 66, 53, 0.08) 7px,
+    rgba(196, 66, 53, 0.08) 14px
+  );
+  box-shadow: 0 0 0 2px rgba(196, 66, 53, 0.08), 0 7px 16px rgba(26, 43, 74, 0.1);
+}
+
+.block-parked-badge {
+  display: inline-flex;
+  margin-top: 2px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: #ffe0e0;
+  color: #9e3131;
+  font-size: 0.59rem;
+  font-weight: 950;
+  line-height: 1.2;
+}
+.calendar-day-body.trainer-day-unavailable::after {
+  content: "Parkfläche";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 0;
+  color: rgba(158, 49, 49, 0.22);
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  pointer-events: none;
 }

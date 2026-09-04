@@ -15,8 +15,7 @@ const defaultSettings = {
   thursday_departure_enabled: true,
   thursday_departure_start: "15:00",
   thursday_departure_end: "17:00",
-  thursday_departure_label: "Abreise",
-  friday_training_enabled: false
+  thursday_departure_label: "Abreise"
 };
 
 let activeTab = "overview";
@@ -524,7 +523,7 @@ function renderSettingsFields() {
   if (!container || !advanced) return;
   container.innerHTML = `
     <div class="time-setting-card">
-      <div class="time-setting-heading"><strong>Schulungstag</strong><span>Montag bis Donnerstag</span></div>
+      <div class="time-setting-heading"><strong>Schulungstag</strong><span>Tageszeiten für alle freigegebenen Tage</span></div>
       <div class="time-pair">${setting("day_start", "Beginn", s.day_start, "time")}${setting("day_end", "Ende", s.day_end, "time")}</div>
     </div>
     <div class="time-setting-card">
@@ -543,8 +542,7 @@ function renderSettingsFields() {
     numberSetting("break_min_minutes", "Pause min.", s.break_min_minutes),
     numberSetting("break_max_minutes", "Pause max.", s.break_max_minutes),
     setting("lunch_window_start", "Mittagsfenster von", s.lunch_window_start, "time"),
-    setting("lunch_window_end", "Mittagsfenster bis", s.lunch_window_end, "time"),
-    checkboxSetting("friday_training_enabled", "Freitag standardmäßig aktiv", s.friday_training_enabled)
+    setting("lunch_window_end", "Mittagsfenster bis", s.lunch_window_end, "time")
   ].join("");
   document.querySelectorAll("#settings-fields input, #advanced-settings-fields input").forEach((input) => input.addEventListener("input", updateSettingField));
   applyWorkflowFieldErrors();
@@ -709,8 +707,22 @@ function availabilityDayIsOnOrAfterStart(week, day) {
 }
 
 function defaultTrainerAvailabilityDays(week = 1) {
-  const defaults = project.settings?.friday_training_enabled ? [...days] : days.slice(0, 4);
-  return defaults.filter((day) => availabilityDayIsOnOrAfterStart(week, day));
+  return days.slice(0, 4).filter((day) => availabilityDayIsOnOrAfterStart(week, day));
+}
+
+function trainerDayIsAvailable(trainer, week, day) {
+  if (!days.includes(day) || !availabilityDayIsOnOrAfterStart(week, day)) return false;
+  const record = trainerAvailabilityRecord(trainer, week, false);
+  const weekdays = record ? (record.weekdays || []) : defaultTrainerAvailabilityDays(week);
+  return weekdays.includes(day);
+}
+
+function trainingBlockIsParked(block) {
+  return Boolean(block && block.type === "training" && !trainerDayIsAvailable(block.trainer || "", Number(block.week || 1), block.day));
+}
+
+function parkedTrainingBlocks() {
+  return (project.blocks || []).filter(trainingBlockIsParked);
 }
 
 function normalizeTrainerAvailabilityRecords() {
@@ -774,7 +786,7 @@ function trainerAvailabilityReviewHtml() {
         <div class="availability-day-grid" role="group" aria-label="Verfügbarkeit ${escapeHtml(trainerLabel(trainer))} Woche ${week}">
           ${days.map((day) => {
             const allowedByStart = availabilityDayIsOnOrAfterStart(week, day);
-            return `<label class="availability-day ${selected.has(day) ? "selected" : ""} ${allowedByStart ? "" : "disabled"}">
+            return `<label class="availability-day ${selected.has(day) ? "selected" : "unavailable"} ${allowedByStart ? "" : "disabled"}">
               <input type="checkbox" data-availability-trainer="${escapeHtml(trainer)}" data-availability-week="${week}" data-availability-day="${day}" ${selected.has(day) ? "checked" : ""} ${allowedByStart ? "" : "disabled"}>
               <span>${escapeHtml(availabilityDateLabel(week, day))}</span>
             </label>`;
@@ -801,7 +813,9 @@ function bindTrainerAvailabilityControls(container) {
       const selected = new Set(record.weekdays || []);
       if (event.currentTarget.checked) selected.add(day); else selected.delete(day);
       record.weekdays = days.filter((name) => selected.has(name));
-      event.currentTarget.closest(".availability-day")?.classList.toggle("selected", event.currentTarget.checked);
+      const label = event.currentTarget.closest(".availability-day");
+      label?.classList.toggle("selected", event.currentTarget.checked);
+      label?.classList.toggle("unavailable", !event.currentTarget.checked);
       markPlanningInputsChanged();
       scheduleAvailabilityEstimate(120);
     });
@@ -1983,7 +1997,7 @@ function renderWeek() {
   const trainers = calendarTrainers();
   $("#tab-week").innerHTML = `
     <div class="calendar-toolbar">
-      <div class="calendar-help">Blöcke können verschoben und an Ober- bzw. Unterkante im 15-Minuten-Raster angepasst werden – auch Anreise und Abreise. Jeder Trainer besitzt pro Kalenderwoche eine eigene Wochenansicht. Leere Trainer-Wochen lassen sich löschen.</div>
+      <div class="calendar-help">Blöcke können verschoben und an Ober- bzw. Unterkante im 15-Minuten-Raster angepasst werden – auch Anreise und Abreise. Rötlich markierte Trainer-Tage sind nicht verfügbar. Schulungen können dort nur vorübergehend geparkt werden und werden deutlich als „Geparkt“ markiert.</div>
       <button type="button" class="button button-secondary" onclick="addManualWeek()">Woche hinzufügen</button>
     </div>
     ${cutBlockId ? `<div class="cut-notice">Ausgeschnitten: ${escapeHtml(cutBlockTitle())}. Zieltag und Zieltrainer waehlen und Einfuegen klicken.</div>` : ""}
@@ -2095,19 +2109,22 @@ function dayHtml(day, dayStart, calendarHeight, week, trainer, trainerIndex, int
   const calendarDate = TrainingCalendar.dateForCalendarDay(project.start_date, week, day);
   const dateLabel = TrainingCalendar.formatGermanDate(calendarDate);
   const holidayHints = TrainingCalendar.holidayHints(calendarDate);
-  return `<section class="calendar-day">
+  const available = trainerDayIsAvailable(trainer, week, day);
+  const availabilityLabel = available ? "Verfügbar" : "Nicht verfügbar · Parkfläche";
+  return `<section class="calendar-day ${available ? "trainer-day-available" : "trainer-day-unavailable"}">
     <div class="calendar-day-title">
       <div class="calendar-day-heading">
         <h3>${day}</h3>
         ${dateLabel ? `<span class="calendar-date">${dateLabel}</span>` : ""}
+        ${interactive ? `<span class="calendar-availability ${available ? "is-available" : "is-unavailable"}">${availabilityLabel}</span>` : (!available ? `<span class="calendar-availability is-unavailable">${availabilityLabel}</span>` : "")}
         ${holidayHints.length ? `<span class="calendar-holiday" title="Landesweiter Feiertag in Deutschland/Oesterreich bzw. Schweizer Bundesfeier. Regionale Feiertage sind ohne Bundesland/Kanton nicht beruecksichtigt.">${holidayHints.map((item) => escapeHtml(item)).join(" · ")}</span>` : ""}
       </div>
       ${interactive ? `<div class="calendar-day-actions">
         ${cutBlockId ? `<button type="button" class="button button-secondary" onclick="pasteCutBlock('${day}', ${week}, ${trainerIndex})">Einfuegen</button>` : ""}
-        <button type="button" class="button button-ghost" onclick="addBlock('${day}', ${week}, ${trainerIndex})">Block</button>
+        <button type="button" class="button button-ghost" onclick="addBlock('${day}', ${week}, ${trainerIndex})" ${available ? "" : "disabled"} title="${available ? "Schulungsblock hinzufügen" : "Trainer nicht verfügbar – vorhandene Blöcke können hier nur geparkt werden"}">Block</button>
       </div>` : ""}
     </div>
-    <div class="calendar-day-body" ${interactive ? `ondragover="event.preventDefault()" ondrop="dropBlock(event, '${day}', ${week}, ${trainerIndex})"` : ""}>
+    <div class="calendar-day-body ${available ? "trainer-day-available" : "trainer-day-unavailable"}" ${interactive ? `ondragover="event.preventDefault()" ondrop="dropBlock(event, '${day}', ${week}, ${trainerIndex})"` : ""}>
       ${quarterGridLines(dayStart, project.settings.day_end).join("")}
       <div class="day-time-labels" aria-hidden="true">${timeAxisLabels(dayStart, toMinutes(project.settings.day_end)).join("")}</div>
       ${visibleBlocks.map((block) => blockHtml(block, dayStart, calendarHeight, interactive)).join("")}
@@ -2177,13 +2194,15 @@ function blockHtml(block, dayStart, calendarHeight, interactive = true) {
   const compactClass = interactive && blockDuration <= 30 ? " is-compact" : "";
   const typography = calendarBlockTypography(cappedHeight);
   const blockTooltip = [displayTitle, displayParts.groupLabel, `${block.start}-${block.end} · ${formatHours(blockDuration)}`].filter(Boolean).join(" · ");
+  const parked = trainingBlockIsParked(block);
   const resizeHandles = interactive && ["training", "arrival", "departure"].includes(block.type) ? `
     <button type="button" class="calendar-resize-handle resize-start" draggable="false" aria-label="Startzeit ziehen" title="Startzeit in 15-Minuten-Schritten ziehen" onpointerdown="startBlockResize(event, '${block.id}', 'start')" ondragstart="event.preventDefault(); event.stopPropagation()"></button>
     <button type="button" class="calendar-resize-handle resize-end" draggable="false" aria-label="Endzeit ziehen" title="Endzeit in 15-Minuten-Schritten ziehen" onpointerdown="startBlockResize(event, '${block.id}', 'end')" ondragstart="event.preventDefault(); event.stopPropagation()"></button>` : "";
-  return `<article class="block calendar-block${compactClass} ${block.type} ${block.id === cutBlockId ? "is-cut" : ""}" data-block-id="${escapeHtml(block.id)}" title="${escapeHtml(blockTooltip)}" ${interactive ? `draggable="true" ondragstart="dragBlock(event, '${block.id}')"` : ""} style="top:${top}px;height:${cappedHeight}px;--block-bg:${escapeHtml(block.background_color || "#ffffff")};--calendar-title-size:${typography.titleSize.toFixed(3)}rem;--calendar-group-size:${typography.groupSize.toFixed(3)}rem;--calendar-meta-size:${typography.metaSize.toFixed(3)}rem;--calendar-title-line-height:${typography.titleLineHeight.toFixed(3)}">
+  return `<article class="block calendar-block${compactClass} ${block.type} ${parked ? "is-parked" : ""} ${block.id === cutBlockId ? "is-cut" : ""}" data-block-id="${escapeHtml(block.id)}" title="${escapeHtml(blockTooltip)}" ${interactive ? `draggable="true" ondragstart="dragBlock(event, '${block.id}')"` : ""} style="top:${top}px;height:${cappedHeight}px;--block-bg:${escapeHtml(block.background_color || "#ffffff")};--calendar-title-size:${typography.titleSize.toFixed(3)}rem;--calendar-group-size:${typography.groupSize.toFixed(3)}rem;--calendar-meta-size:${typography.metaSize.toFixed(3)}rem;--calendar-title-line-height:${typography.titleLineHeight.toFixed(3)}">
     ${resizeHandles}
     <div class="block-content">
       <strong class="block-title">${escapeHtml(displayTitle)}</strong>
+      ${parked ? `<span class="block-parked-badge">Geparkt</span>` : ""}
       ${displayParts.groupLabel ? `<span class="block-group">${escapeHtml(displayParts.groupLabel)}</span>` : ""}
       <span class="block-meta">${block.start}-${block.end} · ${formatHours(blockDuration)}</span>
     </div>
@@ -2337,6 +2356,11 @@ function dropBlock(event, day, week = 1, trainerIndex = 0) {
     block.start = formatTime(start);
     block.end = formatTime(start + blockDuration);
     hideEmptyTransientWeek(previousWeek);
+    if (trainingBlockIsParked(block)) {
+      setStatus(`Schulungsblock geparkt: ${trainerLabel(block.trainer)} ist ${block.day} in Woche ${block.week} nicht verfügbar.`);
+    } else {
+      setStatus(block.type === "training" ? "Schulungsblock verschoben." : block.type === "arrival" ? "Anreise verschoben." : "Abreise verschoben.");
+    }
   }
   draggedBlockId = null;
   draggedBlockOffsetMinutes = 0;
@@ -2375,6 +2399,10 @@ function calendarOffset(minute, start) {
 
 function addBlock(day, week = 1, trainerIndex = 0) {
   const trainer = calendarTrainers()[trainerIndex] || "";
+  if (!trainerDayIsAvailable(trainer, week, day)) {
+    setStatus("An einem nicht verfügbaren Trainer-Tag können keine neuen Schulungsblöcke angelegt werden. Vorhandene Blöcke dürfen dort nur geparkt werden.");
+    return;
+  }
   revealTrainerWeek(week, trainer);
   project.blocks.push({ id: crypto.randomUUID(), type: "training", week, day, title: "Neuer Block", start: "10:00", end: "11:00", topic_id: null, source_topic_id: null, split_part: null, split_parts: null, description: "", trainer, room: "", notes: "", background_color: "#ffffff" });
   validateAndRender();
@@ -2404,6 +2432,9 @@ function pasteCutBlock(day, week = 1, trainerIndex = 0) {
   block.end = formatTime(start + blockDuration);
   hideEmptyTransientWeek(previousWeek);
   cutBlockId = null;
+  if (trainingBlockIsParked(block)) {
+    setStatus(`Schulungsblock geparkt: ${trainerLabel(block.trainer)} ist ${block.day} in Woche ${block.week} nicht verfügbar.`);
+  }
   validateAndRender();
 }
 

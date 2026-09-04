@@ -1550,13 +1550,19 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Zeitachsen der Kundenseite beschriften jedes 15-Minuten-Intervall mit einer Uhrzeit.
 - Version auf `v0.4.2` erhoeht.
 
+## Erweiterung v0.4.4 - Trainer-Verfügbarkeit und Parkflächen
 
-## Erweiterung v0.4.3 - Trainer-Verfuegbarkeit
-
-- Im Workflow-Schritt **Pruefen** wird die voraussichtlich benoetigte Anzahl an Schulungswochen berechnet.
-- Pro Trainer und Woche koennen Montag bis Freitag einzeln aktiviert/deaktiviert werden.
-- Der automatische Planner darf nur aktivierte Trainer-Tage verwenden.
-- Tage vor dem Projektstart sind in Woche 1 nicht zulaessig.
+- Im Workflow-Schritt **Prüfen** wird die voraussichtlich benötigte Anzahl an Schulungswochen berechnet.
+- Pro Trainer und Woche können Montag bis Freitag einzeln aktiviert/deaktiviert werden.
+- Verfügbare Tage werden grün, nicht verfügbare Tage rötlich dargestellt.
+- Der automatische Planner darf ausschließlich aktivierte Trainer-Tage verwenden.
+- Die bisherige Einstellung `Freitag standardmäßig aktiv` entfällt vollständig; Freitag wird ausschließlich über die Trainer-Verfügbarkeit gesteuert.
+- Tage vor dem Projektstart sind in Woche 1 nicht zulässig.
 - Anreise/Abreise liegen automatisch auf dem ersten/letzten aktivierten Schulungstag je Trainer.
-- Im Offline-Kundenplaner ist Freitag immer als Park-/Verschiebetag erlaubt.
-- Version auf `v0.4.3` erhoeht.
+- Im internen Kalender werden nicht verfügbare Trainer-Tage als rötliche Parkflächen gekennzeichnet. Neue Schulungsblöcke dürfen dort nicht angelegt werden. Vorhandene Schulungsblöcke dürfen dort temporär geparkt werden und müssen sichtbar als `Geparkt` markiert sein.
+- Geparkte Schulungsblöcke gelten nicht als regulär eingeplant und erzeugen eine Validierungswarnung.
+- Ein Kundenpaket darf nicht exportiert werden, solange die interne Planung geparkte Schulungsblöcke enthält.
+- Im Offline-Kundenplaner sind nicht verfügbare Tage ebenfalls Parkflächen. Schulungsblöcke dürfen dort zum Umorganisieren abgelegt werden, aber `Änderungen herunterladen` muss blockiert bleiben, bis alle Schulungen wieder auf verfügbaren Trainer-Tagen liegen.
+- Der serverseitige Rückimport muss dieselbe Verfügbarkeitsregel erneut prüfen.
+- Keine PostgreSQL-Migration erforderlich.
+- Version auf `v0.4.4` erhöht.

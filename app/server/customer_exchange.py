@@ -12,7 +12,7 @@ from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
 
 from .models import BlockType, CustomerPlanningReturn, ScheduleBlock, TrainingProject
-from .planner import project_trainers, validate_project
+from .planner import project_trainers, trainer_available_days, trainer_is_available, validate_project
 from .rules import DISPLAY_WEEKDAYS, format_time, minutes_between, parse_time
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -106,6 +106,15 @@ def _view_data(project: TrainingProject) -> dict:
             "background_color": block.background_color,
             "draggable": block.type in {BlockType.training, BlockType.arrival, BlockType.departure},
         })
+    availability = [
+        {
+            "trainer": trainer,
+            "week": week,
+            "weekdays": [day for day in DISPLAY_WEEKDAYS if day in trainer_available_days(project, trainer, week)],
+        }
+        for week in weeks
+        for trainer in trainers
+    ]
     return {
         "title": project.title or "Schulungsplan",
         "customer": project.customer_name if project.customer_data_required else "",
@@ -115,6 +124,7 @@ def _view_data(project: TrainingProject) -> dict:
         "settings": project.settings.model_dump(mode="json"),
         "trainers": trainers,
         "weeks": weeks,
+        "trainer_availability": availability,
         "blocks": blocks,
     }
 
@@ -156,8 +166,11 @@ def _single_file_customer_html(payload: dict) -> str:
 
 
 def build_customer_package(project: TrainingProject) -> bytes:
-    if not any(block.type == BlockType.training for block in project.blocks):
+    training_blocks = [block for block in project.blocks if block.type == BlockType.training]
+    if not training_blocks:
         raise ValueError("no_training_blocks")
+    if any(not trainer_is_available(project, block.trainer, block.week, block.day) for block in training_blocks):
+        raise ValueError("parked_training_blocks")
     baseline = _customer_baseline(project)
     exchange_id = uuid.uuid4().hex
     exported_at = datetime.now(timezone.utc).isoformat()
@@ -219,6 +232,12 @@ def apply_customer_return(payload: CustomerPlanningReturn) -> TrainingProject:
         block.trainer = move.trainer
         block.start = move.start
         block.end = move.end
+
+    if any(
+        block.type == BlockType.training and not trainer_is_available(updated, block.trainer, block.week, block.day)
+        for block in updated.blocks
+    ):
+        raise ValueError("trainer_day_unavailable")
 
     relevant = [
         block for block in updated.blocks

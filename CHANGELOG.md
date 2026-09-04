@@ -1,13 +1,21 @@
 # Changelog
 
-## v0.4.3 - 2026-09-04
+## v0.4.4 - 2026-09-04
 
-- Trainer-spezifische Verfuegbarkeit pro Woche und Wochentag im Workflow-Schritt **Pruefen**.
-- Separater Planungs-Estimate fuer die voraussichtlich benoetigte Wochenanzahl, ohne einen Schulungsplan zu erzeugen.
-- Automatische Planung respektiert die aktivierten Tage pro Trainer.
-- Tage vor dem Projekt-Startdatum werden in Woche 1 nicht fuer Schulungen verwendet.
-- Anreise/Abreise werden auf den ersten/letzten aktivierten Schulungstag des Trainers gelegt.
-- Freitag im Offline-Kundenplaner als freier Park-/Verschiebetag freigegeben; Rueckimport akzeptiert Freitag unabhaengig von der automatischen Freitag-Einstellung.
+### Trainer-Verfügbarkeit, Parkflächen und Freitag-Logik vereinheitlicht
+
+- Trainer-spezifische Schulungstage pro Woche werden im Workflow-Schritt **Prüfen** über Montag bis Freitag ausgewählt.
+- Verfügbare Tage bleiben grün; nicht verfügbare auswählbare Tage werden rötlich dargestellt.
+- Der automatische Planner verwendet ausschließlich die aktivierten Tage des jeweiligen Trainers.
+- Die frühere Checkbox `Freitag standardmäßig aktiv` und die dazugehörige Planner-Logik wurden vollständig entfernt. Freitag wird ausschließlich über die Trainer-Verfügbarkeit gesteuert.
+- Im internen Kalender werden nicht verfügbare Trainer-Tage rötlich als **Parkfläche** markiert. Neue Schulungsblöcke können dort nicht angelegt werden. Bestehende Schulungsblöcke dürfen zum Umorganisieren dorthin verschoben bzw. eingefügt werden und erhalten deutlich die Kennzeichnung `Geparkt`.
+- Die Validierung meldet geparkte Schulungsblöcke ausdrücklich als nicht gültig eingeplant.
+- `Kundenplanung exportieren` wird abgelehnt, solange die interne Planung noch geparkte Schulungsblöcke enthält.
+- Die Offline-Kundenseite übernimmt die Trainer-Verfügbarkeit: verfügbare Tage werden grün, nicht verfügbare Tage rötlich als Parkflächen dargestellt.
+- Kunden dürfen Schulungsblöcke vorübergehend auf nicht verfügbare Tage parken. Solange mindestens ein Schulungsblock geparkt ist, ist `Änderungen herunterladen` deaktiviert und der Export wird zusätzlich im JavaScript geprüft.
+- Der serverseitige Kunden-Rückimport lehnt manipulierte Rückgabedateien mit Schulungsblöcken auf nicht verfügbaren Trainer-Tagen ebenfalls ab.
+- Tage vor dem Projekt-Startdatum bleiben in Woche 1 gesperrt. Anreise und Abreise folgen weiterhin dem ersten bzw. letzten freigegebenen Schulungstag je Trainer.
+- Keine PostgreSQL-Migration erforderlich.
 
 ## v0.4.2 - 2026-09-04
 

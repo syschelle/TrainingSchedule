@@ -35,11 +35,11 @@ def sort_topics(topics: list[TrainingTopic]) -> list[TrainingTopic]:
     return result
 
 
-def training_days(project: TrainingProject) -> list[str]:
-    days = list(WEEKDAYS)
-    if project.settings.friday_training_enabled:
-        days.append("Freitag")
-    return days
+def default_training_days() -> list[str]:
+    # Before trainer-specific availability is configured, preserve the
+    # traditional Monday-Thursday planning default. Friday can be enabled
+    # explicitly per trainer/week in the Review step.
+    return list(WEEKDAYS)
 
 
 def project_trainers(project: TrainingProject) -> list[str]:
@@ -55,7 +55,7 @@ def trainer_available_days(project: TrainingProject, trainer: str, week: int) ->
     for availability in project.trainer_availability:
         if availability.trainer == trainer and int(availability.week) == int(week):
             return {day for day in availability.weekdays if day in DISPLAY_WEEKDAYS}
-    return set(training_days(project))
+    return set(default_training_days())
 
 
 def trainer_is_available(project: TrainingProject, trainer: str, week: int, day: str) -> bool:
@@ -504,6 +504,11 @@ def validate_project(project: TrainingProject) -> list[str]:
     for block in project.blocks:
         if block.type != BlockType.training:
             continue
+        if not trainer_is_available(project, block.trainer, block.week, block.day):
+            trainer_suffix = f", Trainer {block.trainer}" if block.trainer else ""
+            warnings.append(
+                f"Woche {block.week}, {block.day}{trainer_suffix}: '{block.title}' ist nur geparkt, weil der Trainer an diesem Tag nicht verfügbar ist."
+            )
         source_id = block.source_topic_id or block.topic_id
         if source_id:
             training_by_source[source_id].append(block)

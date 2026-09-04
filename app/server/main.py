@@ -35,7 +35,7 @@ from .rules import format_time, minutes_between, parse_time, snap_minutes_to_qua
 BASE_DIR = Path(__file__).resolve().parents[1]
 STATIC_DIR = BASE_DIR / "static"
 MAX_UPLOAD_MB = int(os.environ.get("MAX_UPLOAD_MB", "25"))
-APP_VERSION = os.environ.get("APP_VERSION", "0.4.3")
+APP_VERSION = os.environ.get("APP_VERSION", "0.4.4")
 MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
 
 app = FastAPI(title="Schulungsplantool", version=APP_VERSION)
@@ -304,6 +304,8 @@ def export_customer_package(project: TrainingProject) -> Response:
     except ValueError as error:
         if str(error) == "no_training_blocks":
             raise HTTPException(status_code=400, detail="Für den Kundenexport muss zuerst ein Schulungsplan erstellt werden.") from error
+        if str(error) == "parked_training_blocks":
+            raise HTTPException(status_code=400, detail="Geparkte Schulungsblöcke müssen vor dem Kundenexport auf verfügbare Trainer-Tage verschoben werden.") from error
         raise
     filename = _customer_export_filename(project, datetime.now(timezone.utc))
     return Response(
@@ -329,9 +331,9 @@ async def import_customer_package(file: UploadFile = File(...)) -> dict:
             "duration_changed": "Die Blockdauer wurde in der Kundenplanung unzulässig verändert.",
             "week_not_allowed": "Die Kundenplanung enthält eine nicht freigegebene Kalenderwoche.",
             "trainer_not_allowed": "Die Kundenplanung enthält einen nicht freigegebenen Trainer.",
-            "friday_not_allowed": "Freitag ist für dieses Projekt nicht als Schulungstag freigegeben.",
             "quarter_grid_required": "Die Kundenplanung enthält eine Zeit außerhalb des 15-Minuten-Rasters.",
             "outside_working_hours": "Die Kundenplanung enthält einen Block außerhalb der Arbeitszeit.",
+            "trainer_day_unavailable": "Die Kundenplanung enthält noch geparkte Schulungsblöcke auf nicht verfügbaren Trainer-Tagen.",
             "overlap": "Die Kundenplanung enthält überlappende Blöcke.",
             "block_not_allowed": "Die Kundenplanung enthält einen unbekannten oder nicht verschiebbaren Block.",
             "duplicate_move": "Ein Schulungsblock wurde mehrfach in der Rückgabedatei angegeben.",

@@ -1,16 +1,20 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.4.3**
+Aktuelle Version: **v0.4.4**
 
 
 
-## Aenderungen v0.4.3
+## Aenderungen v0.4.4
 
-- Trainer-spezifische Schulungstage werden im Workflow-Schritt **Pruefen** pro Kalenderwoche ueber Mo-Fr ausgewaehlt.
-- Die Zahl der benoetigten Kalenderwochen wird vor der eigentlichen Planung ueber einen separaten Planungs-Estimate berechnet und passt sich an geaenderte Trainerverfuegbarkeiten an.
-- Das Startdatum sperrt in der ersten Woche automatisch Kalendertage vor Projektbeginn.
-- Anreise und Abreise folgen bei der automatischen Planung dem ersten bzw. letzten aktivierten Schulungstag des jeweiligen Trainers.
-- Der Freitag bleibt im Offline-Kundenplaner als Park-/Verschiebetag nutzbar, auch wenn er fuer die automatische Planung nicht standardmaessig aktiviert ist.
+- Im Workflow-Schritt **Prüfen** werden die Schulungstage pro Trainer und voraussichtlicher Kalenderwoche individuell über Montag bis Freitag gewählt.
+- Verfügbar = grün, nicht verfügbar = rötlich. Tage vor dem Projektstart bleiben deaktiviert.
+- Der automatische Planner verwendet nur die aktivierten Trainer-Tage.
+- `Freitag standardmäßig aktiv` wurde einschließlich der dazugehörigen Logik entfernt; Freitag wird nur noch über die Trainer-Verfügbarkeit freigegeben.
+- Im Schulungsplan-Kalender werden nicht verfügbare Trainer-Tage rötlich als **Parkfläche** markiert. Neue Blöcke können dort nicht angelegt werden; bestehende Schulungen dürfen dort nur vorübergehend geparkt werden und tragen die Kennzeichnung `Geparkt`.
+- Geparkte Schulungen erzeugen eine Validierungswarnung und müssen vor `Kundenplanung exportieren` auf verfügbare Tage zurückverschoben werden.
+- Die Offline-Kundenplanung zeigt dieselben Verfügbarkeiten. Nicht verfügbare Tage bleiben als Parkfläche nutzbar, aber die Rückgabedatei kann nicht heruntergeladen werden, solange dort noch Schulungen geparkt sind.
+- Der Server prüft beim Kunden-Rückimport zusätzlich, dass keine Schulung auf einem nicht verfügbaren Trainer-Tag zurückgegeben wird.
+- Keine PostgreSQL-Migration erforderlich.
 
 ## Aenderungen v0.4.2
 

@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.4.3"' in html
+    assert 'src="calendar.js?v=0.4.4"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -86,7 +86,7 @@ def test_multi_trainer_calendar_and_project_state_controls_are_present() -> None
     assert "block.trainer = calendarTrainers()[trainerIndex]" in javascript
     assert 'fetch("api/project/export"' in javascript
     assert 'fetch("api/project/import"' in javascript
-    assert "Jeder Trainer besitzt pro Kalenderwoche eine eigene Wochenansicht" in javascript
+    assert "Rötlich markierte Trainer-Tage sind nicht verfügbar" in javascript
 
 
 def test_preview_documents_landscape_calendar_export() -> None:
@@ -377,7 +377,7 @@ def test_v030_common_time_settings_are_visible_and_advanced_rules_are_disclosed(
     assert "Anreise · erster Schulungstag" in javascript
     assert "Abreise · letzter Schulungstag" in javascript
     assert "Pause min." in javascript
-    assert "Freitag standardmäßig aktiv" in javascript
+    assert "Freitag standardmäßig aktiv" not in javascript
 
 
 def test_v030_project_menu_separates_project_workflow_from_administration() -> None:
@@ -650,3 +650,35 @@ def test_v043_customer_friday_is_available_as_parking_day() -> None:
     javascript = (STATIC_DIR.parent / "customer_assets" / "app.js").read_text(encoding="utf-8")
     assert 'day==="Freitag"&&!view.settings.friday_training_enabled' not in javascript
     assert "Freitag ist für die Planung nicht freigegeben." not in javascript
+
+
+def test_v044_unavailable_days_are_red_and_calendar_supports_parking():
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    styles = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
+    assert 'selected.has(day) ? "selected" : "unavailable"' in javascript
+    assert 'Nicht verfügbar · Parkfläche' in javascript
+    assert 'trainingBlockIsParked' in javascript
+    assert 'block-parked-badge' in javascript
+    assert '.availability-day.unavailable:not(.disabled)' in styles
+    assert '.calendar-day-body.trainer-day-unavailable' in styles
+    assert '.calendar-block.is-parked' in styles
+
+
+def test_v044_friday_standard_checkbox_and_logic_are_removed():
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    models = (STATIC_DIR.parents[1] / "app" / "server" / "models.py").read_text(encoding="utf-8")
+    planner = (STATIC_DIR.parents[1] / "app" / "server" / "planner.py").read_text(encoding="utf-8")
+    assert "Freitag standardmäßig aktiv" not in javascript
+    assert "friday_training_enabled" not in javascript
+    assert "friday_training_enabled" not in models
+    assert "friday_training_enabled" not in planner
+
+
+def test_v044_customer_parking_blocks_final_return_download():
+    javascript = (STATIC_DIR.parent / "customer_assets" / "app.js").read_text(encoding="utf-8")
+    styles = (STATIC_DIR.parent / "customer_assets" / "style.css").read_text(encoding="utf-8")
+    assert 'function parkedTrainingBlocks()' in javascript
+    assert 'download.disabled=parked>0' in javascript
+    assert 'Schulungsblock geparkt.' in javascript
+    assert 'Nicht verfügbar · Parkfläche' in javascript
+    assert '.block.parked' in styles

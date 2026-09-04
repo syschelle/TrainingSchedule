@@ -32,7 +32,6 @@ class PlanningSettings(BaseModel):
     thursday_departure_start: str = "15:00"
     thursday_departure_end: str = "17:00"
     thursday_departure_label: str = "Abreise"
-    friday_training_enabled: bool = False
 
 
 class TrainingTopic(BaseModel):

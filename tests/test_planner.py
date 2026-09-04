@@ -65,14 +65,20 @@ def test_training_background_color_is_copied_to_calendar_block():
     assert training.background_color == "#abcdef"
 
 
-def test_friday_is_only_used_when_enabled():
-    project = TrainingProject(topics=[topic(f"Thema {index}", 240) for index in range(1, 6)])
-    planned_without_friday = plan_project(project)
-    assert not any(block.type == "training" and block.day == "Freitag" for block in planned_without_friday.blocks)
+def test_friday_is_only_used_when_explicitly_available_for_trainer():
+    default_project = TrainingProject(trainers=["Trainer A"], topics=[topic("Standard", 60)])
+    default_planned = plan_project(default_project)
+    assert not any(block.type == "training" and block.day == "Freitag" for block in default_planned.blocks)
 
-    project.settings.friday_training_enabled = True
-    planned_with_friday = plan_project(project)
-    assert any(block.type == "training" and block.day == "Freitag" for block in planned_with_friday.blocks)
+    friday_project = TrainingProject(
+        trainers=["Trainer A"],
+        trainer_availability=[TrainerWeekAvailability(trainer="Trainer A", week=1, weekdays=["Freitag"])],
+        topics=[topic("Freitag", 60)],
+    )
+    friday_planned = plan_project(friday_project)
+    training = next(block for block in friday_planned.blocks if block.type == "training")
+    assert training.week == 1
+    assert training.day == "Freitag"
 
 
 def test_dependencies_need_previous_day():
@@ -411,7 +417,6 @@ def test_v043_trainer_specific_availability_is_respected():
 def test_v043_explicit_friday_availability_overrides_default_friday_setting():
     project = TrainingProject(
         trainers=["Trainer A"],
-        settings=PlanningSettings(friday_training_enabled=False),
         trainer_availability=[TrainerWeekAvailability(trainer="Trainer A", week=1, weekdays=["Freitag"])],
         topics=[topic("Freitag", 60)],
     )
@@ -461,3 +466,13 @@ def test_v043_unused_trainer_week_does_not_keep_arrival_or_departure_only():
     for block in planned.blocks:
         if block.type in {"arrival", "departure"}:
             assert block.trainer in trainers_with_training
+
+
+def test_v044_validation_marks_training_on_unavailable_trainer_day_as_parked():
+    project = TrainingProject(
+        trainers=["Trainer A"],
+        trainer_availability=[TrainerWeekAvailability(trainer="Trainer A", week=1, weekdays=["Dienstag"])],
+        blocks=[ScheduleBlock(id="parked", type="training", week=1, day="Montag", title="Parken", start="10:00", end="11:00", trainer="Trainer A")],
+    )
+    warnings = validate_project(project)
+    assert any("nur geparkt" in warning and "nicht verfügbar" in warning for warning in warnings)

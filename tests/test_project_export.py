@@ -360,11 +360,16 @@ def test_v042_customer_return_rejects_arrival_duration_change(monkeypatch):
 
 
 
-def test_v043_customer_return_can_park_training_on_friday_when_auto_friday_is_disabled(monkeypatch):
+def test_v044_customer_return_rejects_training_left_on_unavailable_day(monkeypatch):
+    import pytest
+    from app.server.models import TrainerWeekAvailability
     monkeypatch.setenv("CUSTOMER_EXCHANGE_SECRET", "test-secret")
     project = sample_project()
-    project.settings.friday_training_enabled = False
-    training = next(block for block in project.blocks if block.type == "training")
+    project.trainer_availability = [
+        TrainerWeekAvailability(trainer="Trainer A", week=1, weekdays=["Montag", "Dienstag", "Mittwoch", "Donnerstag"]),
+        TrainerWeekAvailability(trainer="Trainer B", week=1, weekdays=["Montag", "Dienstag", "Mittwoch", "Donnerstag"]),
+    ]
+    training = next(block for block in project.blocks if block.type == "training" and block.trainer == "Trainer A")
     duration = minutes_between(training.start, training.end)
     package = build_customer_package(project)
     payload = _customer_return_from_package(package, [{
@@ -375,7 +380,42 @@ def test_v043_customer_return_can_park_training_on_friday_when_auto_friday_is_di
         "start": "09:00",
         "end": f"{(9 * 60 + duration) // 60:02d}:{(9 * 60 + duration) % 60:02d}",
     }])
+    with pytest.raises(ValueError, match="trainer_day_unavailable"):
+        apply_customer_return(payload)
+
+
+def test_v044_customer_return_accepts_friday_when_trainer_is_available(monkeypatch):
+    from app.server.models import TrainerWeekAvailability
+    monkeypatch.setenv("CUSTOMER_EXCHANGE_SECRET", "test-secret")
+    project = sample_project()
+    project.trainer_availability = [
+        TrainerWeekAvailability(trainer="Trainer A", week=1, weekdays=["Montag", "Freitag"]),
+        TrainerWeekAvailability(trainer="Trainer B", week=1, weekdays=["Montag"]),
+    ]
+    training = next(block for block in project.blocks if block.type == "training" and block.trainer == "Trainer A")
+    duration = minutes_between(training.start, training.end)
+    package = build_customer_package(project)
+    payload = _customer_return_from_package(package, [{
+        "block_id": training.id,
+        "week": 1,
+        "day": "Freitag",
+        "trainer": "Trainer A",
+        "start": "09:00",
+        "end": f"{(9 * 60 + duration) // 60:02d}:{(9 * 60 + duration) % 60:02d}",
+    }])
     updated = apply_customer_return(payload)
     moved = next(block for block in updated.blocks if block.id == training.id)
     assert moved.day == "Freitag"
-    assert minutes_between(moved.start, moved.end) == duration
+
+
+def test_v044_customer_package_rejects_internal_parked_training(monkeypatch):
+    import pytest
+    from app.server.models import TrainerWeekAvailability
+    monkeypatch.setenv("CUSTOMER_EXCHANGE_SECRET", "test-secret")
+    project = sample_project()
+    project.trainer_availability = [
+        TrainerWeekAvailability(trainer="Trainer A", week=1, weekdays=["Dienstag"]),
+        TrainerWeekAvailability(trainer="Trainer B", week=1, weekdays=["Montag"]),
+    ]
+    with pytest.raises(ValueError, match="parked_training_blocks"):
+        build_customer_package(project)
