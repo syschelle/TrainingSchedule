@@ -1575,3 +1575,13 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Die bestehende Parkflächen-Funktionalität bleibt vollständig erhalten: vorhandene Schulungsblöcke können weiterhin temporär auf nicht verfügbare Tage verschoben werden und werden dabei als `Geparkt` behandelt.
 - Keine PostgreSQL-Migration erforderlich.
 - Version auf `v0.4.5` erhöht.
+
+
+## Erweiterung v0.4.6 - Geparkte Kundenblöcke zurückholen
+
+- In der Offline-Kundenplanung müssen geparkte Schulungsblöcke wieder zuverlässig auf verfügbare Trainer-Tage zurückverschoben werden können.
+- Kollidiert die gewählte Drop-Position beim Zurückholen mit einer unsichtbaren Pause/Mittagspause oder einem anderen Block, wird automatisch der nächstgelegene tatsächlich freie 15-Minuten-Slot desselben gültigen Tages verwendet.
+- Bestehende Schulungen sowie An- und Abreise dürfen weiterhin nicht überlappt werden. Ist kein ausreichend großer freier Bereich vorhanden, bleibt der Block geparkt und es wird eine verständliche Fehlermeldung angezeigt.
+- Nachträglich erzeugte Mittagspausen des Planners dürfen niemals mit einem Schulungsblock überlappen. Wenn innerhalb des konfigurierten Mittagsfensters kein freier 45-Minuten-Slot existiert, soll die Validierung `Mittagspause fehlt` melden statt einen überlappenden Pausenblock anzulegen.
+- Keine PostgreSQL-Migration erforderlich.
+- Version auf `v0.4.6` erhöht.

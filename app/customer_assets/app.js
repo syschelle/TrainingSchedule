@@ -37,6 +37,16 @@
   function parkedTrainingBlocks(){ return blocks.filter(block=>block.type==="training"&&!dayAvailable(block.week,block.trainer,block.day)); }
   function laneBlocks(week,trainer,day){ return blocks.filter(b=>VISIBLE_TYPES.has(b.type)&&Number(b.week)===Number(week)&&b.trainer===trainer&&b.day===day).sort((a,b)=>a.start.localeCompare(b.start)); }
   function conflict(moving,target){ return blocks.find(other => other.id!==moving.id && Number(other.week)===Number(target.week) && other.day===target.day && other.trainer===target.trainer && toMinutes(target.start)<toMinutes(other.end) && toMinutes(other.start)<toMinutes(target.end)); }
+  function nearestFreeStart(moving,week,day,trainer,preferredStart){
+    const length=duration(moving); const dayStart=toMinutes(view.settings.day_start), dayEnd=toMinutes(view.settings.day_end);
+    const candidates=[];
+    for(let start=dayStart;start+length<=dayEnd;start+=SNAP){
+      const target={...moving,week,day,trainer,start:formatTime(start),end:formatTime(start+length)};
+      if(!conflict(moving,target)) candidates.push(start);
+    }
+    if(!candidates.length)return null;
+    return candidates.sort((left,right)=>Math.abs(left-preferredStart)-Math.abs(right-preferredStart)||left-right)[0];
+  }
 
   function changedMoves(){
     return blocks.filter(block=>MOVABLE_TYPES.has(block.type)).filter(block=>{
@@ -65,10 +75,17 @@
     document.querySelectorAll('.day-body').forEach(body=>{
       body.addEventListener('dragover',event=>{event.preventDefault();body.classList.add('drop-target');}); body.addEventListener('dragleave',()=>body.classList.remove('drop-target'));
       body.addEventListener('drop',event=>{ event.preventDefault(); body.classList.remove('drop-target'); const block=blocks.find(item=>item.id===(draggedId||event.dataTransfer.getData('text/plain'))); if(!block||!MOVABLE_TYPES.has(block.type))return;
-        const week=Number(body.dataset.week), day=body.dataset.day, trainer=body.dataset.trainer;
+        const wasParked=block.type==="training"&&!dayAvailable(block.week,block.trainer,block.day);
+        const week=Number(body.dataset.week), day=body.dataset.day, trainer=body.dataset.trainer; const targetAvailable=dayAvailable(week,trainer,day);
         const rect=body.getBoundingClientRect(); const length=duration(block); const dayStart=toMinutes(view.settings.day_start), dayEnd=toMinutes(view.settings.day_end); let start=snap(dayStart+((event.clientY-rect.top)/HOUR_HEIGHT)*60-dragOffsetMinutes); start=Math.max(dayStart,Math.min(start,dayEnd-length));
-        const target={...block,week,day,trainer,start:formatTime(start),end:formatTime(start+length)}; const hit=conflict(block,target); if(hit){const hidden=hit.type==="break"||hit.type==="lunch";setStatus(hidden?"Der Zielbereich ist nicht verfügbar.":`Der Zielbereich ist durch „${hit.title||hit.type}“ belegt.`,"error");return;}
-        Object.assign(block,target); draggedId=""; dragOffsetMinutes=0; if(block.type==="training"&&!dayAvailable(block.week,block.trainer,block.day)){setStatus("Schulungsblock geparkt. Für die Rückgabedatei muss er wieder auf einen verfügbaren Trainer-Tag verschoben werden.","error");}else{setStatus(block.type==="training"?"Schulungsblock verschoben.":block.type==="arrival"?"Anreise verschoben.":"Abreise verschoben.","ok");} render();
+        let target={...block,week,day,trainer,start:formatTime(start),end:formatTime(start+length)}; let hit=conflict(block,target); let autoPlaced=false;
+        if(hit&&wasParked&&targetAvailable){
+          const fallbackStart=nearestFreeStart(block,week,day,trainer,start);
+          if(fallbackStart===null){setStatus("Auf diesem verfügbaren Tag gibt es keinen ausreichend großen freien Bereich für diesen Schulungsblock.","error");return;}
+          target={...block,week,day,trainer,start:formatTime(fallbackStart),end:formatTime(fallbackStart+length)}; hit=conflict(block,target); autoPlaced=true;
+        }
+        if(hit){const hidden=hit.type==="break"||hit.type==="lunch";setStatus(hidden?"Der Zielbereich ist nicht verfügbar.":`Der Zielbereich ist durch „${hit.title||hit.type}“ belegt.`,"error");return;}
+        Object.assign(block,target); draggedId=""; dragOffsetMinutes=0; if(block.type==="training"&&!dayAvailable(block.week,block.trainer,block.day)){setStatus("Schulungsblock geparkt. Für die Rückgabedatei muss er wieder auf einen verfügbaren Trainer-Tag verschoben werden.","error");}else if(block.type==="training"&&autoPlaced){setStatus("Geparkter Schulungsblock wurde auf dem gültigen Tag automatisch in den nächstgelegenen freien Bereich verschoben.","ok");}else{setStatus(block.type==="training"?"Schulungsblock verschoben.":block.type==="arrival"?"Anreise verschoben.":"Abreise verschoben.","ok");} render();
       });
     });
   }

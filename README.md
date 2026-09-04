@@ -1,6 +1,16 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.4.5**
+Aktuelle Version: **v0.4.6**
+
+
+## Aenderungen v0.4.6
+
+- Geparkte Schulungsblöcke können in der Offline-Kundenplanung wieder zuverlässig auf verfügbare Trainer-Tage zurückverschoben werden.
+- Trifft die gewünschte Drop-Position auf eine unsichtbare Pause, Mittagspause oder einen anderen belegten Bereich, wird beim Zurückholen eines geparkten Schulungsblocks automatisch der nächstgelegene tatsächlich freie 15-Minuten-Slot desselben Tages verwendet.
+- Reale Kollisionen bleiben weiterhin geschützt; wenn der gültige Tag keinen ausreichend großen freien Bereich besitzt, wird der Block nicht verschoben und eine klare Fehlermeldung angezeigt.
+- Der Planner erzeugt eine nachträglich ergänzte Mittagspause nicht mehr überlappend mit langen Schulungsblöcken. Ist im konfigurierten Mittagsfenster kein freier 45-Minuten-Slot vorhanden, bleibt die bestehende Validierungswarnung `Mittagspause fehlt` bestehen statt einen überlappenden Block zu erzeugen.
+- Regressionstests für beide Fälle ergänzt.
+- Keine PostgreSQL-Migration erforderlich.
 
 
 ## Aenderungen v0.4.5

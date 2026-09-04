@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.4.5"' in html
+    assert 'src="calendar.js?v=0.4.6"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -684,3 +684,11 @@ def test_v044_customer_parking_blocks_final_return_download():
     assert 'Nicht verfügbar' in javascript
     assert 'Nicht verfügbar · Parkfläche' not in javascript
     assert '.block.parked' in styles
+
+
+def test_v046_parked_customer_block_falls_back_to_nearest_free_slot_on_available_day():
+    javascript = (STATIC_DIR.parent / "customer_assets" / "app.js").read_text(encoding="utf-8")
+    assert "function nearestFreeStart(" in javascript
+    assert 'const wasParked=block.type==="training"&&!dayAvailable' in javascript
+    assert "if(hit&&wasParked&&targetAvailable)" in javascript
+    assert "automatisch in den nächstgelegenen freien Bereich verschoben" in javascript

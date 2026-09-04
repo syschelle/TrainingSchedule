@@ -476,3 +476,15 @@ def test_v044_validation_marks_training_on_unavailable_trainer_day_as_parked():
     )
     warnings = validate_project(project)
     assert any("nur geparkt" in warning and "nicht verfügbar" in warning for warning in warnings)
+
+
+def test_v046_final_lunch_never_overlaps_long_training_block():
+    project = TrainingProject(
+        trainers=["Trainer A"],
+        topics=[topic("Langer Block", 360)],
+    )
+    planned = plan_project(project)
+    training = next(block for block in planned.blocks if block.type == "training")
+    lunches = [block for block in planned.blocks if block.type == "lunch" and block.week == training.week and block.day == training.day and block.trainer == training.trainer]
+    assert not any(block.start < training.end and training.start < block.end for block in lunches)
+    assert any("Mittagspause fehlt" in warning for warning in planned.warnings)

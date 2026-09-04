@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.4.6 - 2026-09-04
+
+### Geparkte Kundenblöcke wieder auf gültige Tage verschiebbar
+
+- Beim Zurückziehen eines geparkten Schulungsblocks auf einen verfügbaren Trainer-Tag sucht die Offline-Kundenplanung bei einer belegten Drop-Position automatisch den nächstgelegenen freien 15-Minuten-Slot desselben Tages.
+- Unsichtbare Pausen-/Mittagszeiten und andere bestehende Blöcke bleiben Kollisionsschutz; es wird nur in einen tatsächlich freien Bereich verschoben.
+- Gibt es auf dem Zieltag keinen ausreichend großen freien Bereich, bleibt der Block geparkt und die Oberfläche meldet den Grund eindeutig.
+- Der automatische Planner legt eine nachträglich ergänzte Mittagspause nicht mehr über einen langen Schulungsblock. Ist im konfigurierten Mittagsfenster kein kollisionsfreier 45-Minuten-Slot vorhanden, wird keine überlappende Mittagspause erzeugt.
+- Regressionstests ergänzt.
+- Keine PostgreSQL-Migration erforderlich.
+
 ## v0.4.5 - 2026-09-04
 
 ### Kalenderbeschriftung vereinfacht

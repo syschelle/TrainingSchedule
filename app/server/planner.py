@@ -441,10 +441,21 @@ def plan_project(project: TrainingProject) -> TrainingProject:
                 key = (week, day, trainer)
                 if key not in lane_has_training or key in used_lunch:
                     continue
-                cursor = cursor_by_lane[key]
-                lunch_start = snap_minutes_to_quarter(max(parse_time(settings.lunch_window_start), min(cursor, parse_time(settings.lunch_window_end))), "ceil")
-                lunch_end = lunch_start + settings.lunch_minutes
-                if lunch_end <= _latest_training_end(project, day, week, trainer):
+                latest_end = _latest_training_end(project, day, week, trainer)
+                lunch_window_start = snap_minutes_to_quarter(parse_time(settings.lunch_window_start), "ceil")
+                lunch_window_end = min(parse_time(settings.lunch_window_end), latest_end - settings.lunch_minutes)
+                lane_blocks = [
+                    block for block in scheduled
+                    if block.week == week and block.day == day and block.trainer == trainer
+                ]
+                lunch_slot: tuple[int, int] | None = None
+                for lunch_start in range(lunch_window_start, lunch_window_end + 1, 15):
+                    lunch_end = lunch_start + settings.lunch_minutes
+                    if not any(lunch_start < parse_time(block.end) and parse_time(block.start) < lunch_end for block in lane_blocks):
+                        lunch_slot = (lunch_start, lunch_end)
+                        break
+                if lunch_slot is not None:
+                    lunch_start, lunch_end = lunch_slot
                     scheduled.append(ScheduleBlock(
                         id=f"lunch-{uuid4().hex[:8]}",
                         type=BlockType.lunch,
