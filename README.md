@@ -1,6 +1,28 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.3.11**
+Aktuelle Version: **v0.4.1**
+
+
+## Aenderungen v0.4.1
+
+- Der Kundenplanung-Export bleibt ein ZIP, enthaelt aber nur noch eine einzige vollstaendig selbststaendige `index.html`.
+- CSS, JavaScript, signierte Planungsdaten und Dedalus-Logo werden direkt in die HTML-Datei eingebettet.
+- Die Kundenseite benoetigt weiterhin keine Internetverbindung und keinen lokalen Webserver.
+- Die Rueckgabe bleibt eine JSON-Datei, die ueber `Kundenplanung importieren` wieder eingelesen wird.
+- Die ZIP-Verpackung bleibt bewusst bestehen, damit der Export per E-Mail weniger haeufig durch HTML-Anhangsfilter blockiert wird.
+- Keine PostgreSQL-Migration erforderlich.
+
+
+## Aenderungen v0.4.0
+
+- Neuer Offline-Kundenplan-Austausch: `Kundenplanung exportieren` erzeugt ein ZIP mit einer komplett lokal im Browser nutzbaren `index.html`.
+- Die Kundenseite verwendet das mitgelieferte Dedalus-Logo im Header und benoetigt keine Internetverbindung.
+- Kunden koennen ausschliesslich bestehende Schulungsbloecke per Drag-and-drop innerhalb der vorhandenen Wochen verschieben. Blockdauer, Inhalt, Gruppen-/Teilnehmerdaten und Wochenstruktur koennen nicht veraendert oder geloescht werden.
+- Organisatorische Bloecke wie Anreise, Abreise, Pause und Mittag sind auf der Kundenseite sichtbar, aber nicht verschiebbar.
+- `Aenderungen herunterladen` erzeugt eine signierte Rueckgabedatei. `Kundenplanung importieren` liest diese wieder in das Schulungsplantool ein.
+- Der Import akzeptiert nur erlaubte Positionsaenderungen und prueft Signatur, Blockidentitaet, 15-Minuten-Raster, unveraenderte Dauer, freigegebene Wochen/Trainer sowie Ueberlappungen und Inhaltsabhaengigkeiten.
+- Der XLSX-Export wurde vollstaendig aus Benutzeroberflaeche, Export-API, Exporter-Code und Runtime-Abhaengigkeiten entfernt. Der bestehende Excel-Import fuer Quelldaten bleibt erhalten.
+- Keine PostgreSQL-Migration erforderlich.
 
 ## Aenderungen v0.3.11
 
@@ -215,7 +237,8 @@ Lokale Webanwendung zur Erstellung, Bearbeitung, Validierung und zum Export mehr
 - Live-Validierung
 - Planuebersicht mit Schulungszeit, nicht eingeplanter Zeit und Dienstleistungstagen
 - Kalender-Druckvorschau
-- PDF-Export im A4-Querformat als Kalenderansicht sowie XLSX-Export
+- PDF-Export im A4-Querformat als Kalenderansicht
+- Offline-Kundenplanung als ZIP mit Rueckimport der Kundenverschiebungen
 - exportier- und wieder importierbare Projektdatei fuer einen exakten Planungsstand
 - PostgreSQL-Katalog fuer dauerhaft gepflegte Schulungsinhalte
 - Markdown-Editor fuer detaillierte Schulungspunkte je Schulungsinhalt

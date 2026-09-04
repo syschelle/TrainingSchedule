@@ -6,9 +6,9 @@
   <meta name="referrer" content="no-referrer">
   <meta name="robots" content="noindex, nofollow">
   <title>Schulungsplantool</title>
-  <link rel="stylesheet" href="styles.css?v=0.3.11">
-  <script defer src="calendar.js?v=0.3.11"></script>
-  <script defer src="app.js?v=0.3.11"></script>
+  <link rel="stylesheet" href="styles.css?v=0.4.1">
+  <script defer src="calendar.js?v=0.4.1"></script>
+  <script defer src="app.js?v=0.4.1"></script>
 </head>
 <body>
   <header class="topbar">
@@ -27,7 +27,7 @@
       </div>
       <div class="topbar-actions">
         <span id="planSyncStatus" class="plan-sync-status" hidden></span>
-        <span class="version">v0.3.11</span>
+        <span class="version">v0.4.1</span>
       </div>
     </div>
     <nav id="workflowProgress" class="workflow-progress" aria-label="Fortschritt der Planung"></nav>
@@ -175,8 +175,10 @@
             <div class="card-heading-actions">
               <button type="button" id="backToInput" class="button button-ghost">Eingabe</button>
               <button type="button" id="exportProject" class="button button-secondary">Planung exportieren</button>
+              <button type="button" id="exportCustomerPackage" class="button button-secondary">Kundenplanung exportieren</button>
+              <button type="button" id="importCustomerPlan" class="button button-secondary">Kundenplanung importieren</button>
+              <input type="file" id="customerPlanInput" accept=".json,application/json" hidden>
               <button type="button" id="exportPdf" class="button button-primary">PDF</button>
-              <button type="button" id="exportXlsx" class="button button-primary">XLSX</button>
             </div>
           </div>
           <div id="planDirtyBanner" class="plan-dirty-banner" hidden>
@@ -296,7 +298,7 @@
   </div>
 
   <footer>
-    <span>Schulungsplantool v0.3.11</span>
+    <span>Schulungsplantool v0.4.1</span>
   </footer>
 </body>
 </html>

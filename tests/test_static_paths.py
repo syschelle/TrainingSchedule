@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.3.11"' in html
+    assert 'src="calendar.js?v=0.4.1"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -579,3 +579,38 @@ def test_v0311_training_topics_use_compact_left_aligned_columns() -> None:
     assert '("Teilnehmer", 58)' in exporter
     assert "scale = min(1.0, available / sum(widths))" in exporter
     assert "table_width = sum(widths)" in exporter
+
+
+def test_customer_exchange_controls_replace_xlsx_export() -> None:
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    assert 'id="exportCustomerPackage"' in html
+    assert 'id="importCustomerPlan"' in html
+    assert 'id="customerPlanInput"' in html
+    assert 'id="exportXlsx"' not in html
+    assert 'downloadExport("xlsx")' not in javascript
+    assert 'fetch("api/customer/export"' in javascript
+    assert 'fetch("api/customer/import"' in javascript
+
+
+def test_customer_offline_page_has_no_edit_resize_or_week_delete_controls() -> None:
+    root = STATIC_DIR.parent / "customer_assets"
+    html = (root / "index.html").read_text(encoding="utf-8")
+    javascript = (root / "app.js").read_text(encoding="utf-8")
+    assert "{{DEDALUS_DATA_URI}}" in html
+    assert "Änderungen herunterladen" in html
+    assert "Woche löschen" not in html
+    assert "resize" not in html.lower()
+    assert "pointerdown" not in javascript
+    assert 'block.type==="training"' in javascript
+    assert "duration_changed" not in javascript
+
+
+def test_xlsx_export_runtime_code_and_dependency_are_removed() -> None:
+    root = STATIC_DIR.parents[1]
+    requirements = (root / "requirements.txt").read_text(encoding="utf-8").lower()
+    exporter = (root / "app" / "server" / "exporter.py").read_text(encoding="utf-8").lower()
+    main = (root / "app" / "server" / "main.py").read_text(encoding="utf-8").lower()
+    assert "xlsxwriter" not in requirements
+    assert "export_xlsx" not in exporter
+    assert "schulungsplan.xlsx" not in main

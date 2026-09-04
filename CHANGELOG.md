@@ -1,5 +1,31 @@
 # Changelog
 
+## v0.4.1 - 2026-09-04
+
+### Kundenpaket auf eine einzelne HTML-Datei vereinfacht
+
+- `Kundenplanung exportieren` erzeugt weiterhin ein ZIP, damit HTML-Dateien nicht direkt als E-Mail-Anhang versendet werden muessen.
+- Das ZIP enthaelt jetzt ausschliesslich `index.html`.
+- Stylesheet, JavaScript, signierte Projektdaten und das Dedalus-Logo werden direkt in `index.html` eingebettet.
+- Es gibt keine separaten `data.js`, `app.js`, `style.css`, PNG- oder README-Dateien mehr im Kunden-ZIP.
+- Die Offline-Funktion, eingeschraenkte Drag-and-drop-Bedienung und JSON-Rueckgabe bleiben unveraendert.
+- Inline-Projektdaten werden script-sicher escaped, damit Projektnamen oder Kundentexte keine eingebetteten Script-Tags beenden koennen.
+- Keine PostgreSQL-Migration erforderlich.
+
+## v0.4.0 - 2026-09-04
+
+### Offline-Kundenplanung und XLSX-Export entfernt
+
+- Neuer Button `Kundenplanung exportieren`: erzeugt ein eigenstaendiges Offline-ZIP mit `index.html`, CSS, JavaScript, Projektdaten und Dedalus-Logo.
+- Die Kundenseite erlaubt nur Drag-and-drop vorhandener Schulungsbloecke innerhalb bereits vorhandener Wochen und Trainer. Es gibt keine Funktionen zum Loeschen/Hinzufuegen von Wochen, Bearbeiten/Loeschen/Duplizieren von Bloecken oder Resize der Blockdauer.
+- Die Blockdauer bleibt beim Verschieben immer unveraendert; die Position rastet im 15-Minuten-Raster ein.
+- Die Kundenseite kann eine JSON-Rueckgabedatei mit den Positionsaenderungen erzeugen.
+- Neuer Import `Kundenplanung importieren` prueft die signierte Ausgangsplanung und akzeptiert ausschliesslich erlaubte Positionsaenderungen.
+- Signierte Ausgangsplanung erlaubt den Rueckimport auch nach einem Browser-/App-Neustart, ohne serverseitige Projektdateien zu speichern.
+- Der XLSX-Export wurde aus Frontend, API, Exporter und Runtime-Abhaengigkeiten entfernt. Der Excel-Import fuer Quelldateien bleibt erhalten.
+- Keine PostgreSQL-Migration erforderlich.
+
+
 ## v0.3.11 - 2026-09-04
 
 ### Schulungsthemen kompakter dargestellt

@@ -4,7 +4,7 @@ from datetime import date
 from enum import Enum
 from typing import Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class BlockType(str, Enum):
@@ -178,6 +178,38 @@ class ProjectFile(BaseModel):
     project: TrainingProject
 
 
+class CustomerPlanningMove(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    block_id: str
+    week: int = Field(ge=1)
+    day: Literal["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"]
+    trainer: str
+    start: str
+    end: str
+
+
+class CustomerPlanningExchange(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    format: Literal["schulungsplantool-customer-package"] = "schulungsplantool-customer-package"
+    schema_version: Literal[1] = 1
+    exchange_id: str
+    exported_at: str
+    baseline: TrainingProject
+    signature: str
+
+
+class CustomerPlanningReturn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    format: Literal["schulungsplantool-customer-return"] = "schulungsplantool-customer-return"
+    schema_version: Literal[1] = 1
+    returned_at: str = ""
+    exchange: CustomerPlanningExchange
+    moves: list[CustomerPlanningMove] = Field(default_factory=list)
+
+
 class ExportRequest(BaseModel):
     project: TrainingProject
-    format: Literal["pdf", "xlsx"]
+    format: Literal["pdf"]

@@ -134,7 +134,9 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#importProject").addEventListener("click", () => $("#projectImportInput").click());
   $("#projectImportInput").addEventListener("change", importProjectState);
   $("#exportPdf").addEventListener("click", () => downloadExport("pdf"));
-  $("#exportXlsx").addEventListener("click", () => downloadExport("xlsx"));
+  $("#exportCustomerPackage").addEventListener("click", exportCustomerPackage);
+  $("#importCustomerPlan").addEventListener("click", () => $("#customerPlanInput").click());
+  $("#customerPlanInput").addEventListener("change", importCustomerPlan);
   document.querySelectorAll("[data-tab]").forEach((button) => {
     button.addEventListener("click", () => {
       activeTab = button.dataset.tab;
@@ -2585,6 +2587,64 @@ async function importProjectState(event) {
   workflowErrors = {};
   render();
   setStatus("Planungsstand geladen.");
+}
+
+async function exportCustomerPackage() {
+  setStatus("Kundenpaket wird erstellt...");
+  const response = await fetch("api/customer/export", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(project)
+  });
+  const payload = response.ok ? null : await response.json().catch(() => ({}));
+  if (!response.ok) {
+    setStatus(payload?.detail || "Kundenpaket konnte nicht erstellt werden.");
+    return;
+  }
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  const now = new Date();
+  const productName = currentProduct()?.name || project.product_id || "produkt";
+  const customer = project.customer_data_required ? project.customer_name : "ohne-kunde";
+  const location = project.customer_data_required ? project.location : "ohne-standort";
+  const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const time = `${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
+  link.download = `${safeFilenamePart(customer, "kunde")}_${safeFilenamePart(location, "standort")}_${safeFilenamePart(productName, "produkt")}_kundenplanung_${date}_${time}.zip`;
+  link.click();
+  URL.revokeObjectURL(url);
+  setStatus("Kundenpaket exportiert.");
+}
+
+async function importCustomerPlan(event) {
+  const file = event.target.files?.[0];
+  event.target.value = "";
+  if (!file) return;
+  setStatus("Kundenplanung wird importiert...");
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await fetch("api/customer/import", { method: "POST", body: formData });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    setStatus(payload.detail || "Kundenplanung konnte nicht importiert werden.");
+    return;
+  }
+  project = payload.project;
+  normalizeProjectState();
+  transientManualWeeks = new Set();
+  hiddenTransientTrainerWeeks = new Set();
+  cutBlockId = null;
+  draggedBlockId = null;
+  currentPage = "plan";
+  activeTab = "week";
+  planInputsDirty = false;
+  currentWorkflowStep = "review";
+  workflowErrors = {};
+  render();
+  await loadProducts();
+  await loadTrainingContents();
+  setStatus("Kundenplanung importiert.");
 }
 
 async function downloadExport(format) {

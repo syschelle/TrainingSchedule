@@ -25,16 +25,17 @@ from .content_db import (
     update_training_content_markdown,
 )
 from .docx_content import DOCX_MIME, DocxContentError, export_training_content_docx, import_training_content_docx
-from .exporter import export_pdf, export_xlsx
+from .customer_exchange import apply_customer_return, build_customer_package
+from .exporter import export_pdf
 from .importer import build_project_from_uploads
-from .models import ExportRequest, ProductCreate, ProjectFile, TrainingContentCreate, TrainingContentMarkdownUpdate, TrainingContentUpdate, TrainingProject
+from .models import CustomerPlanningReturn, ExportRequest, ProductCreate, ProjectFile, TrainingContentCreate, TrainingContentMarkdownUpdate, TrainingContentUpdate, TrainingProject
 from .planner import plan_project, validate_project
 from .rules import format_time, minutes_between, parse_time, snap_minutes_to_quarter
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 STATIC_DIR = BASE_DIR / "static"
 MAX_UPLOAD_MB = int(os.environ.get("MAX_UPLOAD_MB", "25"))
-APP_VERSION = os.environ.get("APP_VERSION", "0.3.11")
+APP_VERSION = os.environ.get("APP_VERSION", "0.4.1")
 MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
 
 app = FastAPI(title="Schulungsplantool", version=APP_VERSION)
@@ -270,18 +271,73 @@ async def import_project_file(file: UploadFile = File(...)) -> dict:
     }
 
 
+def _customer_export_filename(project: TrainingProject, exported_at: datetime) -> str:
+    product = next((item for item in project.product_lines if item.id == project.product_id), None)
+    product_name = product.name if product else project.product_id or "produkt"
+    customer = project.customer_name if project.customer_data_required else "ohne-kunde"
+    location = project.location if project.customer_data_required else "ohne-standort"
+    timestamp = exported_at.strftime("%Y-%m-%d_%H%M")
+    return "_".join([
+        _safe_export_filename_part(customer, "kunde"),
+        _safe_export_filename_part(location, "standort"),
+        _safe_export_filename_part(product_name, "produkt"),
+        "kundenplanung",
+        timestamp,
+    ]) + ".zip"
+
+
+@app.post("/api/customer/export")
+def export_customer_package(project: TrainingProject) -> Response:
+    try:
+        data = build_customer_package(project)
+    except ValueError as error:
+        if str(error) == "no_training_blocks":
+            raise HTTPException(status_code=400, detail="Für den Kundenexport muss zuerst ein Schulungsplan erstellt werden.") from error
+        raise
+    filename = _customer_export_filename(project, datetime.now(timezone.utc))
+    return Response(
+        data,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.post("/api/customer/import")
+async def import_customer_package(file: UploadFile = File(...)) -> dict:
+    filename, data = await _read_upload(file)
+    if not filename.lower().endswith(".json"):
+        raise HTTPException(status_code=400, detail="Für die Kundenplanung ist die zurückgegebene JSON-Datei erforderlich.")
+    try:
+        raw = json.loads(data.decode("utf-8"))
+        payload = CustomerPlanningReturn.model_validate(raw)
+        project = apply_customer_return(payload)
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
+        message = str(error)
+        details = {
+            "signature_invalid": "Die Kundenplanung gehört nicht zu einem gültigen Schulungsplantool-Export.",
+            "duration_changed": "Die Blockdauer wurde in der Kundenplanung unzulässig verändert.",
+            "week_not_allowed": "Die Kundenplanung enthält eine nicht freigegebene Kalenderwoche.",
+            "trainer_not_allowed": "Die Kundenplanung enthält einen nicht freigegebenen Trainer.",
+            "friday_not_allowed": "Freitag ist für dieses Projekt nicht als Schulungstag freigegeben.",
+            "quarter_grid_required": "Die Kundenplanung enthält eine Zeit außerhalb des 15-Minuten-Rasters.",
+            "outside_working_hours": "Die Kundenplanung enthält einen Block außerhalb der Arbeitszeit.",
+            "overlap": "Die Kundenplanung enthält überlappende Blöcke.",
+            "block_not_allowed": "Die Kundenplanung enthält einen unbekannten oder nicht verschiebbaren Block.",
+            "duplicate_move": "Ein Schulungsblock wurde mehrfach in der Rückgabedatei angegeben.",
+        }
+        detail = details.get(message, "Die Kundenplanung ist ungültig oder nicht kompatibel.")
+        if message.startswith("new_validation_warning:"):
+            detail = "Die Kundenplanung verletzt Planungsregeln: " + message.split(":", 1)[1]
+        raise HTTPException(status_code=400, detail=detail) from error
+    return {"filename": filename, "project": project.model_dump(mode="json")}
+
+
 @app.post("/api/export")
 def export(request: ExportRequest) -> Response:
-    if request.format == "pdf":
-        return Response(
-            export_pdf(request.project),
-            media_type="application/pdf",
-            headers={"Content-Disposition": 'attachment; filename="schulungsplan.pdf"'},
-        )
     return Response(
-        export_xlsx(request.project),
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": 'attachment; filename="schulungsplan.xlsx"'},
+        export_pdf(request.project),
+        media_type="application/pdf",
+        headers={"Content-Disposition": 'attachment; filename="schulungsplan.pdf"'},
     )
 
 

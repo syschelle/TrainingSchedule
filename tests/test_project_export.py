@@ -1,13 +1,14 @@
 from datetime import datetime, timezone
 from io import BytesIO
-from xml.etree import ElementTree
 from zipfile import ZipFile
 
 from pypdf import PdfReader
 
-from app.server.exporter import _appointment_participant_count, _service_day_count, export_pdf, export_xlsx, planned_weeks
-from app.server.main import _project_export_filename
-from app.server.models import ParticipantGroup, ProductLine, ProjectFile, ScheduleBlock, TrainingProject, TrainingTopic
+from app.server.customer_exchange import apply_customer_return, build_customer_package
+from app.server.exporter import _appointment_participant_count, _service_day_count, export_pdf, planned_weeks
+from app.server.main import _customer_export_filename, _project_export_filename
+from app.server.models import CustomerPlanningReturn, ParticipantGroup, ProductLine, ProjectFile, ScheduleBlock, TrainingProject, TrainingTopic
+from app.server.rules import minutes_between
 
 
 def sample_project() -> TrainingProject:
@@ -102,6 +103,100 @@ def test_server_project_export_filename_uses_customer_location_product_date_time
     assert filename == "Musterklinik_Berlin_deepunity-pacs_2026-09-02_1423.json"
 
 
+
+
+def test_customer_package_contains_single_self_contained_html(monkeypatch):
+    monkeypatch.setenv("CUSTOMER_EXCHANGE_SECRET", "test-secret")
+    data = build_customer_package(sample_project())
+    with ZipFile(BytesIO(data)) as archive:
+        assert archive.namelist() == ["index.html"]
+        html = archive.read("index.html").decode("utf-8")
+        assert "data:image/png;base64," in html
+        assert "Änderungen herunterladen" in html
+        assert "window.SCHULUNGSPLAN_KUNDENPAKET = " in html
+        assert "draggable" in html
+        assert "<style>" in html
+        assert "assets/style.css" not in html
+        assert "assets/app.js" not in html
+        assert "data.js" not in html
+        assert "assets/dedalus.png" not in html
+        assert "resize" not in html.lower()
+        assert "Woche löschen" not in html
+
+
+def _package_payload_from_html(html: str) -> dict:
+    prefix = "window.SCHULUNGSPLAN_KUNDENPAKET = "
+    start = html.index(prefix) + len(prefix)
+    end = html.index(";</script>", start)
+    return __import__("json").loads(html[start:end])
+
+
+def _customer_return_from_package(data: bytes, moves: list[dict]) -> CustomerPlanningReturn:
+    with ZipFile(BytesIO(data)) as archive:
+        html = archive.read("index.html").decode("utf-8")
+    package = _package_payload_from_html(html)
+    return CustomerPlanningReturn.model_validate({
+        "format": "schulungsplantool-customer-return",
+        "schema_version": 1,
+        "returned_at": "2026-09-04T12:00:00Z",
+        "exchange": package["exchange"],
+        "moves": moves,
+    })
+
+
+
+
+def test_customer_single_html_escapes_script_breakout_from_project_text(monkeypatch):
+    monkeypatch.setenv("CUSTOMER_EXCHANGE_SECRET", "test-secret")
+    project = sample_project()
+    project.customer_name = "Kunde </script><script>alert(1)</script>"
+    data = build_customer_package(project)
+    with ZipFile(BytesIO(data)) as archive:
+        html = archive.read("index.html").decode("utf-8")
+    assert "Kunde </script><script>alert(1)</script>" not in html
+    assert r"Kunde \u003c/script\u003e\u003cscript\u003ealert(1)\u003c/script\u003e" in html
+    payload = _package_payload_from_html(html)
+    assert payload["view"]["customer"] == project.customer_name
+
+def test_customer_return_moves_training_block_and_preserves_duration(monkeypatch):
+    monkeypatch.setenv("CUSTOMER_EXCHANGE_SECRET", "test-secret")
+    project = sample_project()
+    package = build_customer_package(project)
+    payload = _customer_return_from_package(package, [{
+        "block_id": "block-a", "week": 1, "day": "Dienstag", "trainer": "Trainer A", "start": "12:00", "end": "13:30"
+    }])
+    updated = apply_customer_return(payload)
+    block = next(item for item in updated.blocks if item.id == "block-a")
+    assert (block.day, block.start, block.end) == ("Dienstag", "12:00", "13:30")
+    assert minutes_between(block.start, block.end) == 90
+
+
+def test_customer_return_rejects_duration_changes(monkeypatch):
+    import pytest
+    monkeypatch.setenv("CUSTOMER_EXCHANGE_SECRET", "test-secret")
+    package = build_customer_package(sample_project())
+    payload = _customer_return_from_package(package, [{
+        "block_id": "block-a", "week": 1, "day": "Dienstag", "trainer": "Trainer A", "start": "12:00", "end": "14:00"
+    }])
+    with pytest.raises(ValueError, match="duration_changed"):
+        apply_customer_return(payload)
+
+
+def test_customer_return_rejects_tampered_signed_baseline(monkeypatch):
+    import pytest
+    monkeypatch.setenv("CUSTOMER_EXCHANGE_SECRET", "test-secret")
+    package = build_customer_package(sample_project())
+    payload = _customer_return_from_package(package, [])
+    payload.exchange.baseline.customer_name = "Manipuliert"
+    with pytest.raises(ValueError, match="signature_invalid"):
+        apply_customer_return(payload)
+
+
+def test_customer_zip_filename_uses_project_metadata():
+    filename = _customer_export_filename(sample_project(), datetime(2026, 9, 4, 12, 34, tzinfo=timezone.utc))
+    assert filename == "Musterklinik_Berlin_deepunity-pacs_kundenplanung_2026-09-04_1234.zip"
+
+
 def test_pdf_calendar_hides_participant_group_name_but_keeps_generated_split_label():
     project = sample_project()
     project.product_lines = [
@@ -121,52 +216,6 @@ def test_pdf_calendar_hides_participant_group_name_but_keeps_generated_split_lab
     assert "10:00-11:30 · 1,5 h" in calendar_text
 
 
-
-def _xlsx_sheet_names(data: bytes) -> list[str]:
-    with ZipFile(BytesIO(data)) as archive:
-        root = ElementTree.fromstring(archive.read("xl/workbook.xml"))
-    namespace = {"main": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
-    return [sheet.attrib["name"] for sheet in root.findall("main:sheets/main:sheet", namespace)]
-
-
-def _xlsx_shared_strings(data: bytes) -> str:
-    with ZipFile(BytesIO(data)) as archive:
-        return archive.read("xl/sharedStrings.xml").decode("utf-8")
-
-
-def test_xlsx_mirrors_pdf_structure_with_overview_and_week_sheets():
-    project = sample_project()
-    data = export_xlsx(project)
-    assert _xlsx_sheet_names(data) == ["Übersicht", "Woche 1"]
-    shared = _xlsx_shared_strings(data)
-    assert "Planübersicht" in shared
-    assert "Musterklinik" in shared
-    assert "Dienstleistungstage" in shared
-    assert "Trainer A" in shared
-    assert "Trainer B" in shared
-    assert "Montag" in shared
-    assert "Thema A" in shared
-    assert "Thema B" in shared
-
-
-def test_xlsx_creates_one_worksheet_per_planned_week_only():
-    project = sample_project()
-    project.blocks.append(ScheduleBlock(
-        id="block-c",
-        type="training",
-        week=2,
-        day="Dienstag",
-        title="Thema C",
-        start="09:00",
-        end="10:00",
-        trainer="Trainer A",
-        background_color="#fef3c7",
-    ))
-    data = export_xlsx(project)
-    assert _xlsx_sheet_names(data) == ["Übersicht", "Woche 1", "Woche 2"]
-    shared = _xlsx_shared_strings(data)
-    assert "Woche 2" in shared
-    assert "Thema C" in shared
 
 
 def test_pdf_omits_empty_trainer_week_calendar_page():

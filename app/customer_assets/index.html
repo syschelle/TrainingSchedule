@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Schulungsplan zur Abstimmung</title>
+  <style>{{INLINE_STYLE}}</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="{{DEDALUS_DATA_URI}}" alt="Dedalus">
+      <div>
+        <h1>Schulungsplan zur Abstimmung</h1>
+        <p id="project-meta"></p>
+      </div>
+    </div>
+    <div class="actions">
+      <span id="change-count" class="badge">0 Änderungen</span>
+      <button id="reset" type="button" class="button secondary">Zurücksetzen</button>
+      <button id="download" type="button" class="button primary">Änderungen herunterladen</button>
+    </div>
+  </header>
+  <main>
+    <div id="status" class="status">Schulungsblöcke können per Drag & Drop verschoben werden.</div>
+    <div id="calendar"></div>
+  </main>
+  <footer>Offline-Kundenplanung · Blockdauer und Wochenstruktur sind geschützt.</footer>
+  <script>{{INLINE_DATA}}</script>
+  <script>{{INLINE_APP_JS}}</script>
+</body>
+</html>

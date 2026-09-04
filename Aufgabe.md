@@ -1513,3 +1513,28 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Vorschau und PDF verwenden dieselbe kompakte Tabellenbreite.
 - Keine PostgreSQL-Migration erforderlich.
 - Version auf `v0.3.11` erhoeht.
+
+## Erweiterung v0.4.0 - Offline-Kundenplanung
+
+- Versionssprung auf `v0.4.0`.
+- Der Schulungsplan kann als Offline-Kundenpaket (ZIP) exportiert werden.
+- Das ZIP enthaelt eine ohne Server/Internet lauffaehige `index.html` inklusive lokaler Assets und Dedalus-Logo.
+- Kunden duerfen nur vorhandene Schulungsbloecke per Drag-and-drop in bereits vorhandenen Kalenderwochen verschieben.
+- Keine Wochenanlage/-loeschung, kein Block-Loeschen/Duplizieren/Bearbeiten und kein Resize.
+- Die Blockdauer und fachlichen Blockdaten bleiben unveraendert; die neue Position liegt im 15-Minuten-Raster.
+- Die Kundenseite erzeugt eine Rueckgabe-JSON, die im Schulungsplantool ueber `Kundenplanung importieren` wieder eingelesen werden kann.
+- Die Ausgangsplanung wird im Kundenpaket signiert. Der Rueckimport akzeptiert nur erlaubte Positionsaenderungen und prueft manipulierte bzw. inkompatible Dateien.
+- Der XLSX-Export entfaellt vollstaendig aus Benutzeroberflaeche, Export-API, Exporter-Code und Runtime-Abhaengigkeiten. Excel-Dateien duerfen weiterhin als Quelldaten importiert werden.
+- Keine PostgreSQL-Migration erforderlich.
+
+## Erweiterung v0.4.1 - Ein-Datei-Kundenpaket im ZIP
+
+- Der Kundenexport bleibt aus E-Mail-Kompatibilitaetsgruenden ein ZIP.
+- Innerhalb des ZIP darf nur noch eine einzige Datei `index.html` enthalten sein.
+- CSS, JavaScript, signierte Ausgangsplanung und Dedalus-Logo werden vollstaendig inline in diese HTML-Datei eingebettet.
+- Die Kundenseite bleibt ohne Server und ohne Internetverbindung nutzbar.
+- `Aenderungen herunterladen` erzeugt weiterhin eine Rueckgabe-JSON fuer `Kundenplanung importieren`.
+- Projektdaten muessen beim Einbetten in `<script>` gegen Script-Tag-Abbruch escaped werden.
+- Keine PostgreSQL-Migration erforderlich.
+- Version auf `v0.4.1` erhoeht.
+
