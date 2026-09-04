@@ -472,25 +472,26 @@ def _draw_training_schedule_pages(pdf: canvas.Canvas, project: TrainingProject, 
 
         table_top = page_height - 96
         columns = [
-            ("Datum", 100),
-            ("Anfang", 52),
-            ("Ende", 52),
-            ("Dauer", 58),
-            ("Schulungsinhalt", 246),
-            ("Gruppe", 80),
-            ("Teilnehmer", 64),
+            ("Datum", 92),
+            ("Anfang", 48),
+            ("Ende", 48),
+            ("Dauer", 54),
+            ("Schulungsinhalt", 210),
+            ("Gruppe", 76),
+            ("Teilnehmer", 58),
         ]
         available = page_width - 2 * margin
         widths = [width for _, width in columns]
-        scale = available / sum(widths)
+        scale = min(1.0, available / sum(widths))
         widths = [width * scale for width in widths]
+        table_width = sum(widths)
         header_height = 24
         row_height = 22
         trainer_height = 20
 
         pdf.setFillColor(colors.HexColor("#f3f6fb"))
         pdf.setStrokeColor(colors.HexColor("#dbe3ee"))
-        pdf.rect(margin, table_top - header_height, available, header_height, fill=1, stroke=1)
+        pdf.rect(margin, table_top - header_height, table_width, header_height, fill=1, stroke=1)
         x = margin
         pdf.setFillColor(colors.HexColor("#64748b"))
         pdf.setFont("Helvetica-Bold", 6.8)
@@ -510,7 +511,7 @@ def _draw_training_schedule_pages(pdf: canvas.Canvas, project: TrainingProject, 
                     y -= trainer_height
                     pdf.setFillColor(colors.HexColor("#eaf0fb"))
                     pdf.setStrokeColor(colors.HexColor("#dbe3ee"))
-                    pdf.rect(margin, y, available, trainer_height, fill=1, stroke=1)
+                    pdf.rect(margin, y, table_width, trainer_height, fill=1, stroke=1)
                     pdf.setFillColor(colors.HexColor("#0f172a"))
                     pdf.setFont("Helvetica-Bold", 7.4)
                     trainer_name = str(value or "Nicht zugewiesen")
@@ -521,10 +522,10 @@ def _draw_training_schedule_pages(pdf: canvas.Canvas, project: TrainingProject, 
                 y -= row_height
                 if row_index % 2 == 1:
                     pdf.setFillColor(colors.HexColor("#fbfcfe"))
-                    pdf.rect(margin, y, available, row_height, fill=1, stroke=0)
+                    pdf.rect(margin, y, table_width, row_height, fill=1, stroke=0)
                 row_index += 1
                 pdf.setStrokeColor(colors.HexColor("#e2e8f0"))
-                pdf.line(margin, y, margin + available, y)
+                pdf.line(margin, y, margin + table_width, y)
 
                 title, group_label = _calendar_display_parts(project, block)
                 day_index = {day: index for index, day in enumerate(DISPLAY_WEEKDAYS)}.get(block.day, 0)

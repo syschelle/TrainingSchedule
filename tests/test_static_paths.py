@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.3.10"' in html
+    assert 'src="calendar.js?v=0.3.11"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -566,3 +566,16 @@ def test_v0310_training_topic_time_columns_follow_date() -> None:
     row_labels = [f'data-label="{label}"' for label in expected]
     row_positions = [row.index(label) for label in row_labels]
     assert row_positions == sorted(row_positions)
+
+
+def test_v0311_training_topics_use_compact_left_aligned_columns() -> None:
+    css = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
+    exporter = (STATIC_DIR.parents[1] / "app" / "server" / "exporter.py").read_text(encoding="utf-8")
+    assert "grid-template-columns: 118px 56px 56px 60px minmax(220px, 360px) 82px 72px;" in css
+    assert "justify-content: start;" in css
+    assert "grid-template-columns: 108px 52px 52px 58px minmax(205px, 300px) 76px 64px;" in css
+    assert '("Schulungsinhalt", 210)' in exporter
+    assert '("Gruppe", 76)' in exporter
+    assert '("Teilnehmer", 58)' in exporter
+    assert "scale = min(1.0, available / sum(widths))" in exporter
+    assert "table_width = sum(widths)" in exporter

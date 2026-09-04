@@ -2643,13 +2643,14 @@ body.modal-open {
 .topic-schedule-head,
 .topic-schedule-row {
   display: grid;
-  grid-template-columns: minmax(118px, 0.9fr) minmax(62px, 0.5fr) minmax(62px, 0.5fr) minmax(70px, 0.55fr) minmax(220px, 1.8fr) minmax(84px, 0.7fr) minmax(78px, 0.62fr);
-  gap: 10px;
+  grid-template-columns: 118px 56px 56px 60px minmax(220px, 360px) 82px 72px;
+  gap: 8px;
   align-items: center;
+  justify-content: start;
 }
 
 .topic-schedule-head {
-  padding: 9px 12px;
+  padding: 7px 10px;
   background: #f3f6fb;
   border-bottom: 1px solid var(--line);
   color: var(--muted);
@@ -2658,8 +2659,8 @@ body.modal-open {
 }
 
 .topic-schedule-row {
-  min-height: 42px;
-  padding: 8px 12px;
+  min-height: 36px;
+  padding: 6px 10px;
   border-bottom: 1px solid rgba(220, 227, 236, 0.78);
 }
 
@@ -2740,8 +2741,9 @@ body.modal-open {
 
 .topic-schedule-preview .topic-schedule-head,
 .topic-schedule-preview .topic-schedule-row {
-  grid-template-columns: 112px 60px 60px 68px minmax(235px, 1.8fr) 82px 72px;
-  gap: 8px;
+  grid-template-columns: 108px 52px 52px 58px minmax(205px, 300px) 76px 64px;
+  gap: 6px;
+  justify-content: start;
 }
 
 .topic-schedule-preview .topic-schedule-row {

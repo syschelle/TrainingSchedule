@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.3.11 - 2026-09-04
+
+### Schulungsthemen kompakter dargestellt
+
+- Die Terminliste nutzt eine kompakte, linksbuendige Spaltenbreite.
+- `Gruppe` und `Teilnehmer` stehen dadurch deutlich naeher am Schulungsinhalt und nicht mehr am rechten Rand der Ansicht.
+- Die Reihenfolge `Datum | Anfang | Ende | Dauer | Schulungsinhalt | Gruppe | Teilnehmer` bleibt unveraendert.
+- Vorschau und PDF wurden auf dieselbe kompakte Darstellung angepasst.
+- Keine PostgreSQL-Migration erforderlich.
+
+
 ## v0.3.10 - 2026-09-04
 
 ### Zeitspalten in Schulungsthemen neu angeordnet

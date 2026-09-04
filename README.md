@@ -1,6 +1,15 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.3.10**
+Aktuelle Version: **v0.3.11**
+
+## Aenderungen v0.3.11
+
+- Die Terminliste unter `Schulungsplan -> Schulungsthemen` ist kompakter und linksbuendig aufgebaut.
+- Die bestehende Reihenfolge `Datum | Anfang | Ende | Dauer | Schulungsinhalt | Gruppe | Teilnehmer` bleibt erhalten.
+- Die Spalte `Schulungsinhalt` waechst nicht mehr ueber die gesamte Restbreite; dadurch stehen `Gruppe` und `Teilnehmer` direkt neben dem Schulungsinhalt statt am rechten Fensterrand.
+- Vorschau und PDF verwenden dieselbe kompaktere Tabellenbreite.
+- Keine PostgreSQL-Migration erforderlich.
+
 
 ## Aenderungen v0.3.10
 

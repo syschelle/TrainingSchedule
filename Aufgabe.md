@@ -1502,3 +1502,14 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Vorschau und PDF muessen dieselbe Spaltenreihenfolge verwenden.
 - Keine PostgreSQL-Migration erforderlich.
 - Version auf `v0.3.10` erhoeht.
+
+
+## Erweiterung v0.3.11 - Kompakte Schulungsthemen-Terminliste
+
+- Die Spaltenreihenfolge bleibt `Datum | Anfang | Ende | Dauer | Schulungsinhalt | Gruppe | Teilnehmer`.
+- Die Spalte `Schulungsinhalt` darf die restliche Seitenbreite nicht mehr flexibel auffuellen.
+- `Gruppe` und `Teilnehmer` sollen direkt im Anschluss an den Schulungsinhalt stehen und dadurch deutlich weiter links erscheinen.
+- Die Terminzeilen werden vertikal kompakter dargestellt.
+- Vorschau und PDF verwenden dieselbe kompakte Tabellenbreite.
+- Keine PostgreSQL-Migration erforderlich.
+- Version auf `v0.3.11` erhoeht.
