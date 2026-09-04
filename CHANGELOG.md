@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.3.6 - 2026-09-04
+
+### Daueranzeige in der Schulungsuebersicht vereinfacht
+
+- Schulungsthemen zeigen die projektspezifische Dauer nur noch einmal als Minutenwert, z. B. `DU Diagnost Basic 90 min`.
+- Die doppelte Darstellung `90 / 90 min` entfaellt.
+- Die zwischenzeitliche Stundenanzeige in der Web-Uebersicht wurde wieder auf Minuten umgestellt.
+- PDF- und XLSX-Uebersicht verwenden dieselbe einfache Minutenangabe.
+- Keine PostgreSQL-Migration erforderlich.
+
+## v0.3.5 - 2026-09-04
+
+### Schulungsplan-Uebersicht und Terminuebersicht verbessert
+
+- Doppelte Zeitangaben wie `90 / 90 min` aus der Schulungsthemenliste entfernt; die projektspezifische Dauer wird kompakt einmal in Stunden angezeigt.
+- Produktzusammenfassung zeigt nur noch das aktuell geplante Produkt und nur Teilnehmergruppen mit einer Teilnehmerzahl groesser als 0.
+- Neue Schulungsplan-Seite `Schulungsthemen` direkt nach `Uebersicht`.
+- Pro Schulungsinhalt werden Anzahl der aktuellen Kalendertermine und der Zeitraum vom ersten Start bis zum letzten Ende angezeigt.
+- Termin- und Zeitraumdaten werden aus den aktuellen Kalenderbloecken berechnet und aktualisieren sich nach Drag-and-drop, Resize, Loeschen oder Bearbeiten automatisch.
+- Keine PostgreSQL-Migration erforderlich.
+
 ## v0.3.4 - 2026-09-03
 
 ### XLSX-Export an PDF-Kalenderstruktur angepasst

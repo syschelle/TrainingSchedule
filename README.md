@@ -1,6 +1,20 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.3.4**
+Aktuelle Version: **v0.3.6**
+
+## Aenderungen v0.3.6
+
+- Schulungszeiten in der Schulungsplan-Uebersicht werden als einfache Minutenangabe dargestellt, z. B. `DU Diagnost Basic 90 min`.
+- Die doppelte Schreibweise `90 / 90 min` sowie die Umrechnung auf Stunden in dieser Themenliste entfallen.
+- PDF- und XLSX-Uebersicht verwenden fuer die Schulungsthemen dieselbe einfache Minutenangabe.
+- Keine PostgreSQL-Migration erforderlich.
+
+## Aenderungen v0.3.5
+
+- Schulungsplan-Uebersicht kompakter: Schulungszeiten werden nicht mehr als `90 / 90 min` doppelt dargestellt, sondern einmal als Stundenwert.
+- In der Uebersicht wird nur noch das aktuell geplante Produkt mit dessen belegten Teilnehmergruppen angezeigt.
+- Neue Seite `Schulungsthemen` direkt nach `Uebersicht`. Sie zeigt pro Schulungsinhalt die Anzahl der Termine und den aktuell geplanten Zeitraum vom ersten Start bis zum letzten Ende.
+- Die Schulungsthemen-Seite wird direkt aus den aktuellen Kalenderbloecken berechnet und passt sich nach Verschieben, Resize, Loeschen oder Bearbeiten von Kalenderkacheln automatisch an.
 
 ## Aenderungen v0.3.4
 
@@ -318,12 +332,12 @@ curl http://127.0.0.1:18083/api/health
 Erwartet:
 
 ```json
-{"status":"ok","version":"0.3.4"}
+{"status":"ok","version":"0.3.5"}
 ```
 
 ## GitHub Container Registry
 
-Bei einem Release-Tag wie `v0.3.4` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
+Bei einem Release-Tag wie `v0.3.5` baut `.github/workflows/release-image.yml` nach erfolgreichem Test automatisch:
 
 - `linux/amd64`
 - `linux/arm64`
@@ -331,7 +345,7 @@ Bei einem Release-Tag wie `v0.3.4` baut `.github/workflows/release-image.yml` na
 und veroeffentlicht:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.3.4
+ghcr.io/syschelle/schulungsplantool:0.3.5
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 
@@ -353,7 +367,7 @@ GitHub Actions prueft bei Pushes und Pull Requests automatisch:
 - Docker-Compose-Konfiguration
 - Docker-Image-Build
 
-Bei einem Release-Tag wie `v0.3.4` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
+Bei einem Release-Tag wie `v0.3.5` baut der Workflow `.github/workflows/release-image.yml` zusaetzlich ein Multi-Arch-Image fuer:
 
 - `linux/amd64` (x86_64)
 - `linux/arm64` (z. B. Raspberry Pi 5)
@@ -361,7 +375,7 @@ Bei einem Release-Tag wie `v0.3.4` baut der Workflow `.github/workflows/release-
 und veroeffentlicht es als:
 
 ```text
-ghcr.io/syschelle/schulungsplantool:0.3.4
+ghcr.io/syschelle/schulungsplantool:0.3.5
 ghcr.io/syschelle/schulungsplantool:latest
 ```
 

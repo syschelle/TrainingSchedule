@@ -1438,3 +1438,22 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Leere Wochen erzeugen kein Arbeitsblatt.
 - Keine PostgreSQL-Migration erforderlich.
 
+
+
+## Erweiterung v0.3.5 - Kompakte Uebersicht und dynamische Schulungsthemen-Termine
+
+- In der Schulungsplan-Uebersicht wird pro Schulungsinhalt nur noch die projektspezifische Dauer einmal angezeigt.
+- Die Produktzusammenfassung zeigt ausschliesslich das aktuell gewaehlte Produkt. Teilnehmergruppen ohne Teilnehmer werden in der Uebersicht nicht dargestellt.
+- Direkt nach `Uebersicht` steht die neue Seite `Schulungsthemen`.
+- Diese Seite zeigt je Schulungsinhalt die Zahl der aktuell geplanten Termine sowie den Zeitraum vom Start des ersten bis zum Ende des letzten zugeordneten Kalenderblocks.
+- Datum und Uhrzeit werden aus `week`, `day`, `start` und `end` der aktuellen Kalenderbloecke berechnet. Dadurch werden Drag-and-drop-, Resize-, Blockeditor- und Loesch-Aenderungen bei der naechsten Darstellung automatisch uebernommen.
+
+
+## Erweiterung v0.3.6 - Einfache Minutenangabe in der Schulungsuebersicht
+
+- In der Schulungsplan-Uebersicht wird die Dauer eines Schulungsinhalts genau einmal in Minuten angezeigt, z. B. `DU Diagnost Basic 90 min`.
+- Doppelte Angaben wie `90 / 90 min` werden nicht verwendet.
+- In dieser Liste erfolgt keine Umrechnung auf Stunden.
+- PDF- und XLSX-Uebersichten verwenden dieselbe einfache Minutenangabe.
+- Keine PostgreSQL-Migration erforderlich.
+- Version auf `v0.3.6` erhoeht.

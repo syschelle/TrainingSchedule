@@ -6,9 +6,9 @@
   <meta name="referrer" content="no-referrer">
   <meta name="robots" content="noindex, nofollow">
   <title>Schulungsplantool</title>
-  <link rel="stylesheet" href="styles.css?v=0.3.4">
-  <script defer src="calendar.js?v=0.3.4"></script>
-  <script defer src="app.js?v=0.3.4"></script>
+  <link rel="stylesheet" href="styles.css?v=0.3.6">
+  <script defer src="calendar.js?v=0.3.6"></script>
+  <script defer src="app.js?v=0.3.6"></script>
 </head>
 <body>
   <header class="topbar">
@@ -27,7 +27,7 @@
       </div>
       <div class="topbar-actions">
         <span id="planSyncStatus" class="plan-sync-status" hidden></span>
-        <span class="version">v0.3.4</span>
+        <span class="version">v0.3.6</span>
       </div>
     </div>
     <nav id="workflowProgress" class="workflow-progress" aria-label="Fortschritt der Planung"></nav>
@@ -185,11 +185,13 @@
           </div>
           <div class="button-row">
             <button type="button" data-tab="overview" class="button button-secondary active">Übersicht</button>
+            <button type="button" data-tab="topics" class="button button-secondary">Schulungsthemen</button>
             <button type="button" data-tab="week" class="button button-secondary">Woche</button>
             <button type="button" data-tab="preview" class="button button-secondary">Vorschau</button>
           </div>
           <div id="status-line" class="status">Bereit.</div>
           <div id="tab-overview" class="tab-panel active"></div>
+          <div id="tab-topics" class="tab-panel"></div>
           <div id="tab-week" class="tab-panel"></div>
           <div id="tab-preview" class="tab-panel"></div>
         </aside>
@@ -294,7 +296,7 @@
   </div>
 
   <footer>
-    <span>Schulungsplantool v0.3.4</span>
+    <span>Schulungsplantool v0.3.6</span>
   </footer>
 </body>
 </html>

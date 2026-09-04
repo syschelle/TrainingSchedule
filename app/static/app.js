@@ -1496,6 +1496,7 @@ function renderTabs() {
   document.querySelectorAll("[data-tab]").forEach((button) => button.classList.toggle("active", button.dataset.tab === activeTab));
   document.querySelectorAll(".tab-panel").forEach((panel) => panel.classList.toggle("active", panel.id === `tab-${activeTab}`));
   renderOverview();
+  renderTopicSchedule();
   renderWeek();
   renderPreview();
 }
@@ -1556,21 +1557,84 @@ function formatServiceDays(count) {
 }
 
 function topicSummary() {
-  if (!project.topics.length) return "Noch keine Themen.";
-  return project.topics.map((item) => {
-    const planned = project.blocks.some((block) => (block.source_topic_id || block.topic_id) === item.id) ? item.duration_minutes : 0;
-    return `<div class="summary-row"><span>${escapeHtml(item.title)}</span><b>${planned} / ${item.duration_minutes} min</b></div>`;
-  }).join("");
+  const productId = currentProduct().id;
+  const topics = (project.topics || []).filter((item) => !item.product_id || item.product_id === productId);
+  if (!topics.length) return `<div class="empty-compact">Keine Schulungen ausgewählt.</div>`;
+  return `<div class="topic-summary-compact">${topics.map((item) => `
+    <div class="topic-summary-item">
+      <span>${escapeHtml(item.title)}</span>
+      <b>${Number(item.duration_minutes || 0)} min</b>
+    </div>`).join("")}</div>`;
 }
 
 function productSummary() {
-  return (project.product_lines || []).map((product) => `
+  const product = currentProduct();
+  if (!product) return "";
+  const participantGroups = (product.participant_groups || []).filter((group) => Number(group.participant_count || 0) > 0);
+  return `
     <section class="product-summary-card">
       <strong>${escapeHtml(product.name)}</strong>
-      <span>${escapeHtml(product.description || "")}</span>
-      <div>${product.participant_groups.map((group) => `<b>${escapeHtml(group.name)}: ${Number(group.participant_count)}</b>`).join("")}</div>
-    </section>
-  `).join("");
+      ${product.description ? `<span>${escapeHtml(product.description)}</span>` : ""}
+      ${participantGroups.length ? `<div>${participantGroups.map((group) => `<b>${escapeHtml(group.name)}: ${Number(group.participant_count)}</b>`).join("")}</div>` : ""}
+    </section>`;
+}
+
+function renderTopicSchedule() {
+  const target = $("#tab-topics");
+  if (!target) return;
+  const productId = currentProduct().id;
+  const topics = (project.topics || []).filter((item) => !item.product_id || item.product_id === productId);
+  if (!topics.length) {
+    target.innerHTML = `<div class="calendar-empty-state"><strong>Keine Schulungsthemen ausgewählt.</strong></div>`;
+    return;
+  }
+
+  target.innerHTML = `
+    <div class="topic-schedule-page">
+      <div class="topic-schedule-head">
+        <span>Schulungsinhalt</span>
+        <span>Termine</span>
+        <span>Zeitraum</span>
+      </div>
+      <div class="topic-schedule-list">
+        ${topics.map((topic) => {
+          const blocks = topicScheduleBlocks(topic.id);
+          return `<article class="topic-schedule-row">
+            <strong>${escapeHtml(topic.title)}</strong>
+            <span class="topic-schedule-count">${blocks.length ? `${blocks.length} ${blocks.length === 1 ? "Termin" : "Termine"}` : "—"}</span>
+            <span class="topic-schedule-period ${blocks.length ? "" : "is-empty"}">${escapeHtml(topicSchedulePeriod(blocks))}</span>
+          </article>`;
+        }).join("")}
+      </div>
+    </div>`;
+}
+
+function topicScheduleBlocks(topicId) {
+  return (project.blocks || [])
+    .filter((block) => block.type === "training" && (block.source_topic_id || block.topic_id) === topicId)
+    .slice()
+    .sort(compareScheduleBlocks);
+}
+
+function compareScheduleBlocks(left, right) {
+  const leftDate = TrainingCalendar.dateForCalendarDay(project.start_date, Number(left.week || 1), left.day);
+  const rightDate = TrainingCalendar.dateForCalendarDay(project.start_date, Number(right.week || 1), right.day);
+  const leftKey = leftDate ? leftDate.getTime() : Number(left.week || 1) * 7 * 86400000 + days.indexOf(left.day) * 86400000;
+  const rightKey = rightDate ? rightDate.getTime() : Number(right.week || 1) * 7 * 86400000 + days.indexOf(right.day) * 86400000;
+  return (leftKey + toMinutes(left.start) * 60000) - (rightKey + toMinutes(right.start) * 60000);
+}
+
+function topicSchedulePeriod(blocks) {
+  if (!blocks.length) return "Nicht eingeplant";
+  const first = blocks[0];
+  const last = blocks[blocks.length - 1];
+  const firstDate = TrainingCalendar.dateForCalendarDay(project.start_date, Number(first.week || 1), first.day);
+  const lastDate = TrainingCalendar.dateForCalendarDay(project.start_date, Number(last.week || 1), last.day);
+  const firstLabel = TrainingCalendar.formatGermanDate(firstDate);
+  const lastLabel = TrainingCalendar.formatGermanDate(lastDate);
+  if (firstLabel && firstLabel === lastLabel) return `${firstLabel} · ${first.start}–${last.end}`;
+  if (firstLabel && lastLabel) return `${firstLabel} ${first.start} – ${lastLabel} ${last.end}`;
+  return `Woche ${first.week}, ${first.day} ${first.start} – Woche ${last.week}, ${last.day} ${last.end}`;
 }
 
 function calendarTrainers() {

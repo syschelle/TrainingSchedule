@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.3.4"' in html
+    assert 'src="calendar.js?v=0.3.6"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -438,3 +438,44 @@ def test_imported_planning_status_does_not_show_stored_app_version() -> None:
     assert 'setStatus("Planungsstand geladen.");' in javascript
     assert 'Planungsstand geladen (${payload.app_version' not in javascript
     assert 'unbekannte Version' not in javascript
+
+
+def test_v035_plan_overview_is_compact_and_shows_only_active_product() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    topic_summary = javascript.split("function topicSummary()", 1)[1].split("function productSummary()", 1)[0]
+    product_summary = javascript.split("function productSummary()", 1)[1].split("function renderTopicSchedule()", 1)[0]
+    assert "planned} / ${item.duration_minutes}" not in topic_summary
+    assert "formatHours(Number(item.duration_minutes || 0))" not in topic_summary
+    assert "${Number(item.duration_minutes || 0)} min" in topic_summary
+    assert 'class="topic-summary-compact"' in topic_summary
+    assert "const product = currentProduct();" in product_summary
+    assert "(project.product_lines || []).map" not in product_summary
+    assert "participant_count || 0) > 0" in product_summary
+
+
+def test_v035_topic_schedule_is_a_separate_live_tab_after_overview() -> None:
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    css = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
+    overview_pos = html.index('data-tab="overview"')
+    topics_pos = html.index('data-tab="topics"')
+    week_pos = html.index('data-tab="week"')
+    assert overview_pos < topics_pos < week_pos
+    assert 'id="tab-topics"' in html
+    assert "renderTopicSchedule();" in javascript
+    assert "function topicScheduleBlocks(topicId)" in javascript
+    assert 'block.type === "training" && (block.source_topic_id || block.topic_id) === topicId' in javascript
+    assert "TrainingCalendar.dateForCalendarDay(project.start_date" in javascript
+    assert 'blocks.length === 1 ? "Termin" : "Termine"' in javascript
+    assert 'return `${firstLabel} · ${first.start}–${last.end}`;' in javascript
+    assert ".topic-schedule-row" in css
+
+
+def test_v036_overview_training_durations_are_single_minute_values() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    exporter = (STATIC_DIR.parents[1] / "app" / "server" / "exporter.py").read_text(encoding="utf-8")
+    topic_summary = javascript.split("function topicSummary()", 1)[1].split("function productSummary()", 1)[0]
+    assert "${Number(item.duration_minutes || 0)} min" in topic_summary
+    assert "formatHours(Number(item.duration_minutes || 0))" not in topic_summary
+    assert 'f"{topic.duration_minutes} min"' in exporter
+    assert 'planned_minutes} / {topic.duration_minutes} min' not in exporter

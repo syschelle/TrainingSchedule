@@ -243,12 +243,10 @@ def _draw_overview_page(pdf: canvas.Canvas, project: TrainingProject, page_width
             pdf.setFillColor(colors.HexColor("#64748b"))
             pdf.drawString(margin, y, f"... {remaining} weitere Themen")
             break
-        planned = any((block.source_topic_id or block.topic_id) == topic.id for block in project.blocks)
-        planned_minutes = topic.duration_minutes if planned else 0
         pdf.setFillColor(colors.HexColor("#0f172a"))
         pdf.drawString(margin, y, topic.title)
         pdf.setFillColor(colors.HexColor("#475569"))
-        pdf.drawRightString(page_width - margin, y, f"{planned_minutes} / {topic.duration_minutes} min")
+        pdf.drawRightString(page_width - margin, y, f"{topic.duration_minutes} min")
         y -= 13
 
     pdf.setFillColor(colors.HexColor("#64748b"))
@@ -562,10 +560,8 @@ def _xlsx_write_overview(workbook: xlsxwriter.Workbook, project: TrainingProject
     sheet.merge_range(row, 0, row, 5, "Schulungsthemen", section_fmt)
     row += 2
     for topic in project.topics:
-        planned = any((block.source_topic_id or block.topic_id) == topic.id for block in project.blocks)
-        planned_minutes = topic.duration_minutes if planned else 0
         sheet.merge_range(row, 0, row, 4, topic.title, topic_fmt)
-        sheet.write(row, 5, f"{planned_minutes} / {topic.duration_minutes} min", topic_minutes_fmt)
+        sheet.write(row, 5, f"{topic.duration_minutes} min", topic_minutes_fmt)
         row += 1
 
     row += 2
