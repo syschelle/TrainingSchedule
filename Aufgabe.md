@@ -1493,3 +1493,12 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Alle Werte werden weiterhin aus den aktuellen Kalenderbloecken und Projektdaten berechnet und nicht separat gespeichert.
 - Keine PostgreSQL-Migration erforderlich.
 - Version auf `v0.3.9` erhoeht.
+
+
+## Erweiterung v0.3.10 - Zeitspalten in Schulungsthemen
+
+- In `Schulungsplan -> Schulungsthemen` stehen `Anfang`, `Ende` und `Dauer` direkt nach Wochentag/Datum.
+- Reihenfolge: `Datum | Anfang | Ende | Dauer | Schulungsinhalt | Gruppe | Teilnehmer`.
+- Vorschau und PDF muessen dieselbe Spaltenreihenfolge verwenden.
+- Keine PostgreSQL-Migration erforderlich.
+- Version auf `v0.3.10` erhoeht.

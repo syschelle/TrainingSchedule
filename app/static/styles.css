@@ -2643,7 +2643,7 @@ body.modal-open {
 .topic-schedule-head,
 .topic-schedule-row {
   display: grid;
-  grid-template-columns: minmax(118px, 0.9fr) minmax(220px, 1.8fr) minmax(84px, 0.7fr) minmax(78px, 0.62fr) minmax(62px, 0.5fr) minmax(62px, 0.5fr) minmax(70px, 0.55fr);
+  grid-template-columns: minmax(118px, 0.9fr) minmax(62px, 0.5fr) minmax(62px, 0.5fr) minmax(70px, 0.55fr) minmax(220px, 1.8fr) minmax(84px, 0.7fr) minmax(78px, 0.62fr);
   gap: 10px;
   align-items: center;
 }
@@ -2740,7 +2740,7 @@ body.modal-open {
 
 .topic-schedule-preview .topic-schedule-head,
 .topic-schedule-preview .topic-schedule-row {
-  grid-template-columns: 112px minmax(235px, 1.8fr) 82px 72px 60px 60px 68px;
+  grid-template-columns: 112px 60px 60px 68px minmax(235px, 1.8fr) 82px 72px;
   gap: 8px;
 }
 

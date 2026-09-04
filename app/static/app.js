@@ -1726,7 +1726,7 @@ function appointmentParticipantCount(block) {
 
 function topicScheduleHeaderHtml() {
   return `<div class="topic-schedule-head">
-    <span>Datum</span><span>Schulungsinhalt</span><span>Gruppe</span><span>Teilnehmer</span><span>Anfang</span><span>Ende</span><span>Dauer</span>
+    <span>Datum</span><span>Anfang</span><span>Ende</span><span>Dauer</span><span>Schulungsinhalt</span><span>Gruppe</span><span>Teilnehmer</span>
   </div>`;
 }
 
@@ -1737,12 +1737,12 @@ function topicScheduleRowHtml(block, preview = false) {
   const className = preview ? "topic-schedule-row topic-schedule-preview-row" : "topic-schedule-row";
   return `<article class="${className}">
     <span data-label="Datum" class="topic-schedule-date">${escapeHtml(topicScheduleDate(block))}</span>
-    <strong data-label="Schulungsinhalt">${escapeHtml(parts.title)}</strong>
-    <span data-label="Gruppe" class="topic-schedule-group">${parts.groupLabel ? escapeHtml(parts.groupLabel) : "—"}</span>
-    <span data-label="Teilnehmer" class="topic-schedule-participants">${participantCount == null ? "—" : escapeHtml(String(participantCount))}</span>
     <span data-label="Anfang" class="topic-schedule-time">${escapeHtml(block.start)}</span>
     <span data-label="Ende" class="topic-schedule-time">${escapeHtml(block.end)}</span>
     <span data-label="Dauer" class="topic-schedule-duration">${escapeHtml(formatHours(durationMinutes))}</span>
+    <strong data-label="Schulungsinhalt">${escapeHtml(parts.title)}</strong>
+    <span data-label="Gruppe" class="topic-schedule-group">${parts.groupLabel ? escapeHtml(parts.groupLabel) : "—"}</span>
+    <span data-label="Teilnehmer" class="topic-schedule-participants">${participantCount == null ? "—" : escapeHtml(String(participantCount))}</span>
   </article>`;
 }
 

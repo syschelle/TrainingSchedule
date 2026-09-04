@@ -255,3 +255,11 @@ def test_pdf_training_schedule_groups_by_trainer_and_shows_weekday_and_participa
     assert "Di, 08.09.2026" in schedule_text
     assert "Review MFA" in schedule_text
     assert "8" in schedule_text
+
+
+def test_v0310_pdf_training_topic_columns_put_times_after_date() -> None:
+    project = sample_project()
+    reader = PdfReader(BytesIO(export_pdf(project)))
+    text = reader.pages[1].extract_text() or ""
+    positions = [text.index(label) for label in ["Datum", "Anfang", "Ende", "Dauer", "Schulungsinhalt", "Gruppe", "Teilnehmer"]]
+    assert positions == sorted(positions)

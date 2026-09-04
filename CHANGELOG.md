@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.10 - 2026-09-04
+
+### Zeitspalten in Schulungsthemen neu angeordnet
+
+- Die Spalten `Anfang`, `Ende` und `Dauer` stehen jetzt direkt nach `Datum`.
+- Neue Reihenfolge: `Datum | Anfang | Ende | Dauer | Schulungsinhalt | Gruppe | Teilnehmer`.
+- Vorschau und PDF verwenden dieselbe Reihenfolge.
+- Keine PostgreSQL-Migration erforderlich.
+
+
 ## v0.3.9 - 2026-09-04
 
 ### Schulungstermine nach Trainer gruppiert

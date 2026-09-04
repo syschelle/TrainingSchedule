@@ -473,12 +473,12 @@ def _draw_training_schedule_pages(pdf: canvas.Canvas, project: TrainingProject, 
         table_top = page_height - 96
         columns = [
             ("Datum", 100),
-            ("Schulungsinhalt", 246),
-            ("Gruppe", 80),
-            ("Teilnehmer", 64),
             ("Anfang", 52),
             ("Ende", 52),
             ("Dauer", 58),
+            ("Schulungsinhalt", 246),
+            ("Gruppe", 80),
+            ("Teilnehmer", 64),
         ]
         available = page_width - 2 * margin
         widths = [width for _, width in columns]
@@ -533,19 +533,19 @@ def _draw_training_schedule_pages(pdf: canvas.Canvas, project: TrainingProject, 
                 participant_count = _appointment_participant_count(project, block)
                 values = [
                     date_label,
-                    title,
-                    group_label or "—",
-                    str(participant_count) if participant_count is not None else "—",
                     block.start,
                     block.end,
                     _format_hours(max(0, minutes_between(block.start, block.end))),
+                    title,
+                    group_label or "—",
+                    str(participant_count) if participant_count is not None else "—",
                 ]
                 x = margin
                 for column_index, (cell_value, width) in enumerate(zip(values, widths)):
-                    pdf.setFillColor(colors.HexColor("#0f172a" if column_index != 2 else "#3157d5"))
-                    font = "Helvetica-Bold" if column_index == 1 else "Helvetica"
-                    size = 6.9 if column_index == 1 else 6.6
-                    if column_index == 1:
+                    pdf.setFillColor(colors.HexColor("#0f172a" if column_index != 5 else "#3157d5"))
+                    font = "Helvetica-Bold" if column_index == 4 else "Helvetica"
+                    size = 6.9 if column_index == 4 else 6.6
+                    if column_index == 4:
                         _draw_wrapped_text(pdf, str(cell_value), x + 5, y + 14, width - 10, font, size, 2)
                     else:
                         text = str(cell_value)

@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.3.9"' in html
+    assert 'src="calendar.js?v=0.3.10"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -553,3 +553,16 @@ def test_v039_topic_schedule_groups_by_trainer_and_shows_weekday_and_participant
     assert 'data-label="Teilnehmer"' in javascript
     assert ".topic-schedule-participants" in css
     assert ".topic-trainer-section" in css
+
+
+def test_v0310_training_topic_time_columns_follow_date() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    header = javascript.split("function topicScheduleHeaderHtml()", 1)[1].split("function topicScheduleRowHtml", 1)[0]
+    expected = ["Datum", "Anfang", "Ende", "Dauer", "Schulungsinhalt", "Gruppe", "Teilnehmer"]
+    positions = [header.index(f">{label}<") for label in expected]
+    assert positions == sorted(positions)
+
+    row = javascript.split("function topicScheduleRowHtml", 1)[1].split("function paginateGroupedAppointments", 1)[0]
+    row_labels = [f'data-label="{label}"' for label in expected]
+    row_positions = [row.index(label) for label in row_labels]
+    assert row_positions == sorted(row_positions)

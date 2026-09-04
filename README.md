@@ -1,6 +1,13 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.3.9**
+Aktuelle Version: **v0.3.10**
+
+## Aenderungen v0.3.10
+
+- In `Schulungsplan -> Schulungsthemen` stehen die Zeitspalten jetzt direkt nach Datum/Wochentag: `Datum | Anfang | Ende | Dauer | Schulungsinhalt | Gruppe | Teilnehmer`.
+- Vorschau und PDF verwenden dieselbe Spaltenreihenfolge.
+- Keine PostgreSQL-Migration erforderlich.
+
 
 ## Aenderungen v0.3.9
 
