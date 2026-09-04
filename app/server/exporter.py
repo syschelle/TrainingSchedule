@@ -303,13 +303,118 @@ def _format_hours(minutes: int) -> str:
     return f"{value.replace('.', ',')} h"
 
 
+
+def _training_schedule_blocks(project: TrainingProject):
+    day_order = {day: index for index, day in enumerate(DISPLAY_WEEKDAYS)}
+
+    def key(block):
+        day_index = day_order.get(block.day, 0)
+        current_date = _week_date(project, block.week, day_index)
+        ordinal = current_date.toordinal() if current_date else block.week * 7 + day_index
+        return (ordinal, parse_time(block.start), block.trainer or "", block.title or "")
+
+    return sorted((block for block in project.blocks if block.type == BlockType.training), key=key)
+
+
+def _draw_training_schedule_pages(pdf: canvas.Canvas, project: TrainingProject, page_width: float, page_height: float, margin: float) -> None:
+    blocks = _training_schedule_blocks(project)
+    rows_per_page = 20
+    pages = [blocks[index:index + rows_per_page] for index in range(0, len(blocks), rows_per_page)] or [[]]
+    customer = project.customer_name or "—" if project.customer_data_required else "Nicht erforderlich"
+    location = project.location or "—" if project.customer_data_required else "Nicht erforderlich"
+
+    for page_index, page_blocks in enumerate(pages, start=1):
+        pdf.setFillColor(colors.HexColor("#0f1b2d"))
+        pdf.rect(0, page_height - 72, page_width, 72, fill=1, stroke=0)
+        pdf.setFillColor(colors.white)
+        pdf.setFont("Helvetica-Bold", 18)
+        pdf.drawString(margin, page_height - 29, project.title or "Schulungsplan")
+        pdf.setFont("Helvetica", 9)
+        suffix = f" · {page_index}/{len(pages)}" if len(pages) > 1 else ""
+        pdf.drawString(margin, page_height - 47, f"Schulungsthemen{suffix}")
+        pdf.setFont("Helvetica-Bold", 7.2)
+        pdf.drawRightString(page_width - margin, page_height - 34, f"Kunde: {customer}")
+        pdf.drawRightString(page_width - margin, page_height - 47, f"Standort: {location}")
+
+        table_top = page_height - 96
+        columns = [
+            ("Datum", 70),
+            ("Schulungsinhalt", 236),
+            ("Gruppe", 76),
+            ("Trainer", 112),
+            ("Anfang", 52),
+            ("Ende", 52),
+            ("Dauer", 56),
+        ]
+        available = page_width - 2 * margin
+        widths = [width for _, width in columns]
+        scale = available / sum(widths)
+        widths = [width * scale for width in widths]
+        header_height = 24
+        row_height = 22
+
+        pdf.setFillColor(colors.HexColor("#f3f6fb"))
+        pdf.setStrokeColor(colors.HexColor("#dbe3ee"))
+        pdf.rect(margin, table_top - header_height, available, header_height, fill=1, stroke=1)
+        x = margin
+        pdf.setFillColor(colors.HexColor("#64748b"))
+        pdf.setFont("Helvetica-Bold", 6.8)
+        for (label, _), width in zip(columns, widths):
+            pdf.drawString(x + 5, table_top - 15, label)
+            x += width
+
+        if not page_blocks:
+            pdf.setFillColor(colors.HexColor("#64748b"))
+            pdf.setFont("Helvetica", 9)
+            pdf.drawString(margin + 8, table_top - header_height - 24, "Keine Schulungen eingeplant.")
+        else:
+            y = table_top - header_height
+            for row_index, block in enumerate(page_blocks):
+                y -= row_height
+                if row_index % 2 == 1:
+                    pdf.setFillColor(colors.HexColor("#fbfcfe"))
+                    pdf.rect(margin, y, available, row_height, fill=1, stroke=0)
+                pdf.setStrokeColor(colors.HexColor("#e2e8f0"))
+                pdf.line(margin, y, margin + available, y)
+
+                title, group_label = _calendar_display_parts(project, block)
+                day_index = {day: index for index, day in enumerate(DISPLAY_WEEKDAYS)}.get(block.day, 0)
+                current_date = _week_date(project, block.week, day_index)
+                values = [
+                    german_date(current_date) if current_date else f"W{block.week} {block.day}",
+                    title,
+                    group_label or "—",
+                    block.trainer or "Nicht zugewiesen",
+                    block.start,
+                    block.end,
+                    _format_hours(max(0, minutes_between(block.start, block.end))),
+                ]
+                x = margin
+                for column_index, (value, width) in enumerate(zip(values, widths)):
+                    pdf.setFillColor(colors.HexColor("#0f172a" if column_index != 2 else "#3157d5"))
+                    font = "Helvetica-Bold" if column_index == 1 else "Helvetica"
+                    size = 6.9 if column_index == 1 else 6.6
+                    if column_index == 1:
+                        _draw_wrapped_text(pdf, value, x + 5, y + 14, width - 10, font, size, 2)
+                    else:
+                        text = str(value)
+                        while text and stringWidth(text, font, size) > width - 10:
+                            text = text[:-1]
+                        pdf.setFont(font, size)
+                        pdf.drawString(x + 5, y + 8, text)
+                    x += width
+
+        pdf.setFillColor(colors.HexColor("#64748b"))
+        pdf.setFont("Helvetica", 6)
+        pdf.drawRightString(page_width - margin, 14, "Schulungsplantool · Schulungsthemen")
+        pdf.showPage()
+
 def export_pdf(project: TrainingProject) -> bytes:
     """Export the same trainer/week calendar concept as the browser preview.
 
-    The PDF is landscape A4. Page 1 is the project overview. Each trainer then
-    gets one full calendar week page, ordered chronologically by week and then
-    by trainer. Break and lunch blocks stay hidden, exactly like in the browser
-    calendar.
+    The PDF is landscape A4. Page 1 is the project overview. It is followed by
+    a chronological training-appointment summary and then by the trainer/week
+    calendar pages. Break and lunch blocks stay hidden in the calendar pages.
     """
     buffer = BytesIO()
     page_size = landscape(A4)
@@ -331,6 +436,7 @@ def export_pdf(project: TrainingProject) -> bytes:
     product = next((item for item in project.product_lines if item.id == project.product_id), None)
 
     _draw_overview_page(pdf, project, page_width, page_height, margin)
+    _draw_training_schedule_pages(pdf, project, page_width, page_height, margin)
 
     for week in planned_weeks(project):
         for trainer in trainers:

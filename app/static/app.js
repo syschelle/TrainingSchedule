@@ -1582,38 +1582,39 @@ function productSummary() {
 function renderTopicSchedule() {
   const target = $("#tab-topics");
   if (!target) return;
-  const productId = currentProduct().id;
-  const topics = (project.topics || []).filter((item) => !item.product_id || item.product_id === productId);
-  if (!topics.length) {
-    target.innerHTML = `<div class="calendar-empty-state"><strong>Keine Schulungsthemen ausgewählt.</strong></div>`;
+  const appointments = scheduledTrainingAppointments();
+  if (!appointments.length) {
+    target.innerHTML = `<div class="calendar-empty-state"><strong>Keine Schulungen eingeplant.</strong></div>`;
     return;
   }
 
   target.innerHTML = `
     <div class="topic-schedule-page">
       <div class="topic-schedule-head">
+        <span>Datum</span>
         <span>Schulungsinhalt</span>
-        <span>Termine</span>
-        <span>Zeitraum</span>
+        <span>Gruppe</span>
+        <span>Trainer</span>
+        <span>Anfang</span>
+        <span>Ende</span>
+        <span>Dauer</span>
       </div>
       <div class="topic-schedule-list">
-        ${topics.map((topic) => {
-          const blocks = topicScheduleBlocks(topic.id);
-          return `<article class="topic-schedule-row">
-            <strong>${escapeHtml(topic.title)}</strong>
-            <span class="topic-schedule-count">${blocks.length ? `${blocks.length} ${blocks.length === 1 ? "Termin" : "Termine"}` : "—"}</span>
-            <span class="topic-schedule-period ${blocks.length ? "" : "is-empty"}">${escapeHtml(topicSchedulePeriod(blocks))}</span>
-          </article>`;
-        }).join("")}
+        ${appointments.map((block) => topicScheduleRowHtml(block)).join("")}
       </div>
     </div>`;
 }
 
-function topicScheduleBlocks(topicId) {
+function scheduledTrainingAppointments() {
   return (project.blocks || [])
-    .filter((block) => block.type === "training" && (block.source_topic_id || block.topic_id) === topicId)
+    .filter((block) => block.type === "training")
     .slice()
     .sort(compareScheduleBlocks);
+}
+
+function topicScheduleBlocks(topicId) {
+  return scheduledTrainingAppointments()
+    .filter((block) => (block.source_topic_id || block.topic_id) === topicId);
 }
 
 function compareScheduleBlocks(left, right) {
@@ -1621,20 +1622,62 @@ function compareScheduleBlocks(left, right) {
   const rightDate = TrainingCalendar.dateForCalendarDay(project.start_date, Number(right.week || 1), right.day);
   const leftKey = leftDate ? leftDate.getTime() : Number(left.week || 1) * 7 * 86400000 + days.indexOf(left.day) * 86400000;
   const rightKey = rightDate ? rightDate.getTime() : Number(right.week || 1) * 7 * 86400000 + days.indexOf(right.day) * 86400000;
-  return (leftKey + toMinutes(left.start) * 60000) - (rightKey + toMinutes(right.start) * 60000);
+  const timeDifference = (leftKey + toMinutes(left.start) * 60000) - (rightKey + toMinutes(right.start) * 60000);
+  if (timeDifference) return timeDifference;
+  const trainerDifference = String(left.trainer || "").localeCompare(String(right.trainer || ""), "de");
+  if (trainerDifference) return trainerDifference;
+  return calendarDisplayTitle(left).localeCompare(calendarDisplayTitle(right), "de");
 }
 
-function topicSchedulePeriod(blocks) {
-  if (!blocks.length) return "Nicht eingeplant";
-  const first = blocks[0];
-  const last = blocks[blocks.length - 1];
-  const firstDate = TrainingCalendar.dateForCalendarDay(project.start_date, Number(first.week || 1), first.day);
-  const lastDate = TrainingCalendar.dateForCalendarDay(project.start_date, Number(last.week || 1), last.day);
-  const firstLabel = TrainingCalendar.formatGermanDate(firstDate);
-  const lastLabel = TrainingCalendar.formatGermanDate(lastDate);
-  if (firstLabel && firstLabel === lastLabel) return `${firstLabel} · ${first.start}–${last.end}`;
-  if (firstLabel && lastLabel) return `${firstLabel} ${first.start} – ${lastLabel} ${last.end}`;
-  return `Woche ${first.week}, ${first.day} ${first.start} – Woche ${last.week}, ${last.day} ${last.end}`;
+function topicScheduleDate(block) {
+  const value = TrainingCalendar.dateForCalendarDay(project.start_date, Number(block.week || 1), block.day);
+  return TrainingCalendar.formatGermanDate(value) || `Woche ${block.week}, ${block.day}`;
+}
+
+function topicScheduleRowHtml(block, preview = false) {
+  const parts = calendarDisplayParts(block);
+  const durationMinutes = Math.max(0, duration(block.start, block.end));
+  const className = preview ? "topic-schedule-row topic-schedule-preview-row" : "topic-schedule-row";
+  return `<article class="${className}">
+    <span data-label="Datum" class="topic-schedule-date">${escapeHtml(topicScheduleDate(block))}</span>
+    <strong data-label="Schulungsinhalt">${escapeHtml(parts.title)}</strong>
+    <span data-label="Gruppe" class="topic-schedule-group">${parts.groupLabel ? escapeHtml(parts.groupLabel) : "—"}</span>
+    <span data-label="Trainer">${escapeHtml(trainerLabel(block.trainer || ""))}</span>
+    <span data-label="Anfang" class="topic-schedule-time">${escapeHtml(block.start)}</span>
+    <span data-label="Ende" class="topic-schedule-time">${escapeHtml(block.end)}</span>
+    <span data-label="Dauer" class="topic-schedule-duration">${escapeHtml(formatHours(durationMinutes))}</span>
+  </article>`;
+}
+
+function chunkAppointments(items, size = 18) {
+  const chunks = [];
+  for (let index = 0; index < items.length; index += size) chunks.push(items.slice(index, index + size));
+  return chunks.length ? chunks : [[]];
+}
+
+function topicSchedulePreviewPages(customer, location) {
+  const appointments = scheduledTrainingAppointments();
+  const chunks = chunkAppointments(appointments, 18);
+  return chunks.map((chunk, index) => `
+    <section class="pdf-preview-sheet pdf-preview-topic-sheet">
+      <div class="pdf-preview-header">
+        <div>
+          <h2>${escapeHtml(project.title || "Schulungsplan")}</h2>
+          <p>Schulungsthemen${chunks.length > 1 ? ` · ${index + 1}/${chunks.length}` : ""}</p>
+        </div>
+        <div class="pdf-preview-customer"><strong>Kunde: ${escapeHtml(customer)}</strong><strong>Standort: ${escapeHtml(location)}</strong></div>
+      </div>
+      <div class="pdf-preview-topic-body">
+        <h3>Schulungstermine</h3>
+        ${chunk.length ? `
+          <div class="topic-schedule-page topic-schedule-preview">
+            <div class="topic-schedule-head">
+              <span>Datum</span><span>Schulungsinhalt</span><span>Gruppe</span><span>Trainer</span><span>Anfang</span><span>Ende</span><span>Dauer</span>
+            </div>
+            <div class="topic-schedule-list">${chunk.map((block) => topicScheduleRowHtml(block, true)).join("")}</div>
+          </div>` : `<div class="calendar-empty-state"><strong>Keine Schulungen eingeplant.</strong></div>`}
+      </div>
+    </section>`).join("");
 }
 
 function calendarTrainers() {
@@ -2229,7 +2272,7 @@ function renderPreview() {
   const serviceDays = serviceDayCount();
   const unscheduled = project.unscheduled_topics.reduce((sum, item) => sum + item.duration_minutes, 0);
   $("#tab-preview").innerHTML = `<div class="calendar-preview">
-    <p class="muted">PDF-Vorschau: Seite 1 ist die Uebersicht. Danach folgen die Kalenderseiten im A4-Querformat chronologisch nach Kalenderwoche und Trainer.</p>
+    <p class="muted">PDF-Vorschau im A4-Querformat: Seite 1 ist die Übersicht. Danach folgt die chronologische Terminübersicht der Schulungsthemen und anschließend die Kalenderseiten nach Kalenderwoche und Trainer.</p>
     <div class="pdf-preview-pages">
       <section class="pdf-preview-sheet pdf-preview-overview-sheet">
         <div class="pdf-preview-header">
@@ -2250,6 +2293,7 @@ function renderPreview() {
           <div class="output-wrap"><div class="output-content">${topicSummary()}</div></div>
         </div>
       </section>
+      ${topicSchedulePreviewPages(customer, location)}
       ${scheduledWeeks().map((week) => trainers.map((trainer, trainerIndex) => `
         <section class="pdf-preview-sheet">
           <div class="pdf-preview-header">

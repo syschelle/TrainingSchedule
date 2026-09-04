@@ -6,9 +6,9 @@
   <meta name="referrer" content="no-referrer">
   <meta name="robots" content="noindex, nofollow">
   <title>Schulungsplantool</title>
-  <link rel="stylesheet" href="styles.css?v=0.3.6">
-  <script defer src="calendar.js?v=0.3.6"></script>
-  <script defer src="app.js?v=0.3.6"></script>
+  <link rel="stylesheet" href="styles.css?v=0.3.7">
+  <script defer src="calendar.js?v=0.3.7"></script>
+  <script defer src="app.js?v=0.3.7"></script>
 </head>
 <body>
   <header class="topbar">
@@ -27,7 +27,7 @@
       </div>
       <div class="topbar-actions">
         <span id="planSyncStatus" class="plan-sync-status" hidden></span>
-        <span class="version">v0.3.6</span>
+        <span class="version">v0.3.7</span>
       </div>
     </div>
     <nav id="workflowProgress" class="workflow-progress" aria-label="Fortschritt der Planung"></nav>
@@ -51,7 +51,7 @@
       <section id="input-page" class="workspace app-page active">
         <div class="workflow-shell">
           <div class="workflow-top-actions">
-            <button type="button" id="importProject" class="button button-ghost">Planung öffnen</button>
+            <button type="button" id="importProject" class="button button-ghost">Planung importieren</button>
             <input type="file" id="projectImportInput" accept=".json,application/json" hidden>
             <button type="button" data-page="plan" id="showExistingPlan" class="button button-ghost">Schulungsplan anzeigen</button>
           </div>
@@ -296,7 +296,7 @@
   </div>
 
   <footer>
-    <span>Schulungsplantool v0.3.6</span>
+    <span>Schulungsplantool v0.3.7</span>
   </footer>
 </body>
 </html>

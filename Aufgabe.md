@@ -1457,3 +1457,15 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - PDF- und XLSX-Uebersichten verwenden dieselbe einfache Minutenangabe.
 - Keine PostgreSQL-Migration erforderlich.
 - Version auf `v0.3.6` erhoeht.
+
+
+## Erweiterung v0.3.7 - Einzeltermine in Schulungsthemen und Vorschau
+
+- Die Schulungsplan-Seite `Schulungsthemen` fuehrt jeden einzelnen geplanten Trainingsblock chronologisch auf.
+- Angezeigt werden Datum, Schulungsinhalt, optionale `Gruppe x/y`, Trainer, Anfangszeit, Endzeit und Dauer.
+- Die Daten duerfen nicht separat gespeichert werden, sondern muessen aus den aktuellen Kalenderbloecken berechnet werden, damit manuelle Kalenderaenderungen sofort uebernommen werden.
+- Die PDF-Vorschau zeigt direkt nach der Uebersicht eine eigene Seite mit der chronologischen Terminliste; bei vielen Terminen sind Folgeseiten zulaessig.
+- Der PDF-Export entspricht der Vorschau und fuegt die Terminliste ebenfalls direkt nach der Uebersicht ein.
+- Im Workflow wird `Planung öffnen` in `Planung importieren` umbenannt.
+- Keine PostgreSQL-Migration erforderlich.
+- Version auf `v0.3.7` erhoeht.

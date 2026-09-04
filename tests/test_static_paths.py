@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.3.6"' in html
+    assert 'src="calendar.js?v=0.3.7"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -453,7 +453,7 @@ def test_v035_plan_overview_is_compact_and_shows_only_active_product() -> None:
     assert "participant_count || 0) > 0" in product_summary
 
 
-def test_v035_topic_schedule_is_a_separate_live_tab_after_overview() -> None:
+def test_v037_topic_schedule_lists_each_calendar_training_chronologically() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     css = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
@@ -463,12 +463,31 @@ def test_v035_topic_schedule_is_a_separate_live_tab_after_overview() -> None:
     assert overview_pos < topics_pos < week_pos
     assert 'id="tab-topics"' in html
     assert "renderTopicSchedule();" in javascript
-    assert "function topicScheduleBlocks(topicId)" in javascript
-    assert 'block.type === "training" && (block.source_topic_id || block.topic_id) === topicId' in javascript
+    assert "function scheduledTrainingAppointments()" in javascript
+    assert '.filter((block) => block.type === "training")' in javascript
+    assert ".sort(compareScheduleBlocks);" in javascript
+    assert "function topicScheduleRowHtml(block, preview = false)" in javascript
+    for label in ["Datum", "Schulungsinhalt", "Gruppe", "Trainer", "Anfang", "Ende", "Dauer"]:
+        assert f">{label}<" in javascript or f'"{label}"' in javascript
     assert "TrainingCalendar.dateForCalendarDay(project.start_date" in javascript
-    assert 'blocks.length === 1 ? "Termin" : "Termine"' in javascript
-    assert 'return `${firstLabel} · ${first.start}–${last.end}`;' in javascript
+    assert "formatHours(durationMinutes)" in javascript
     assert ".topic-schedule-row" in css
+
+
+def test_v037_preview_inserts_training_schedule_after_overview() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    assert "function topicSchedulePreviewPages(customer, location)" in javascript
+    overview_pos = javascript.index('pdf-preview-overview-sheet')
+    topic_pos = javascript.index('${topicSchedulePreviewPages(customer, location)}')
+    calendar_pos = javascript.index('${scheduledWeeks().map((week)')
+    assert overview_pos < topic_pos < calendar_pos
+    assert "chronologische Terminübersicht der Schulungsthemen" in javascript
+
+
+def test_v037_workflow_uses_planung_importieren_wording() -> None:
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    assert ">Planung importieren</button>" in html
+    assert ">Planung öffnen</button>" not in html
 
 
 def test_v036_overview_training_durations_are_single_minute_values() -> None:

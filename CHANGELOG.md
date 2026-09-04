@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.3.7 - 2026-09-04
+
+### Chronologische Schulungstermine und Vorschau erweitert
+
+- Die Seite `Schulungsthemen` listet jetzt jeden einzelnen Trainingsblock chronologisch auf.
+- Jeder Termin zeigt Datum, Schulungsinhalt, optionale Gruppennummer, Trainer, Anfang, Ende und Dauer.
+- Die Terminliste basiert direkt auf den aktuellen Kalenderbloecken und bleibt nach Drag-and-drop, Resize, Bearbeiten oder Loeschen synchron.
+- Die Vorschau enthaelt direkt nach der Planuebersicht eine eigene Schulungsthemen-/Terminseite; umfangreiche Terminlisten werden in lesbare Folgeseiten geteilt.
+- Der PDF-Export verwendet dieselbe Reihenfolge und enthaelt die chronologische Terminliste ebenfalls direkt nach der Uebersicht.
+- `Planung öffnen` wurde im Eingabe-Workflow in `Planung importieren` umbenannt.
+- Keine PostgreSQL-Migration erforderlich.
+
 ## v0.3.6 - 2026-09-04
 
 ### Daueranzeige in der Schulungsuebersicht vereinfacht

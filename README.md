@@ -1,6 +1,16 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.3.6**
+Aktuelle Version: **v0.3.7**
+
+## Aenderungen v0.3.7
+
+- `Schulungsthemen` zeigt jetzt jede einzelne geplante Schulung chronologisch statt nur einer aggregierten Terminanzahl bzw. eines Gesamtzeitraums.
+- Pro Termin werden Datum, Schulungsinhalt, optionale `Gruppe x/y`, Trainer, Anfangszeit, Endzeit und Dauer angezeigt.
+- Die Terminliste wird direkt aus den aktuellen Kalenderbloecken erzeugt und aktualisiert sich daher nach Drag-and-drop, Resize, Blockeditor-Aenderungen und Loeschen automatisch.
+- Im Reiter `Vorschau` folgt direkt nach der Uebersichtsseite eine eigene Schulungsthemen-/Terminseite; bei vielen Terminen wird sie lesbar auf mehrere Vorschauseiten aufgeteilt.
+- Der PDF-Export folgt derselben Reihenfolge: Uebersicht, chronologische Schulungstermine, danach Kalenderseiten.
+- Im Workflow heisst die Aktion zum Laden einer gespeicherten Planung wieder `Planung importieren`.
+- Keine PostgreSQL-Migration erforderlich.
 
 ## Aenderungen v0.3.6
 
