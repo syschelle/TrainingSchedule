@@ -3041,16 +3041,3 @@ body.modal-open {
   font-weight: 950;
   line-height: 1.2;
 }
-.calendar-day-body.trainer-day-unavailable::after {
-  content: "Parkfläche";
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 0;
-  color: rgba(158, 49, 49, 0.22);
-  font-size: 0.72rem;
-  font-weight: 950;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  pointer-events: none;
-}

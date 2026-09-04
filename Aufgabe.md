@@ -1585,3 +1585,12 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Nachträglich erzeugte Mittagspausen des Planners dürfen niemals mit einem Schulungsblock überlappen. Wenn innerhalb des konfigurierten Mittagsfensters kein freier 45-Minuten-Slot existiert, soll die Validierung `Mittagspause fehlt` melden statt einen überlappenden Pausenblock anzulegen.
 - Keine PostgreSQL-Migration erforderlich.
 - Version auf `v0.4.6` erhöht.
+
+## Erweiterung v0.4.7 - Parkfläche aus blockierten Kalendertagen entfernen
+
+- In nicht verfügbaren bzw. blockierten Trainer-Tagen des internen Kalenders darf das Wasserzeichen `Parkfläche` nicht mehr angezeigt werden.
+- Die sichtbare Tageskennzeichnung bleibt `Nicht verfügbar`; die rötliche Darstellung bleibt bestehen.
+- Die bestehende Parklogik bleibt vollständig erhalten: vorhandene Schulungsblöcke dürfen weiterhin temporär auf nicht verfügbare Tage verschoben werden und müssen als `Geparkt` gekennzeichnet bleiben.
+- Keine PostgreSQL-Migration erforderlich.
+- Version auf `v0.4.7` erhöht.
+

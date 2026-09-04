@@ -1,6 +1,15 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.4.6**
+Aktuelle Version: **v0.4.7**
+
+
+## Aenderungen v0.4.7
+
+- Das Wasserzeichen `Parkfläche` wurde aus blockierten bzw. nicht verfügbaren Tagen im internen Schulungsplan-Kalender entfernt.
+- Blockierte Tage bleiben weiterhin rötlich als `Nicht verfügbar` gekennzeichnet.
+- Die bestehende Parklogik bleibt unverändert: vorhandene Schulungsblöcke können weiterhin temporär auf nicht verfügbaren Tagen geparkt werden und tragen dann die Kennzeichnung `Geparkt`.
+- Regressionstest ergänzt.
+- Keine PostgreSQL-Migration erforderlich.
 
 
 ## Aenderungen v0.4.6

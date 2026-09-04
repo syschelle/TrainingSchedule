@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.4.7 - 2026-09-04
+
+### Parkfläche-Wasserzeichen aus blockierten Kalendertagen entfernt
+
+- Das sichtbare Wasserzeichen `Parkfläche` wird in nicht verfügbaren Trainer-Tagen des internen Kalenders nicht mehr eingeblendet.
+- Die Tageskennzeichnung bleibt `Nicht verfügbar`; die rötliche Darstellung blockierter Tage bleibt erhalten.
+- Die Parkflächen-Logik selbst bleibt unverändert: vorhandene Schulungsblöcke können weiterhin temporär auf nicht verfügbaren Tagen geparkt werden und werden dabei als `Geparkt` markiert.
+- Regressionstest ergänzt.
+- Keine PostgreSQL-Migration erforderlich.
+
 ## v0.4.6 - 2026-09-04
 
 ### Geparkte Kundenblöcke wieder auf gültige Tage verschiebbar
