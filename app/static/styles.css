@@ -2643,7 +2643,7 @@ body.modal-open {
 .topic-schedule-head,
 .topic-schedule-row {
   display: grid;
-  grid-template-columns: minmax(92px, 0.7fr) minmax(210px, 1.8fr) minmax(80px, 0.75fr) minmax(110px, 0.9fr) minmax(62px, 0.5fr) minmax(62px, 0.5fr) minmax(70px, 0.55fr);
+  grid-template-columns: minmax(118px, 0.9fr) minmax(220px, 1.8fr) minmax(84px, 0.7fr) minmax(78px, 0.62fr) minmax(62px, 0.5fr) minmax(62px, 0.5fr) minmax(70px, 0.55fr);
   gap: 10px;
   align-items: center;
 }
@@ -2692,6 +2692,35 @@ body.modal-open {
   font-weight: 750;
 }
 
+.topic-trainer-section {
+  margin-top: 16px;
+}
+
+.topic-trainer-section:first-child {
+  margin-top: 4px;
+}
+
+.topic-trainer-section > h3 {
+  margin: 0 0 7px 2px;
+  color: var(--text);
+  font-size: 0.92rem;
+}
+
+.topic-schedule-trainer-row {
+  padding: 7px 12px;
+  border-bottom: 1px solid rgba(220, 227, 236, 0.9);
+  background: #eaf0fb;
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 850;
+}
+
+.topic-schedule-participants {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+}
+
 .pdf-preview-topic-sheet {
   min-height: 720px;
 }
@@ -2711,7 +2740,7 @@ body.modal-open {
 
 .topic-schedule-preview .topic-schedule-head,
 .topic-schedule-preview .topic-schedule-row {
-  grid-template-columns: 92px minmax(240px, 1.8fr) 86px 110px 62px 62px 70px;
+  grid-template-columns: 112px minmax(235px, 1.8fr) 82px 72px 60px 60px 68px;
   gap: 8px;
 }
 

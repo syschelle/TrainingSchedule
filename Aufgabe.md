@@ -1480,3 +1480,16 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Trainer-Namen werden live waehrend der Eingabe in den Projektzustand uebernommen; ein weiterer Klick auf `＋ Trainer` ist nur zum Anlegen eines zusaetzlichen Trainers erforderlich.
 - Kalenderbloecke vom Typ `arrival` und `departure` erhalten dieselben oberen/unteren Resize-Griffe wie Schulungsbloecke und bleiben im 15-Minuten-Raster.
 - Version auf `v0.3.8` erhoeht.
+
+
+## Erweiterung v0.3.9 - Schulungstermine nach Trainer und Teilnehmerzahl
+
+- Die Schulungsplan-Seite `Schulungsthemen` gruppiert die Einzeltermine nach Trainer.
+- Innerhalb jedes Trainers sind die Schulungen chronologisch nach Datum und Startzeit sortiert.
+- Das Datum enthaelt einen kurzen deutschen Wochentag, z. B. `Mo, 28.09.2026`.
+- Eine Spalte `Teilnehmer` zeigt pro Termin die relevante Teilnehmerzahl.
+- Bei Teilnehmergruppen mit mehreren automatisch erzeugten Sitzungen (`Gruppe x/y`) wird die Teilnehmerzahl je Sitzung aus Gesamtteilnehmern und `participants_per_session` berechnet; die letzte Gruppe kann entsprechend kleiner sein.
+- Vorschau und PDF verwenden dieselbe Gruppierung und dieselben Zusatzinformationen.
+- Alle Werte werden weiterhin aus den aktuellen Kalenderbloecken und Projektdaten berechnet und nicht separat gespeichert.
+- Keine PostgreSQL-Migration erforderlich.
+- Version auf `v0.3.9` erhoeht.

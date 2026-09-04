@@ -325,14 +325,139 @@ def _training_schedule_blocks(project: TrainingProject):
     return sorted((block for block in project.blocks if block.type == BlockType.training), key=key)
 
 
-def _draw_training_schedule_pages(pdf: canvas.Canvas, project: TrainingProject, page_width: float, page_height: float, margin: float) -> None:
+def _training_schedule_groups(project: TrainingProject):
     blocks = _training_schedule_blocks(project)
-    rows_per_page = 20
-    pages = [blocks[index:index + rows_per_page] for index in range(0, len(blocks), rows_per_page)] or [[]]
+    trainer_order = list(project_trainers(project))
+    for block in blocks:
+        trainer = (block.trainer or "").strip()
+        if trainer not in trainer_order:
+            trainer_order.append(trainer)
+    return [
+        (trainer, [block for block in blocks if (block.trainer or "").strip() == trainer])
+        for trainer in trainer_order
+        if any((block.trainer or "").strip() == trainer for block in blocks)
+    ]
+
+
+def _short_weekday(day_name: str, current_date: date | None = None) -> str:
+    by_name = {
+        "Montag": "Mo",
+        "Dienstag": "Di",
+        "Mittwoch": "Mi",
+        "Donnerstag": "Do",
+        "Freitag": "Fr",
+        "Samstag": "Sa",
+        "Sonntag": "So",
+    }
+    if day_name in by_name:
+        return by_name[day_name]
+    if current_date is not None:
+        return ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"][current_date.weekday()]
+    return (day_name or "—")[:2]
+
+
+def _topic_for_block(project: TrainingProject, block: ScheduleBlock):
+    topic_key = block.source_topic_id or block.topic_id
+    return next((item for item in project.topics if item.id == topic_key), None)
+
+
+def _participant_group_for_block(project: TrainingProject, block: ScheduleBlock, topic):
+    if topic is None:
+        return None
+    product = next((item for item in project.product_lines if item.id == (topic.product_id or project.product_id)), None)
+    if product is None:
+        product = next((item for item in project.product_lines if item.id == project.product_id), None)
+    groups = list(product.participant_groups) if product is not None else []
+    title = block.title or ""
+    for group in sorted(groups, key=lambda item: len((item.name or "").strip()), reverse=True):
+        name = (group.name or "").strip()
+        if name and f" - {name}" in title:
+            return group
+    group_ids = list(topic.participant_group_ids or [])
+    if len(group_ids) == 1:
+        return next((group for group in groups if group.id == group_ids[0]), None)
+    if topic.participant_group_id:
+        return next((group for group in groups if group.id == topic.participant_group_id), None)
+    return None
+
+
+def _generated_group_index(group_label: str) -> tuple[int, int] | None:
+    prefix = "Gruppe "
+    value = (group_label or "").strip()
+    if not value.startswith(prefix):
+        return None
+    fraction = value[len(prefix):].split("/")
+    if len(fraction) != 2:
+        return None
+    try:
+        index = int(fraction[0])
+        total = int(fraction[1])
+    except ValueError:
+        return None
+    return (index, total) if index > 0 and total > 0 else None
+
+
+def _appointment_participant_count(project: TrainingProject, block: ScheduleBlock) -> int | None:
+    topic = _topic_for_block(project, block)
+    if topic is None:
+        return None
+    product = next((item for item in project.product_lines if item.id == (topic.product_id or project.product_id)), None)
+    if product is None:
+        product = next((item for item in project.product_lines if item.id == project.product_id), None)
+    groups = list(product.participant_groups) if product is not None else []
+    group = _participant_group_for_block(project, block, topic)
+    max_participants = int(topic.participants_per_session or 0)
+    _, group_label = _calendar_display_parts(project, block)
+    split = _generated_group_index(group_label)
+    if group is not None:
+        total_participants = max(0, int(group.participant_count or 0))
+        if split is not None and max_participants > 0:
+            index, _ = split
+            return max(0, min(max_participants, total_participants - ((index - 1) * max_participants)))
+        return total_participants or None
+    selected_ids = list(topic.participant_group_ids or [])
+    if selected_ids:
+        total = sum(max(0, int(group_item.participant_count or 0)) for group_item in groups if group_item.id in selected_ids)
+        return total or None
+    return None
+
+
+def _training_schedule_page_items(project: TrainingProject, rows_per_page: int = 18):
+    pages: list[list[tuple[str, object]]] = []
+    page: list[tuple[str, object]] = []
+    used_rows = 0
+
+    def flush() -> None:
+        nonlocal page, used_rows
+        if page:
+            pages.append(page)
+        page = []
+        used_rows = 0
+
+    for trainer, blocks in _training_schedule_groups(project):
+        index = 0
+        while index < len(blocks):
+            if used_rows >= rows_per_page - 1:
+                flush()
+            page.append(("trainer", trainer))
+            used_rows += 1
+            capacity = max(1, rows_per_page - used_rows)
+            chunk = blocks[index:index + capacity]
+            page.extend(("block", block) for block in chunk)
+            used_rows += len(chunk)
+            index += len(chunk)
+            if index < len(blocks):
+                flush()
+    flush()
+    return pages or [[]]
+
+
+def _draw_training_schedule_pages(pdf: canvas.Canvas, project: TrainingProject, page_width: float, page_height: float, margin: float) -> None:
+    pages = _training_schedule_page_items(project, 18)
     customer = project.customer_name or "—" if project.customer_data_required else "Nicht erforderlich"
     location = project.location or "—" if project.customer_data_required else "Nicht erforderlich"
 
-    for page_index, page_blocks in enumerate(pages, start=1):
+    for page_index, page_items in enumerate(pages, start=1):
         pdf.setFillColor(colors.HexColor("#0f1b2d"))
         pdf.rect(0, page_height - 72, page_width, 72, fill=1, stroke=0)
         pdf.setFillColor(colors.white)
@@ -347,13 +472,13 @@ def _draw_training_schedule_pages(pdf: canvas.Canvas, project: TrainingProject, 
 
         table_top = page_height - 96
         columns = [
-            ("Datum", 70),
-            ("Schulungsinhalt", 236),
-            ("Gruppe", 76),
-            ("Trainer", 112),
+            ("Datum", 100),
+            ("Schulungsinhalt", 246),
+            ("Gruppe", 80),
+            ("Teilnehmer", 64),
             ("Anfang", 52),
             ("Ende", 52),
-            ("Dauer", 56),
+            ("Dauer", 58),
         ]
         available = page_width - 2 * margin
         widths = [width for _, width in columns]
@@ -361,6 +486,7 @@ def _draw_training_schedule_pages(pdf: canvas.Canvas, project: TrainingProject, 
         widths = [width * scale for width in widths]
         header_height = 24
         row_height = 22
+        trainer_height = 20
 
         pdf.setFillColor(colors.HexColor("#f3f6fb"))
         pdf.setStrokeColor(colors.HexColor("#dbe3ee"))
@@ -372,41 +498,57 @@ def _draw_training_schedule_pages(pdf: canvas.Canvas, project: TrainingProject, 
             pdf.drawString(x + 5, table_top - 15, label)
             x += width
 
-        if not page_blocks:
+        if not page_items:
             pdf.setFillColor(colors.HexColor("#64748b"))
             pdf.setFont("Helvetica", 9)
             pdf.drawString(margin + 8, table_top - header_height - 24, "Keine Schulungen eingeplant.")
         else:
             y = table_top - header_height
-            for row_index, block in enumerate(page_blocks):
+            row_index = 0
+            for kind, value in page_items:
+                if kind == "trainer":
+                    y -= trainer_height
+                    pdf.setFillColor(colors.HexColor("#eaf0fb"))
+                    pdf.setStrokeColor(colors.HexColor("#dbe3ee"))
+                    pdf.rect(margin, y, available, trainer_height, fill=1, stroke=1)
+                    pdf.setFillColor(colors.HexColor("#0f172a"))
+                    pdf.setFont("Helvetica-Bold", 7.4)
+                    trainer_name = str(value or "Nicht zugewiesen")
+                    pdf.drawString(margin + 6, y + 6, f"Trainer: {trainer_name}")
+                    continue
+
+                block = value
                 y -= row_height
                 if row_index % 2 == 1:
                     pdf.setFillColor(colors.HexColor("#fbfcfe"))
                     pdf.rect(margin, y, available, row_height, fill=1, stroke=0)
+                row_index += 1
                 pdf.setStrokeColor(colors.HexColor("#e2e8f0"))
                 pdf.line(margin, y, margin + available, y)
 
                 title, group_label = _calendar_display_parts(project, block)
                 day_index = {day: index for index, day in enumerate(DISPLAY_WEEKDAYS)}.get(block.day, 0)
                 current_date = _week_date(project, block.week, day_index)
+                date_label = f"{_short_weekday(block.day, current_date)}, {german_date(current_date)}" if current_date else f"{_short_weekday(block.day)} · W{block.week}"
+                participant_count = _appointment_participant_count(project, block)
                 values = [
-                    german_date(current_date) if current_date else f"W{block.week} {block.day}",
+                    date_label,
                     title,
                     group_label or "—",
-                    block.trainer or "Nicht zugewiesen",
+                    str(participant_count) if participant_count is not None else "—",
                     block.start,
                     block.end,
                     _format_hours(max(0, minutes_between(block.start, block.end))),
                 ]
                 x = margin
-                for column_index, (value, width) in enumerate(zip(values, widths)):
+                for column_index, (cell_value, width) in enumerate(zip(values, widths)):
                     pdf.setFillColor(colors.HexColor("#0f172a" if column_index != 2 else "#3157d5"))
                     font = "Helvetica-Bold" if column_index == 1 else "Helvetica"
                     size = 6.9 if column_index == 1 else 6.6
                     if column_index == 1:
-                        _draw_wrapped_text(pdf, value, x + 5, y + 14, width - 10, font, size, 2)
+                        _draw_wrapped_text(pdf, str(cell_value), x + 5, y + 14, width - 10, font, size, 2)
                     else:
-                        text = str(value)
+                        text = str(cell_value)
                         while text and stringWidth(text, font, size) > width - 10:
                             text = text[:-1]
                         pdf.setFont(font, size)

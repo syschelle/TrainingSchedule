@@ -1,6 +1,15 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.3.8**
+Aktuelle Version: **v0.3.9**
+
+## Aenderungen v0.3.9
+
+- `Schulungsthemen` ist jetzt nach Trainer gruppiert; innerhalb jedes Trainers bleiben die Termine chronologisch sortiert.
+- Das Datum zeigt zusaetzlich den kurzen Wochentag, z. B. `Mo, 28.09.2026`.
+- Neue Spalte `Teilnehmer`: pro Termin wird die tatsaechliche Teilnehmerzahl der zugeordneten Gruppe bzw. der erzeugten `Gruppe x/y` angezeigt. Bei der letzten Teilgruppe wird die Restbelegung korrekt berechnet.
+- Die nach Trainer gruppierte Darstellung gilt auch fuer die Schulungsthemen-Seiten in Vorschau und PDF.
+- Keine PostgreSQL-Migration erforderlich.
+
 
 ## Aenderungen v0.3.8
 

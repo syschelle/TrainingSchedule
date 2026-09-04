@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.3.8"' in html
+    assert 'src="calendar.js?v=0.3.9"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -481,7 +481,7 @@ def test_v037_preview_inserts_training_schedule_after_overview() -> None:
     topic_pos = javascript.index('${topicSchedulePreviewPages(customer, location)}')
     calendar_pos = javascript.index('${scheduledWeeks().map((week)')
     assert overview_pos < topic_pos < calendar_pos
-    assert "chronologische Terminübersicht der Schulungsthemen" in javascript
+    assert "nach Trainer gruppierte chronologische Terminübersicht der Schulungsthemen" in javascript
 
 
 def test_v037_workflow_uses_planung_importieren_wording() -> None:
@@ -538,3 +538,18 @@ def test_v038_preview_hides_trainer_week_without_visible_blocks() -> None:
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     preview = javascript.split("function renderPreview()", 1)[1].split("function normalizeProjectState()", 1)[0]
     assert ".filter(({ trainer }) => trainerWeekHasVisibleBlocks(week, trainer))" in preview
+
+
+def test_v039_topic_schedule_groups_by_trainer_and_shows_weekday_and_participants() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    css = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
+    assert "function groupedScheduledTrainingAppointments()" in javascript
+    assert 'Trainer: ${escapeHtml(trainerLabel(trainer))}' in javascript
+    assert "function shortWeekday(dayName, dateValue = null)" in javascript
+    assert 'return formatted ? `${weekday}, ${formatted}`' in javascript
+    assert "function appointmentParticipantCount(block)" in javascript
+    assert "function generatedGroupIndex(groupLabel)" in javascript
+    assert '<span>Teilnehmer</span>' in javascript
+    assert 'data-label="Teilnehmer"' in javascript
+    assert ".topic-schedule-participants" in css
+    assert ".topic-trainer-section" in css

@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.3.9 - 2026-09-04
+
+### Schulungstermine nach Trainer gruppiert
+
+- Die Seite `Schulungsthemen` gruppiert Termine nach Trainer; innerhalb eines Trainerbereichs bleibt die Reihenfolge chronologisch.
+- Das Datum wird mit kurzem Wochentag dargestellt, z. B. `Mo, 28.09.2026`.
+- Neue Spalte `Teilnehmer` mit der fuer den jeweiligen Termin relevanten Teilnehmerzahl. Bei automatisch erzeugten `Gruppe x/y`-Sitzungen wird die Belegung anhand der Gruppengroesse und der maximalen Teilnehmer pro Sitzung berechnet.
+- Vorschau und PDF verwenden dieselbe Trainer-Gruppierung, Datumsdarstellung und Teilnehmer-Spalte.
+- Die Termininformationen bleiben direkt aus den aktuellen Kalenderbloecken abgeleitet und reagieren damit weiterhin auf Drag-and-drop, Resize, Trainerwechsel und Loeschen.
+- Keine PostgreSQL-Migration erforderlich.
+
+
 ## v0.3.8 - 2026-09-04
 
 ### Bedienung von Trainer-Wochen und Zeitbloecken verbessert

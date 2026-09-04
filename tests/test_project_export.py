@@ -5,9 +5,9 @@ from zipfile import ZipFile
 
 from pypdf import PdfReader
 
-from app.server.exporter import _service_day_count, export_pdf, export_xlsx, planned_weeks
+from app.server.exporter import _appointment_participant_count, _service_day_count, export_pdf, export_xlsx, planned_weeks
 from app.server.main import _project_export_filename
-from app.server.models import ParticipantGroup, ProductLine, ProjectFile, ScheduleBlock, TrainingProject
+from app.server.models import ParticipantGroup, ProductLine, ProjectFile, ScheduleBlock, TrainingProject, TrainingTopic
 
 
 def sample_project() -> TrainingProject:
@@ -195,3 +195,63 @@ def test_pdf_omits_empty_trainer_week_calendar_page():
     calendar_text = reader.pages[-1].extract_text() or ""
     assert "Trainer: Trainer A" in calendar_text
     assert "Trainer: Trainer B" not in calendar_text
+
+
+def test_training_schedule_participant_count_respects_generated_group_remainder():
+    project = TrainingProject(
+        title="Teilnehmergruppen",
+        product_id="deepunity-pacs",
+        trainers=["Trainer A"],
+        start_date="2026-09-07",
+        product_lines=[
+            ProductLine(
+                id="deepunity-pacs",
+                name="DeepUnity PACS",
+                participant_groups=[ParticipantGroup(id="webviewer", name="Webviewer", participant_count=12)],
+            )
+        ],
+        topics=[
+            TrainingTopic(
+                id="viewer",
+                product_id="deepunity-pacs",
+                title="DU Viewer",
+                duration_minutes=30,
+                participants_per_session=5,
+                participant_group_ids=["webviewer"],
+            )
+        ],
+        blocks=[
+            ScheduleBlock(
+                id="g1", type="training", week=1, day="Montag", title="DU Viewer - Webviewer Gruppe 1/3",
+                start="09:00", end="09:30", trainer="Trainer A", topic_id="viewer-webviewer-gruppe-1", source_topic_id="viewer"
+            ),
+            ScheduleBlock(
+                id="g3", type="training", week=1, day="Montag", title="DU Viewer - Webviewer Gruppe 3/3",
+                start="10:00", end="10:30", trainer="Trainer A", topic_id="viewer-webviewer-gruppe-3", source_topic_id="viewer"
+            ),
+        ],
+    )
+    assert _appointment_participant_count(project, project.blocks[0]) == 5
+    assert _appointment_participant_count(project, project.blocks[1]) == 2
+
+
+def test_pdf_training_schedule_groups_by_trainer_and_shows_weekday_and_participants():
+    project = TrainingProject(
+        title="Trainergruppen", customer_name="Musterklinik", location="Berlin", product_id="deepunity-pacs",
+        trainers=["Trainer A", "Trainer B"], start_date="2026-09-07",
+        product_lines=[ProductLine(id="deepunity-pacs", name="DeepUnity PACS", participant_groups=[ParticipantGroup(id="mfa", name="MFA", participant_count=8)])],
+        topics=[TrainingTopic(id="review", product_id="deepunity-pacs", title="Review MFA", duration_minutes=60, participants_per_session=8, participant_group_ids=["mfa"])],
+        blocks=[
+            ScheduleBlock(id="a", type="training", week=1, day="Montag", title="Review MFA - MFA", start="09:00", end="10:00", trainer="Trainer A", topic_id="review", source_topic_id="review"),
+            ScheduleBlock(id="b", type="training", week=1, day="Dienstag", title="Review MFA - MFA", start="11:00", end="12:00", trainer="Trainer B", topic_id="review", source_topic_id="review"),
+        ],
+    )
+    reader = PdfReader(BytesIO(export_pdf(project)))
+    schedule_text = "\n".join(page.extract_text() or "" for page in reader.pages[1:3])
+    assert "Teilnehmer" in schedule_text
+    assert "Trainer: Trainer A" in schedule_text
+    assert "Trainer: Trainer B" in schedule_text
+    assert "Mo, 07.09.2026" in schedule_text
+    assert "Di, 08.09.2026" in schedule_text
+    assert "Review MFA" in schedule_text
+    assert "8" in schedule_text

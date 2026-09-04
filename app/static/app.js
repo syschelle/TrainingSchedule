@@ -1600,27 +1600,22 @@ function productSummary() {
 function renderTopicSchedule() {
   const target = $("#tab-topics");
   if (!target) return;
-  const appointments = scheduledTrainingAppointments();
-  if (!appointments.length) {
+  const groups = groupedScheduledTrainingAppointments();
+  if (!groups.length) {
     target.innerHTML = `<div class="calendar-empty-state"><strong>Keine Schulungen eingeplant.</strong></div>`;
     return;
   }
 
-  target.innerHTML = `
-    <div class="topic-schedule-page">
-      <div class="topic-schedule-head">
-        <span>Datum</span>
-        <span>Schulungsinhalt</span>
-        <span>Gruppe</span>
-        <span>Trainer</span>
-        <span>Anfang</span>
-        <span>Ende</span>
-        <span>Dauer</span>
+  target.innerHTML = groups.map(({ trainer, appointments }) => `
+    <section class="topic-trainer-section">
+      <h3>Trainer: ${escapeHtml(trainerLabel(trainer))}</h3>
+      <div class="topic-schedule-page">
+        ${topicScheduleHeaderHtml()}
+        <div class="topic-schedule-list">
+          ${appointments.map((block) => topicScheduleRowHtml(block)).join("")}
+        </div>
       </div>
-      <div class="topic-schedule-list">
-        ${appointments.map((block) => topicScheduleRowHtml(block)).join("")}
-      </div>
-    </div>`;
+    </section>`).join("");
 }
 
 function scheduledTrainingAppointments() {
@@ -1628,6 +1623,22 @@ function scheduledTrainingAppointments() {
     .filter((block) => block.type === "training")
     .slice()
     .sort(compareScheduleBlocks);
+}
+
+function groupedScheduledTrainingAppointments() {
+  const appointments = scheduledTrainingAppointments();
+  const trainerOrder = calendarTrainers();
+  const known = new Set(trainerOrder);
+  appointments.forEach((block) => {
+    const trainer = String(block.trainer || "").trim();
+    if (!known.has(trainer)) {
+      known.add(trainer);
+      trainerOrder.push(trainer);
+    }
+  });
+  return trainerOrder
+    .map((trainer) => ({ trainer, appointments: appointments.filter((block) => String(block.trainer || "").trim() === trainer) }))
+    .filter((entry) => entry.appointments.length);
 }
 
 function topicScheduleBlocks(topicId) {
@@ -1649,50 +1660,139 @@ function compareScheduleBlocks(left, right) {
 
 function topicScheduleDate(block) {
   const value = TrainingCalendar.dateForCalendarDay(project.start_date, Number(block.week || 1), block.day);
-  return TrainingCalendar.formatGermanDate(value) || `Woche ${block.week}, ${block.day}`;
+  const formatted = TrainingCalendar.formatGermanDate(value);
+  const weekday = shortWeekday(block.day, value);
+  return formatted ? `${weekday}, ${formatted}` : `${weekday} · Woche ${block.week}`;
+}
+
+function shortWeekday(dayName, dateValue = null) {
+  const byName = { Montag: "Mo", Dienstag: "Di", Mittwoch: "Mi", Donnerstag: "Do", Freitag: "Fr", Samstag: "Sa", Sonntag: "So" };
+  if (byName[dayName]) return byName[dayName];
+  if (dateValue instanceof Date && !Number.isNaN(dateValue.getTime())) return ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"][dateValue.getDay()];
+  return String(dayName || "").slice(0, 2) || "—";
+}
+
+function topicForBlock(block) {
+  const topicId = block.source_topic_id || block.topic_id;
+  return (project.topics || []).find((item) => item.id === topicId) || null;
+}
+
+function participantGroupForBlock(block, topic) {
+  if (!topic) return null;
+  const product = (project.product_lines || []).find((item) => item.id === (topic.product_id || project.product_id)) || currentProduct();
+  const groups = product?.participant_groups || [];
+  const title = String(block.title || "");
+  const byName = groups.slice().sort((left, right) => String(right.name || "").length - String(left.name || "").length)
+    .find((group) => title.includes(` - ${String(group.name || "").trim()}`));
+  if (byName) return byName;
+  const ids = topic.participant_group_ids || [];
+  if (ids.length === 1) return groups.find((group) => group.id === ids[0]) || null;
+  if (topic.participant_group_id) return groups.find((group) => group.id === topic.participant_group_id) || null;
+  return null;
+}
+
+function generatedGroupIndex(groupLabel) {
+  const value = String(groupLabel || "");
+  if (!value.startsWith("Gruppe ")) return null;
+  const fraction = value.slice("Gruppe ".length).split("/");
+  if (fraction.length !== 2) return null;
+  const index = Number(fraction[0]);
+  const total = Number(fraction[1]);
+  return Number.isInteger(index) && Number.isInteger(total) && index > 0 && total > 0 ? { index, total } : null;
+}
+
+function appointmentParticipantCount(block) {
+  const topic = topicForBlock(block);
+  if (!topic) return null;
+  const product = (project.product_lines || []).find((item) => item.id === (topic.product_id || project.product_id)) || currentProduct();
+  const groups = product?.participant_groups || [];
+  const group = participantGroupForBlock(block, topic);
+  const maxParticipants = Number(topic.participants_per_session || 0);
+  const split = generatedGroupIndex(calendarDisplayParts(block).groupLabel);
+  if (group) {
+    const totalParticipants = Math.max(0, Number(group.participant_count || 0));
+    if (split && maxParticipants > 0) {
+      return Math.max(0, Math.min(maxParticipants, totalParticipants - ((split.index - 1) * maxParticipants)));
+    }
+    return totalParticipants || null;
+  }
+  const selectedIds = topic.participant_group_ids || [];
+  if (selectedIds.length) {
+    const total = groups.filter((groupItem) => selectedIds.includes(groupItem.id)).reduce((sum, groupItem) => sum + Math.max(0, Number(groupItem.participant_count || 0)), 0);
+    return total || null;
+  }
+  return null;
+}
+
+function topicScheduleHeaderHtml() {
+  return `<div class="topic-schedule-head">
+    <span>Datum</span><span>Schulungsinhalt</span><span>Gruppe</span><span>Teilnehmer</span><span>Anfang</span><span>Ende</span><span>Dauer</span>
+  </div>`;
 }
 
 function topicScheduleRowHtml(block, preview = false) {
   const parts = calendarDisplayParts(block);
   const durationMinutes = Math.max(0, duration(block.start, block.end));
+  const participantCount = appointmentParticipantCount(block);
   const className = preview ? "topic-schedule-row topic-schedule-preview-row" : "topic-schedule-row";
   return `<article class="${className}">
     <span data-label="Datum" class="topic-schedule-date">${escapeHtml(topicScheduleDate(block))}</span>
     <strong data-label="Schulungsinhalt">${escapeHtml(parts.title)}</strong>
     <span data-label="Gruppe" class="topic-schedule-group">${parts.groupLabel ? escapeHtml(parts.groupLabel) : "—"}</span>
-    <span data-label="Trainer">${escapeHtml(trainerLabel(block.trainer || ""))}</span>
+    <span data-label="Teilnehmer" class="topic-schedule-participants">${participantCount == null ? "—" : escapeHtml(String(participantCount))}</span>
     <span data-label="Anfang" class="topic-schedule-time">${escapeHtml(block.start)}</span>
     <span data-label="Ende" class="topic-schedule-time">${escapeHtml(block.end)}</span>
     <span data-label="Dauer" class="topic-schedule-duration">${escapeHtml(formatHours(durationMinutes))}</span>
   </article>`;
 }
 
-function chunkAppointments(items, size = 18) {
-  const chunks = [];
-  for (let index = 0; index < items.length; index += size) chunks.push(items.slice(index, index + size));
-  return chunks.length ? chunks : [[]];
+function paginateGroupedAppointments(groups, rowLimit = 18) {
+  const pages = [];
+  let page = [];
+  let usedRows = 0;
+  const flush = () => {
+    if (page.length) pages.push(page);
+    page = [];
+    usedRows = 0;
+  };
+  groups.forEach(({ trainer, appointments }) => {
+    let index = 0;
+    while (index < appointments.length) {
+      if (usedRows >= rowLimit - 1) flush();
+      page.push({ kind: "trainer", trainer });
+      usedRows += 1;
+      const capacity = Math.max(1, rowLimit - usedRows);
+      const chunk = appointments.slice(index, index + capacity);
+      chunk.forEach((block) => page.push({ kind: "block", block }));
+      usedRows += chunk.length;
+      index += chunk.length;
+      if (index < appointments.length) flush();
+    }
+  });
+  flush();
+  return pages.length ? pages : [[]];
 }
 
 function topicSchedulePreviewPages(customer, location) {
-  const appointments = scheduledTrainingAppointments();
-  const chunks = chunkAppointments(appointments, 18);
-  return chunks.map((chunk, index) => `
+  const groups = groupedScheduledTrainingAppointments();
+  const pages = paginateGroupedAppointments(groups, 18);
+  return pages.map((items, index) => `
     <section class="pdf-preview-sheet pdf-preview-topic-sheet">
       <div class="pdf-preview-header">
         <div>
           <h2>${escapeHtml(project.title || "Schulungsplan")}</h2>
-          <p>Schulungsthemen${chunks.length > 1 ? ` · ${index + 1}/${chunks.length}` : ""}</p>
+          <p>Schulungsthemen${pages.length > 1 ? ` · ${index + 1}/${pages.length}` : ""}</p>
         </div>
         <div class="pdf-preview-customer"><strong>Kunde: ${escapeHtml(customer)}</strong><strong>Standort: ${escapeHtml(location)}</strong></div>
       </div>
       <div class="pdf-preview-topic-body">
-        <h3>Schulungstermine</h3>
-        ${chunk.length ? `
+        <h3>Schulungstermine nach Trainer</h3>
+        ${items.length ? `
           <div class="topic-schedule-page topic-schedule-preview">
-            <div class="topic-schedule-head">
-              <span>Datum</span><span>Schulungsinhalt</span><span>Gruppe</span><span>Trainer</span><span>Anfang</span><span>Ende</span><span>Dauer</span>
-            </div>
-            <div class="topic-schedule-list">${chunk.map((block) => topicScheduleRowHtml(block, true)).join("")}</div>
+            ${topicScheduleHeaderHtml()}
+            <div class="topic-schedule-list">${items.map((item) => item.kind === "trainer"
+              ? `<div class="topic-schedule-trainer-row">Trainer: ${escapeHtml(trainerLabel(item.trainer))}</div>`
+              : topicScheduleRowHtml(item.block, true)).join("")}</div>
           </div>` : `<div class="calendar-empty-state"><strong>Keine Schulungen eingeplant.</strong></div>`}
       </div>
     </section>`).join("");
@@ -2344,7 +2444,7 @@ function renderPreview() {
   const serviceDays = serviceDayCount();
   const unscheduled = project.unscheduled_topics.reduce((sum, item) => sum + item.duration_minutes, 0);
   $("#tab-preview").innerHTML = `<div class="calendar-preview">
-    <p class="muted">PDF-Vorschau im A4-Querformat: Seite 1 ist die Übersicht. Danach folgt die chronologische Terminübersicht der Schulungsthemen und anschließend die Kalenderseiten nach Kalenderwoche und Trainer.</p>
+    <p class="muted">PDF-Vorschau im A4-Querformat: Seite 1 ist die Übersicht. Danach folgt die nach Trainer gruppierte chronologische Terminübersicht der Schulungsthemen und anschließend die Kalenderseiten nach Kalenderwoche und Trainer.</p>
     <div class="pdf-preview-pages">
       <section class="pdf-preview-sheet pdf-preview-overview-sheet">
         <div class="pdf-preview-header">
