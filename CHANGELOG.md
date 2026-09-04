@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.4.8 - 2026-09-04
+
+### CodeQL-Sprachmatrix explizit festgelegt
+
+- Eigener `.github/workflows/codeql.yml` fuer `python` und `javascript-typescript` hinzugefuegt.
+- `actions` ist bewusst nicht Teil der CodeQL-Sprachmatrix, da im Repository kein eigener GitHub-Action-Quellcode vorhanden ist. Damit wird der fehlerhafte automatisch erzeugte Actions-CodeQL-Lauf mit Exit Code 32 vermieden.
+- Der Workflow verwendet `github/codeql-action/init@v4` und `github/codeql-action/analyze@v4`.
+- CodeQL laeuft fuer Pushes und Pull Requests gegen `main`, per `workflow_dispatch` sowie woechentlich.
+- Beim Wechsel von GitHubs bisherigem `Default setup` muss einmalig auf `Advanced setup` umgestellt werden.
+- Regressionstests fuer die CodeQL-Konfiguration ergaenzt.
+- Keine PostgreSQL-Migration erforderlich.
+
 ## v0.4.7 - 2026-09-04
 
 ### Parkfläche-Wasserzeichen aus blockierten Kalendertagen entfernt

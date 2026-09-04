@@ -1594,3 +1594,13 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Keine PostgreSQL-Migration erforderlich.
 - Version auf `v0.4.7` erhöht.
 
+## Erweiterung v0.4.8 - CodeQL Buildfehler beheben
+
+- CodeQL darf nur die im Projekt tatsaechlich analysierbaren Sprachen `python` und `javascript-typescript` verwenden.
+- Die automatisch erkannte CodeQL-Sprache `actions` darf nicht Teil der Analyse sein, weil das Repository zwar Workflow-YAML, aber keinen eigenen GitHub-Action-Quellcode enthaelt und CodeQL sonst mit `no source code seen` / Exit Code 32 abbrechen kann.
+- Ein eigener Advanced-Setup-Workflow unter `.github/workflows/codeql.yml` legt die Sprachmatrix explizit fest.
+- Der Workflow verwendet `github/codeql-action` v4.
+- GitHubs bestehendes CodeQL `Default setup` muss beim Einspielen einmalig auf `Advanced setup` umgestellt werden, damit nur der versionierte Repository-Workflow laeuft.
+- Keine PostgreSQL-Migration erforderlich.
+- Version auf `v0.4.8` erhoeht.
+

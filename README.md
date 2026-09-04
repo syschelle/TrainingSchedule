@@ -1,6 +1,16 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.4.7**
+Aktuelle Version: **v0.4.8**
+
+
+## Aenderungen v0.4.8
+
+- Eigener CodeQL-Workflow fuer die tatsaechlich verwendeten Sprachen `python` und `javascript-typescript` hinzugefuegt.
+- Die CodeQL-Sprache `actions` wird bewusst nicht analysiert, da das Repository zwar GitHub-Workflow-YAML enthaelt, aber keinen eigenen GitHub-Action-Quellcode. Dadurch wird der fehlerhafte CodeQL-Lauf mit `no source code seen` / Exit Code 32 vermieden.
+- CodeQL verwendet `github/codeql-action` v4 und laeuft bei Push/PR auf `main`, manuell sowie woechentlich.
+- Fuer die Umstellung muss GitHubs bisheriges CodeQL `Default setup` einmalig auf `Advanced setup` umgestellt werden, damit nicht zusaetzlich der von GitHub generierte Default-Lauf aktiv bleibt.
+- Regressionstests fuer die explizite CodeQL-Sprachmatrix ergaenzt.
+- Keine PostgreSQL-Migration erforderlich.
 
 
 ## Aenderungen v0.4.7
