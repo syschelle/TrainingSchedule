@@ -2110,7 +2110,7 @@ function dayHtml(day, dayStart, calendarHeight, week, trainer, trainerIndex, int
   const dateLabel = TrainingCalendar.formatGermanDate(calendarDate);
   const holidayHints = TrainingCalendar.holidayHints(calendarDate);
   const available = trainerDayIsAvailable(trainer, week, day);
-  const availabilityLabel = available ? "Verfügbar" : "Nicht verfügbar · Parkfläche";
+  const availabilityLabel = available ? "Verfügbar" : "Nicht verfügbar";
   return `<section class="calendar-day ${available ? "trainer-day-available" : "trainer-day-unavailable"}">
     <div class="calendar-day-title">
       <div class="calendar-day-heading">

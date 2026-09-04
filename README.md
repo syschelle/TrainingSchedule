@@ -1,8 +1,13 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.4.4**
+Aktuelle Version: **v0.4.5**
 
 
+## Aenderungen v0.4.5
+
+- Die Beschriftung nicht verfügbarer Tage im internen Kalender und in der Offline-Kundenplanung lautet jetzt nur noch `Nicht verfügbar` statt `Nicht verfügbar · Parkfläche`.
+- Die Parkflächen-Funktionalität selbst bleibt unverändert erhalten.
+- Keine PostgreSQL-Migration erforderlich.
 
 ## Aenderungen v0.4.4
 

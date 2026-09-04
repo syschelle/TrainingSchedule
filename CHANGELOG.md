@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.4.5 - 2026-09-04
+
+### Kalenderbeschriftung vereinfacht
+
+- Nicht verfügbare Tage werden im internen Kalender und in der Offline-Kundenplanung nur noch mit `Nicht verfügbar` beschriftet.
+- Der Zusatz `· Parkfläche` wurde ausschließlich aus der sichtbaren Tagesbeschriftung entfernt; die bestehende Parkflächen-Logik bleibt unverändert.
+- Keine PostgreSQL-Migration erforderlich.
+
 ## v0.4.4 - 2026-09-04
 
 ### Trainer-Verfügbarkeit, Parkflächen und Freitag-Logik vereinheitlicht

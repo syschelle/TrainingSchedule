@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.4.4"' in html
+    assert 'src="calendar.js?v=0.4.5"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -656,7 +656,8 @@ def test_v044_unavailable_days_are_red_and_calendar_supports_parking():
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     styles = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
     assert 'selected.has(day) ? "selected" : "unavailable"' in javascript
-    assert 'Nicht verfügbar · Parkfläche' in javascript
+    assert 'Nicht verfügbar' in javascript
+    assert 'Nicht verfügbar · Parkfläche' not in javascript
     assert 'trainingBlockIsParked' in javascript
     assert 'block-parked-badge' in javascript
     assert '.availability-day.unavailable:not(.disabled)' in styles
@@ -680,5 +681,6 @@ def test_v044_customer_parking_blocks_final_return_download():
     assert 'function parkedTrainingBlocks()' in javascript
     assert 'download.disabled=parked>0' in javascript
     assert 'Schulungsblock geparkt.' in javascript
-    assert 'Nicht verfügbar · Parkfläche' in javascript
+    assert 'Nicht verfügbar' in javascript
+    assert 'Nicht verfügbar · Parkfläche' not in javascript
     assert '.block.parked' in styles

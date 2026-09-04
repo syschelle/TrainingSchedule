@@ -1566,3 +1566,12 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Der serverseitige Rückimport muss dieselbe Verfügbarkeitsregel erneut prüfen.
 - Keine PostgreSQL-Migration erforderlich.
 - Version auf `v0.4.4` erhöht.
+
+## Erweiterung v0.4.5 - Kalenderbeschriftung vereinfacht
+
+- Nicht verfügbare Tage werden im internen Kalender nur noch mit `Nicht verfügbar` beschriftet.
+- Auch in der Offline-Kundenplanung lautet die Tagesbeschriftung nur noch `Nicht verfügbar`.
+- Der sichtbare Zusatz `· Parkfläche` entfällt.
+- Die bestehende Parkflächen-Funktionalität bleibt vollständig erhalten: vorhandene Schulungsblöcke können weiterhin temporär auf nicht verfügbare Tage verschoben werden und werden dabei als `Geparkt` behandelt.
+- Keine PostgreSQL-Migration erforderlich.
+- Version auf `v0.4.5` erhöht.
