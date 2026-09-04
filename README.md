@@ -1,7 +1,17 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.4.1**
+Aktuelle Version: **v0.4.2**
 
+
+
+## Aenderungen v0.4.2
+
+- `Kundenplanung importieren` steht nur noch am Anfang des Eingabe-Workflows und wurde aus der Schulungsplan-Aktionsleiste entfernt.
+- In der Offline-Kundenplanung werden Pausen und Mittagspausen nicht mehr als Kalenderkacheln dargestellt. Sie bleiben intern als geschuetzte Belegungszeiten erhalten.
+- Kunden koennen neben Schulungsbloecken jetzt auch `Anreise` und `Abreise` per Drag-and-drop verschieben. Die jeweilige Dauer bleibt unveraendert und es gibt weiterhin keine Resize-Funktion.
+- Der Rueckimport akzeptiert entsprechend Positionsaenderungen von Schulung, Anreise und Abreise und prueft weiterhin Signatur, vorhandene Wochen/Trainer, 15-Minuten-Raster, unveraenderte Dauer und Ueberlappungen.
+- Die Zeitachsen der Offline-Kundenseite zeigen jetzt jede Viertelstunde mit eigener Zeitangabe (`08:00`, `08:15`, `08:30`, `08:45` usw.).
+- Keine PostgreSQL-Migration erforderlich.
 
 ## Aenderungen v0.4.1
 

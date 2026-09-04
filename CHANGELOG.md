@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.4.2 - 2026-09-04
+
+### Kundenplanung-Workflow und Offline-Kalender verbessert
+
+- `Kundenplanung importieren` wurde aus dem Schulungsplan entfernt und steht nur noch am Anfang des Eingabe-Workflows.
+- Pausen und Mittagspausen werden in der exportierten Offline-Kundenseite nicht mehr sichtbar dargestellt.
+- Anreise und Abreise koennen vom Kunden jetzt wie Schulungsbloecke per Drag-and-drop verschoben werden; ihre Dauer bleibt dabei unveraendert.
+- Der geschuetzte Rueckimport akzeptiert Positionsaenderungen fuer Schulung, Anreise und Abreise.
+- Die Zeitachse zeigt jetzt alle 15 Minuten eine konkrete Uhrzeit.
+- Verdeckte Pausen-/Mittagsbereiche bleiben als geschuetzte Belegungszeiten erhalten und werden bei Kollisionen neutral als nicht verfuegbar gemeldet.
+- Keine PostgreSQL-Migration erforderlich.
+
 ## v0.4.1 - 2026-09-04
 
 ### Kundenpaket auf eine einzelne HTML-Datei vereinfacht

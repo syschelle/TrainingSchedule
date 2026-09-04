@@ -1538,3 +1538,14 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Keine PostgreSQL-Migration erforderlich.
 - Version auf `v0.4.1` erhoeht.
 
+
+
+## Erweiterung v0.4.2 - Kundenplanung Import/Drag-Zeiten
+
+- `Kundenplanung importieren` ist nur noch am Anfang des gefuehrten Eingabe-Workflows verfuegbar und nicht mehr im Schulungsplan selbst.
+- Offline-Kundenpaket bleibt ein ZIP mit genau einer selbststaendigen `index.html`.
+- Pausen und Mittagspausen werden auf der Kundenseite nicht als Kalenderbloecke gerendert; sie bleiben intern als nicht sichtbare Belegungszeiten fuer Kollisionsschutz erhalten.
+- Verschiebbar sind jetzt `training`, `arrival` und `departure`. Blockdauer, Wochenstruktur und Inhalte koennen weiterhin nicht veraendert werden.
+- Rueckimport erlaubt Positionsaenderungen derselben drei Blocktypen und prueft unveraenderte Dauer, 15-Minuten-Raster, erlaubte Woche/Trainer/Tag, Arbeitszeit, Kollisionen und Abhaengigkeiten.
+- Zeitachsen der Kundenseite beschriften jedes 15-Minuten-Intervall mit einer Uhrzeit.
+- Version auf `v0.4.2` erhoeht.

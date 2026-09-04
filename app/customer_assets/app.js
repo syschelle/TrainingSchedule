@@ -7,6 +7,8 @@
   const DAY_INDEX = Object.fromEntries(DAYS.map((name,index)=>[name,index]));
   const HOUR_HEIGHT = 72;
   const SNAP = 15;
+  const VISIBLE_TYPES = new Set(["training","arrival","departure"]);
+  const MOVABLE_TYPES = new Set(["training","arrival","departure"]);
   let blocks = JSON.parse(JSON.stringify(view.blocks || []));
   const baseline = JSON.parse(JSON.stringify(view.blocks || []));
   const baselineById = new Map(baseline.map(block => [block.id, block]));
@@ -29,11 +31,11 @@
   function calendarDate(week,day){ const monday=mondayOfStart(); if(!monday)return null; const result=new Date(monday); result.setDate(result.getDate()+(week-1)*7+DAY_INDEX[day]); return result; }
   function germanDate(date){ return date?`${String(date.getDate()).padStart(2,"0")}.${String(date.getMonth()+1).padStart(2,"0")}.${date.getFullYear()}`:""; }
   function weekHeading(week){ return `Woche ${week} · ${germanDate(calendarDate(week,"Montag"))}–${germanDate(calendarDate(week,"Freitag"))}`; }
-  function laneBlocks(week,trainer,day){ return blocks.filter(b=>Number(b.week)===Number(week)&&b.trainer===trainer&&b.day===day).sort((a,b)=>a.start.localeCompare(b.start)); }
+  function laneBlocks(week,trainer,day){ return blocks.filter(b=>VISIBLE_TYPES.has(b.type)&&Number(b.week)===Number(week)&&b.trainer===trainer&&b.day===day).sort((a,b)=>a.start.localeCompare(b.start)); }
   function conflict(moving,target){ return blocks.find(other => other.id!==moving.id && Number(other.week)===Number(target.week) && other.day===target.day && other.trainer===target.trainer && toMinutes(target.start)<toMinutes(other.end) && toMinutes(other.start)<toMinutes(target.end)); }
 
   function changedMoves(){
-    return blocks.filter(block=>block.type==="training").filter(block=>{
+    return blocks.filter(block=>MOVABLE_TYPES.has(block.type)).filter(block=>{
       const original=baselineById.get(block.id); return original && ["week","day","trainer","start","end"].some(key=>String(block[key])!==String(original[key]));
     }).map(block=>({block_id:block.id,week:Number(block.week),day:block.day,trainer:block.trainer,start:block.start,end:block.end}));
   }
@@ -41,12 +43,12 @@
 
   function blockHtml(block){
     const dayStart=toMinutes(view.settings.day_start); const top=((toMinutes(block.start)-dayStart)/60)*HOUR_HEIGHT; const height=Math.max(22,(duration(block)/60)*HOUR_HEIGHT);
-    const draggable=block.type==="training"; const title=block.type==="arrival"?"Anreise":block.title;
-    return `<article class="block ${draggable?"training":"fixed"}" data-id="${escapeHtml(block.id)}" ${draggable?'draggable="true"':''} style="top:${top}px;height:${height}px;--block-bg:${escapeHtml(block.background_color||"#eef2ff")}">
+    const draggable=MOVABLE_TYPES.has(block.type); const title=block.type==="arrival"?"Anreise":block.type==="departure"?"Abreise":block.title;
+    return `<article class="block ${escapeHtml(block.type)} ${draggable?"movable":"fixed"}" data-id="${escapeHtml(block.id)}" ${draggable?'draggable="true"':''} style="top:${top}px;height:${height}px;--block-bg:${escapeHtml(block.background_color||"#eef2ff")}">
       <strong>${escapeHtml(title)}</strong>${block.group?`<span class="group">${escapeHtml(block.group)}</span>`:""}<span class="meta">${escapeHtml(block.start)}–${escapeHtml(block.end)} · ${escapeHtml(formatHours(duration(block)))}</span>
     </article>`;
   }
-  function timeLabels(){ const start=toMinutes(view.settings.day_start), end=toMinutes(view.settings.day_end); let out=""; for(let minute=start;minute<=end;minute+=60){ out+=`<span class="time-label" style="top:${((minute-start)/60)*HOUR_HEIGHT}px">${formatTime(minute)}</span>`;} return out; }
+  function timeLabels(){ const start=toMinutes(view.settings.day_start), end=toMinutes(view.settings.day_end); let out=""; for(let minute=start;minute<=end;minute+=15){ out+=`<span class="time-label" style="top:${((minute-start)/60)*HOUR_HEIGHT}px">${formatTime(minute)}</span>`;} return out; }
   function dayHtml(week,trainer,day){ const total=(toMinutes(view.settings.day_end)-toMinutes(view.settings.day_start)); const height=(total/60)*HOUR_HEIGHT; return `<section class="day"><div class="day-head"><strong>${day}</strong><span>${germanDate(calendarDate(week,day))}</span></div><div class="day-body" data-week="${week}" data-trainer="${escapeHtml(trainer)}" data-day="${day}" style="--calendar-height:${height}px">${timeLabels()}${laneBlocks(week,trainer,day).map(blockHtml).join("")}</div></section>`; }
   function render(){
     const scrollY=window.scrollY; const meta=[view.customer,view.location,view.product].filter(Boolean).join(" · "); $("#project-meta").textContent=meta;
@@ -54,15 +56,15 @@
     bindDrag(); updateCount(); requestAnimationFrame(()=>window.scrollTo({top:scrollY}));
   }
   function bindDrag(){
-    document.querySelectorAll('.block.training').forEach(el=>el.addEventListener('dragstart',event=>{ draggedId=el.dataset.id; const rect=el.getBoundingClientRect(); dragOffsetMinutes=((event.clientY-rect.top)/HOUR_HEIGHT)*60; el.classList.add('dragging'); event.dataTransfer.effectAllowed='move'; event.dataTransfer.setData('text/plain',draggedId); }));
-    document.querySelectorAll('.block.training').forEach(el=>el.addEventListener('dragend',()=>el.classList.remove('dragging')));
+    document.querySelectorAll('.block.movable').forEach(el=>el.addEventListener('dragstart',event=>{ draggedId=el.dataset.id; const rect=el.getBoundingClientRect(); dragOffsetMinutes=((event.clientY-rect.top)/HOUR_HEIGHT)*60; el.classList.add('dragging'); event.dataTransfer.effectAllowed='move'; event.dataTransfer.setData('text/plain',draggedId); }));
+    document.querySelectorAll('.block.movable').forEach(el=>el.addEventListener('dragend',()=>el.classList.remove('dragging')));
     document.querySelectorAll('.day-body').forEach(body=>{
       body.addEventListener('dragover',event=>{event.preventDefault();body.classList.add('drop-target');}); body.addEventListener('dragleave',()=>body.classList.remove('drop-target'));
-      body.addEventListener('drop',event=>{ event.preventDefault(); body.classList.remove('drop-target'); const block=blocks.find(item=>item.id===(draggedId||event.dataTransfer.getData('text/plain'))); if(!block||block.type!=="training")return;
-        const week=Number(body.dataset.week), day=body.dataset.day, trainer=body.dataset.trainer; if(day==="Freitag"&&!view.settings.friday_training_enabled){setStatus("Freitag ist für Schulungen nicht freigegeben.","error");return;}
+      body.addEventListener('drop',event=>{ event.preventDefault(); body.classList.remove('drop-target'); const block=blocks.find(item=>item.id===(draggedId||event.dataTransfer.getData('text/plain'))); if(!block||!MOVABLE_TYPES.has(block.type))return;
+        const week=Number(body.dataset.week), day=body.dataset.day, trainer=body.dataset.trainer; if(day==="Freitag"&&!view.settings.friday_training_enabled){setStatus("Freitag ist für die Planung nicht freigegeben.","error");return;}
         const rect=body.getBoundingClientRect(); const length=duration(block); const dayStart=toMinutes(view.settings.day_start), dayEnd=toMinutes(view.settings.day_end); let start=snap(dayStart+((event.clientY-rect.top)/HOUR_HEIGHT)*60-dragOffsetMinutes); start=Math.max(dayStart,Math.min(start,dayEnd-length));
-        const target={...block,week,day,trainer,start:formatTime(start),end:formatTime(start+length)}; const hit=conflict(block,target); if(hit){setStatus(`Der Zielbereich ist durch „${hit.title||hit.type}“ belegt.`,"error");return;}
-        Object.assign(block,target); draggedId=""; dragOffsetMinutes=0; setStatus("Schulungsblock verschoben.","ok"); render();
+        const target={...block,week,day,trainer,start:formatTime(start),end:formatTime(start+length)}; const hit=conflict(block,target); if(hit){const hidden=hit.type==="break"||hit.type==="lunch";setStatus(hidden?"Der Zielbereich ist nicht verfügbar.":`Der Zielbereich ist durch „${hit.title||hit.type}“ belegt.`,"error");return;}
+        Object.assign(block,target); draggedId=""; dragOffsetMinutes=0; setStatus(block.type==="training"?"Schulungsblock verschoben.":block.type==="arrival"?"Anreise verschoben.":"Abreise verschoben.","ok"); render();
       });
     });
   }

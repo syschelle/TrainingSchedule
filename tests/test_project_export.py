@@ -312,3 +312,48 @@ def test_v0310_pdf_training_topic_columns_put_times_after_date() -> None:
     text = reader.pages[1].extract_text() or ""
     positions = [text.index(label) for label in ["Datum", "Anfang", "Ende", "Dauer", "Schulungsinhalt", "Gruppe", "Teilnehmer"]]
     assert positions == sorted(positions)
+
+
+def test_v042_customer_return_can_move_arrival_and_preserves_duration(monkeypatch):
+    monkeypatch.setenv("CUSTOMER_EXCHANGE_SECRET", "test-secret")
+    project = sample_project()
+    project.blocks.append(ScheduleBlock(
+        id="arrival-a",
+        type="arrival",
+        week=1,
+        day="Montag",
+        title="Anreise / Eintreffen der Teilnehmer",
+        start="08:30",
+        end="09:30",
+        trainer="Trainer A",
+    ))
+    package = build_customer_package(project)
+    payload = _customer_return_from_package(package, [{
+        "block_id": "arrival-a", "week": 1, "day": "Montag", "trainer": "Trainer A", "start": "08:45", "end": "09:45"
+    }])
+    updated = apply_customer_return(payload)
+    block = next(item for item in updated.blocks if item.id == "arrival-a")
+    assert (block.start, block.end) == ("08:45", "09:45")
+    assert minutes_between(block.start, block.end) == 60
+
+
+def test_v042_customer_return_rejects_arrival_duration_change(monkeypatch):
+    import pytest
+    monkeypatch.setenv("CUSTOMER_EXCHANGE_SECRET", "test-secret")
+    project = sample_project()
+    project.blocks.append(ScheduleBlock(
+        id="arrival-a",
+        type="arrival",
+        week=1,
+        day="Montag",
+        title="Anreise / Eintreffen der Teilnehmer",
+        start="08:30",
+        end="09:30",
+        trainer="Trainer A",
+    ))
+    package = build_customer_package(project)
+    payload = _customer_return_from_package(package, [{
+        "block_id": "arrival-a", "week": 1, "day": "Montag", "trainer": "Trainer A", "start": "08:30", "end": "09:45"
+    }])
+    with pytest.raises(ValueError, match="duration_changed"):
+        apply_customer_return(payload)

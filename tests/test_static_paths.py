@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.4.1"' in html
+    assert 'src="calendar.js?v=0.4.2"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -602,7 +602,7 @@ def test_customer_offline_page_has_no_edit_resize_or_week_delete_controls() -> N
     assert "Woche löschen" not in html
     assert "resize" not in html.lower()
     assert "pointerdown" not in javascript
-    assert 'block.type==="training"' in javascript
+    assert 'const MOVABLE_TYPES = new Set(["training","arrival","departure"]);' in javascript
     assert "duration_changed" not in javascript
 
 
@@ -614,3 +614,22 @@ def test_xlsx_export_runtime_code_and_dependency_are_removed() -> None:
     assert "xlsxwriter" not in requirements
     assert "export_xlsx" not in exporter
     assert "schulungsplan.xlsx" not in main
+
+
+def test_v042_customer_import_is_only_in_input_workflow_start() -> None:
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    input_section = html.split('id="input-page"', 1)[1].split('id="products-page"', 1)[0]
+    plan_section = html.split('id="plan-page"', 1)[1].split('id="blockEditorModal"', 1)[0]
+    assert 'id="importCustomerPlan"' in input_section
+    assert 'id="customerPlanInput"' in input_section
+    assert 'id="importCustomerPlan"' not in plan_section
+    assert 'id="customerPlanInput"' not in plan_section
+
+
+def test_v042_customer_calendar_hides_breaks_and_lunch_and_shows_quarter_labels() -> None:
+    javascript = (STATIC_DIR.parent / "customer_assets" / "app.js").read_text(encoding="utf-8")
+    assert 'const VISIBLE_TYPES = new Set(["training","arrival","departure"]);' in javascript
+    assert 'blocks.filter(b=>VISIBLE_TYPES.has(b.type)' in javascript
+    assert 'minute+=15' in javascript
+    assert 'MOVABLE_TYPES.has(block.type)' in javascript
+    assert "document.querySelectorAll('.block.movable')" in javascript

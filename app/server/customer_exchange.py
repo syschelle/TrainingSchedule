@@ -104,7 +104,7 @@ def _view_data(project: TrainingProject) -> dict:
             "title": title,
             "group": group_label,
             "background_color": block.background_color,
-            "draggable": block.type == BlockType.training,
+            "draggable": block.type in {BlockType.training, BlockType.arrival, BlockType.departure},
         })
     return {
         "title": project.title or "Schulungsplan",
@@ -185,8 +185,9 @@ def _overlap(left: ScheduleBlock, right: ScheduleBlock) -> bool:
 def apply_customer_return(payload: CustomerPlanningReturn) -> TrainingProject:
     baseline = verify_customer_exchange(payload)
     updated = baseline.model_copy(deep=True)
-    training_by_id = {block.id: block for block in updated.blocks if block.type == BlockType.training}
-    original_by_id = {block.id: block for block in baseline.blocks if block.type == BlockType.training}
+    movable_types = {BlockType.training, BlockType.arrival, BlockType.departure}
+    movable_by_id = {block.id: block for block in updated.blocks if block.type in movable_types}
+    original_by_id = {block.id: block for block in baseline.blocks if block.type in movable_types}
     allowed_weeks = {int(block.week) for block in baseline.blocks if block.type == BlockType.training}
     allowed_trainers = set(project_trainers(baseline))
     seen: set[str] = set()
@@ -195,7 +196,7 @@ def apply_customer_return(payload: CustomerPlanningReturn) -> TrainingProject:
         if move.block_id in seen:
             raise ValueError("duplicate_move")
         seen.add(move.block_id)
-        block = training_by_id.get(move.block_id)
+        block = movable_by_id.get(move.block_id)
         original = original_by_id.get(move.block_id)
         if block is None or original is None:
             raise ValueError("block_not_allowed")
