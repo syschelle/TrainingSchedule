@@ -55,6 +55,7 @@ function makeDefaultProject() {
   return {
     title: "DeepUnity Schulungsplan",
     project_mode: "training_plan",
+    delivery_mode: "onsite",
     customer_data_required: true,
     customer_name: "",
     location: "",
@@ -216,13 +217,15 @@ function renderBaseFields() {
   base.innerHTML = [
     customerDisabled ? "" : field("customer_name", "Kunde", project.customer_name),
     customerDisabled ? "" : field("location", "Standort", project.location),
-    field("start_date", "Startdatum", project.start_date || "", "date")
+    field("start_date", "Startdatum", project.start_date || "", "date"),
+    deliveryModeSelector()
   ].join("");
   advanced.innerHTML = [
     field("title", "Schulungsbezeichnung", project.title, "text", true),
     modeSelector()
   ].join("");
   document.querySelectorAll("#base-fields input[data-field-name], #project-advanced-fields input[data-field-name]").forEach((input) => input.addEventListener("input", updateProjectField));
+  document.querySelectorAll("[data-delivery-mode]").forEach((button) => button.addEventListener("click", updateDeliveryMode));
   const mode = $("#projectMode");
   if (mode) mode.addEventListener("change", updateProjectMode);
   applyWorkflowFieldErrors();
@@ -477,6 +480,18 @@ function deleteTrainer(index) {
   validateAndRender();
 }
 
+function deliveryModeSelector() {
+  const mode = project.delivery_mode === "remote" ? "remote" : "onsite";
+  return `<div class="field field-wide delivery-mode-field" data-field="delivery_mode">
+    <span>Durchführung</span>
+    <div class="delivery-mode-buttons" role="group" aria-label="Durchführung der Schulung">
+      <button type="button" class="delivery-mode-button ${mode === "onsite" ? "active" : "inactive"}" data-delivery-mode="onsite" aria-pressed="${mode === "onsite" ? "true" : "false"}">Vor Ort</button>
+      <button type="button" class="delivery-mode-button ${mode === "remote" ? "active" : "inactive"}" data-delivery-mode="remote" aria-pressed="${mode === "remote" ? "true" : "false"}">Remote</button>
+    </div>
+    <small>${mode === "remote" ? "Remote-Schulung ohne An- und Abreise." : "Vor-Ort-Schulung mit den konfigurierten An- und Abreisezeiten."}</small>
+  </div>`;
+}
+
 function modeSelector() {
   return `<label class="field field-wide" data-field="project_mode">
     <span>Verwendungszweck</span>
@@ -521,19 +536,25 @@ function renderSettingsFields() {
   const container = $("#settings-fields");
   const advanced = $("#advanced-settings-fields");
   if (!container || !advanced) return;
+  const travelSettings = project.delivery_mode === "remote"
+    ? `<div class="time-setting-card remote-travel-card">
+        <div class="time-setting-heading"><strong>An- & Abreise</strong><span>Nicht erforderlich</span></div>
+        <p>Für Remote-Schulungen werden keine Anreise- oder Abreiseblöcke eingeplant.</p>
+      </div>`
+    : `<div class="time-setting-card">
+        <div class="time-setting-heading"><strong>Anreise · erster Schulungstag</strong>${inlineToggle("monday_arrival_enabled", s.monday_arrival_enabled, "Aktiv")}</div>
+        <div class="time-pair ${s.monday_arrival_enabled ? "" : "is-disabled"}">${setting("monday_arrival_start", "Von", s.monday_arrival_start, "time")}${setting("monday_arrival_end", "Bis", s.monday_arrival_end, "time")}</div>
+      </div>
+      <div class="time-setting-card">
+        <div class="time-setting-heading"><strong>Abreise · letzter Schulungstag</strong>${inlineToggle("thursday_departure_enabled", s.thursday_departure_enabled, "Aktiv")}</div>
+        <div class="time-pair ${s.thursday_departure_enabled ? "" : "is-disabled"}">${setting("thursday_departure_start", "Von", s.thursday_departure_start, "time")}${setting("thursday_departure_end", "Bis", s.thursday_departure_end, "time")}</div>
+      </div>`;
   container.innerHTML = `
     <div class="time-setting-card">
       <div class="time-setting-heading"><strong>Schulungstag</strong><span>Tageszeiten für alle freigegebenen Tage</span></div>
       <div class="time-pair">${setting("day_start", "Beginn", s.day_start, "time")}${setting("day_end", "Ende", s.day_end, "time")}</div>
     </div>
-    <div class="time-setting-card">
-      <div class="time-setting-heading"><strong>Anreise · erster Schulungstag</strong>${inlineToggle("monday_arrival_enabled", s.monday_arrival_enabled, "Aktiv")}</div>
-      <div class="time-pair ${s.monday_arrival_enabled ? "" : "is-disabled"}">${setting("monday_arrival_start", "Von", s.monday_arrival_start, "time")}${setting("monday_arrival_end", "Bis", s.monday_arrival_end, "time")}</div>
-    </div>
-    <div class="time-setting-card">
-      <div class="time-setting-heading"><strong>Abreise · letzter Schulungstag</strong>${inlineToggle("thursday_departure_enabled", s.thursday_departure_enabled, "Aktiv")}</div>
-      <div class="time-pair ${s.thursday_departure_enabled ? "" : "is-disabled"}">${setting("thursday_departure_start", "Von", s.thursday_departure_start, "time")}${setting("thursday_departure_end", "Bis", s.thursday_departure_end, "time")}</div>
-    </div>
+    ${travelSettings}
     <div class="time-setting-card">
       <div class="time-setting-heading"><strong>Pausen</strong><span>Standardwerte</span></div>
       <div class="time-pair">${numberSetting("break_preferred_minutes", "Zwischen Schulungen", s.break_preferred_minutes)}${numberSetting("lunch_minutes", "Mittagspause", s.lunch_minutes)}</div>
@@ -870,10 +891,10 @@ function renderWorkflowReview() {
       <span class="review-status-icon" aria-hidden="true">${ready ? "✓" : "!"}</span>
     </div>
     <div class="review-grid">
-      ${reviewCard("Projekt", [["Produkt", product.name], ["Start", dateLabel], ["Standort", project.location || "—"]], "project")}
+      ${reviewCard("Projekt", [["Produkt", product.name], ["Start", dateLabel], ["Standort", project.location || "—"], ["Durchführung", project.delivery_mode === "remote" ? "Remote" : "Vor Ort"]], "project")}
       ${reviewCard("Personen", [["Trainer", trainers.length ? trainers.join(", ") : "—"], ["Teilnehmer", String(participants)], ["Gruppen", String(groups.length)]], "people")}
       ${reviewCard("Schulungen", [["Ausgewählt", `${trainingCount} ${trainingCount === 1 ? "Schulungsinhalt" : "Schulungsinhalte"}`]], "training")}
-      ${reviewCard("Zeiten", [["Schulungstag", `${project.settings.day_start}–${project.settings.day_end}`], ["Anreise", project.settings.monday_arrival_enabled ? `${project.settings.monday_arrival_start}–${project.settings.monday_arrival_end}` : "Aus"], ["Abreise", project.settings.thursday_departure_enabled ? `${project.settings.thursday_departure_start}–${project.settings.thursday_departure_end}` : "Aus"]], "time")}
+      ${reviewCard("Zeiten", [["Schulungstag", `${project.settings.day_start}–${project.settings.day_end}`], ["Anreise", project.delivery_mode === "remote" ? "Nicht erforderlich" : project.settings.monday_arrival_enabled ? `${project.settings.monday_arrival_start}–${project.settings.monday_arrival_end}` : "Aus"], ["Abreise", project.delivery_mode === "remote" ? "Nicht erforderlich" : project.settings.thursday_departure_enabled ? `${project.settings.thursday_departure_start}–${project.settings.thursday_departure_end}` : "Aus"]], "time")}
     </div>
     ${trainerAvailabilityReviewHtml()}
     ${missing.length ? `<div class="review-missing">${missing.map((step) => `<button type="button" data-review-step="${step.id}">${step.label} ergänzen</button>`).join("")}</div>` : ""}
@@ -912,6 +933,17 @@ function updateProjectMode(event) {
   if (!project.customer_data_required) {
     project.customer_name = "";
     project.location = "";
+  }
+  markPlanningInputsChanged();
+  render();
+}
+
+function updateDeliveryMode(event) {
+  const nextMode = event.currentTarget?.dataset.deliveryMode;
+  if (!["onsite", "remote"].includes(nextMode) || project.delivery_mode === nextMode) return;
+  project.delivery_mode = nextMode;
+  if (nextMode === "remote") {
+    project.blocks = (project.blocks || []).filter((block) => !["arrival", "departure"].includes(block.type));
   }
   markPlanningInputsChanged();
   render();
@@ -2677,7 +2709,11 @@ function renderPreview() {
 }
 
 function normalizeProjectState() {
+  project.delivery_mode = project.delivery_mode === "remote" ? "remote" : "onsite";
   project.blocks = Array.isArray(project.blocks) ? project.blocks : [];
+  if (project.delivery_mode === "remote") {
+    project.blocks = project.blocks.filter((block) => !["arrival", "departure"].includes(block.type));
+  }
   project.manual_weeks = Array.isArray(project.manual_weeks) ? project.manual_weeks : [];
   project.trainer_availability = Array.isArray(project.trainer_availability) ? project.trainer_availability : [];
   project.settings = project.settings || { ...defaultSettings };

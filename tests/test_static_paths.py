@@ -51,7 +51,7 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.4.8"' in html
+    assert 'src="calendar.js?v=0.4.9"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -701,3 +701,16 @@ def test_v047_unavailable_calendar_days_have_no_parking_watermark():
     assert 'content: "Parkfläche"' not in styles
     assert 'Nicht verfügbar' in javascript
 
+
+
+def test_v049_delivery_mode_buttons_are_linked_and_remote_disables_travel_planning() -> None:
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    css = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
+    assert 'delivery_mode: "onsite"' in javascript
+    assert 'data-delivery-mode="onsite"' in javascript
+    assert 'data-delivery-mode="remote"' in javascript
+    assert 'project.delivery_mode === "remote"' in javascript
+    assert '!["arrival", "departure"].includes(block.type)' in javascript
+    assert '.delivery-mode-button.active {' in css
+    assert 'background: var(--success-soft);' in css
+    assert 'background: var(--danger-soft);' in css

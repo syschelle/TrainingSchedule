@@ -1604,3 +1604,19 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Keine PostgreSQL-Migration erforderlich.
 - Version auf `v0.4.8` erhoeht.
 
+## Erweiterung v0.4.9 - Remote- oder Vor-Ort-Schulungen
+
+- In **Stammdaten → Projekt** muss eine gekoppelte Auswahl **Vor Ort / Remote** vorhanden sein.
+- Beide Optionen werden als Buttons dargestellt und stehen exklusiv zueinander: genau eine Option ist aktiv.
+- Die aktive Option wird gruen, die nicht aktive Option rot dargestellt.
+- Standard fuer neue und aeltere Projekte ohne gespeicherte Auswahl ist **Vor Ort**.
+- Bei **Vor Ort** bleiben die bestehenden konfigurierbaren Anreise- und Abreisebloecke unveraendert erhalten.
+- Bei **Remote** duerfen weder Anreise- noch Abreisebloecke erzeugt oder Zeitfenster dafuer reserviert werden.
+- Beim Umschalten eines vorhandenen Plans auf Remote werden bereits vorhandene Reisebloecke entfernt.
+- In der Zeiteingabe muss fuer Remote klar angezeigt werden, dass An- und Abreise nicht erforderlich sind.
+- Die Pruefansicht muss die Durchfuehrungsart anzeigen und bei Remote An-/Abreise als nicht erforderlich darstellen.
+- Remote-Kundenpakete duerfen keine Anreise-/Abreisebloecke enthalten; die KundenHTML soll Remote/Vor Ort in den Projektdaten anzeigen.
+- Alte Projektdateien muessen ohne Migration weiter importierbar sein.
+- Keine PostgreSQL-Migration erforderlich.
+- Version auf `v0.4.9` erhoeht.
+

@@ -7,6 +7,7 @@
   const DAY_INDEX = Object.fromEntries(DAYS.map((name,index)=>[name,index]));
   const HOUR_HEIGHT = 72;
   const SNAP = 15;
+  const remoteTraining = view.delivery_mode === "remote";
   const VISIBLE_TYPES = new Set(["training","arrival","departure"]);
   const MOVABLE_TYPES = new Set(["training","arrival","departure"]);
   let blocks = JSON.parse(JSON.stringify(view.blocks || []));
@@ -65,7 +66,7 @@
   function timeLabels(){ const start=toMinutes(view.settings.day_start), end=toMinutes(view.settings.day_end); let out=""; for(let minute=start;minute<=end;minute+=15){ out+=`<span class="time-label" style="top:${((minute-start)/60)*HOUR_HEIGHT}px">${formatTime(minute)}</span>`;} return out; }
   function dayHtml(week,trainer,day){ const total=(toMinutes(view.settings.day_end)-toMinutes(view.settings.day_start)); const height=(total/60)*HOUR_HEIGHT; const available=dayAvailable(week,trainer,day); return `<section class="day ${available?"available":"unavailable"}"><div class="day-head"><strong>${day}</strong><span>${germanDate(calendarDate(week,day))}</span><em>${available?"Verfügbar":"Nicht verfügbar"}</em></div><div class="day-body ${available?"available":"unavailable"}" data-week="${week}" data-trainer="${escapeHtml(trainer)}" data-day="${day}" style="--calendar-height:${height}px">${timeLabels()}${laneBlocks(week,trainer,day).map(blockHtml).join("")}</div></section>`; }
   function render(){
-    const scrollY=window.scrollY; const meta=[view.customer,view.location,view.product].filter(Boolean).join(" · "); $("#project-meta").textContent=meta;
+    const scrollY=window.scrollY; const meta=[view.customer,view.location,view.product,remoteTraining?"Remote":"Vor Ort"].filter(Boolean).join(" · "); $("#project-meta").textContent=meta;
     $("#calendar").innerHTML=(view.weeks||[]).map(week=>`<section class="week-wrap"><h2 class="week-heading">${weekHeading(week)}</h2>${(view.trainers||[]).map(trainer=>`<section class="trainer-week"><div class="trainer-title">Trainer: ${escapeHtml(trainer)}</div><div class="calendar-scroll"><div class="calendar">${DAYS.map(day=>dayHtml(week,trainer,day)).join("")}</div></div></section>`).join("")}</section>`).join("");
     bindDrag(); updateCount(); requestAnimationFrame(()=>window.scrollTo({top:scrollY}));
   }
@@ -91,5 +92,9 @@
   }
   function safePart(value,fallback){ const normalized=String(value||fallback).normalize("NFKD").replace(/[\u0300-\u036f]/g,""); return normalized.replace(/[^A-Za-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||fallback; }
   function download(){ const parked=parkedTrainingBlocks(); if(parked.length){setStatus(`${parked.length} Schulungsblock${parked.length===1?" ist":"e sind"} noch auf nicht verfügbaren Trainer-Tagen geparkt. Bitte zuerst auf verfügbare Tage verschieben.`,"error");return;} const now=new Date(); const date=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`; const time=`${String(now.getHours()).padStart(2,"0")}${String(now.getMinutes()).padStart(2,"0")}`; const payload={format:"schulungsplantool-customer-return",schema_version:1,returned_at:now.toISOString(),exchange:source.exchange,moves:changedMoves()}; const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}); const url=URL.createObjectURL(blob); const link=document.createElement("a"); link.href=url; link.download=`${safePart(view.customer,"kunde")}_${safePart(view.location,"standort")}_${safePart(view.product,"produkt")}_kundenplanung_${date}_${time}.json`; link.click(); URL.revokeObjectURL(url); setStatus("Rückgabedatei wurde erstellt.","ok"); }
-  $("#download").addEventListener("click",download); $("#reset").addEventListener("click",()=>{blocks=JSON.parse(JSON.stringify(baseline));setStatus("Ausgangsplanung wiederhergestellt.");render();}); render();
+  $("#download").addEventListener("click",download); $("#reset").addEventListener("click",()=>{blocks=JSON.parse(JSON.stringify(baseline));setStatus("Ausgangsplanung wiederhergestellt.");render();});
+  setStatus(remoteTraining
+    ? "Remote-Schulungen können per Drag & Drop verschoben werden. Rötliche Tage sind Parkflächen; geparkte Schulungen müssen vor der Rückgabe wieder auf verfügbare Tage verschoben werden."
+    : "Schulungen sowie An- und Abreise können per Drag & Drop verschoben werden. Rötliche Tage sind Parkflächen; geparkte Schulungen müssen vor der Rückgabe wieder auf verfügbare Tage verschoben werden.");
+  render();
 })();

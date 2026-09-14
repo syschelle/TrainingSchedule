@@ -222,6 +222,8 @@ def _trainer_week_days(project: TrainingProject, trainer: str, week: int) -> lis
 def _add_fixed_blocks(project: TrainingProject, day: str, week: int, trainer: str) -> list[ScheduleBlock]:
     settings = project.settings
     blocks: list[ScheduleBlock] = []
+    if project.delivery_mode == "remote":
+        return blocks
     week_days = _trainer_week_days(project, trainer, week)
     if not week_days:
         return blocks
@@ -253,6 +255,8 @@ def _add_fixed_blocks(project: TrainingProject, day: str, week: int, trainer: st
 
 def _latest_training_end(project: TrainingProject, day: str, week: int, trainer: str) -> int:
     settings = project.settings
+    if project.delivery_mode == "remote":
+        return parse_time(settings.day_end)
     week_days = _trainer_week_days(project, trainer, week)
     if week_days and day == week_days[-1] and settings.thursday_departure_enabled:
         return min(parse_time(settings.day_end), parse_time(settings.thursday_departure_start))
@@ -280,7 +284,7 @@ def plan_project(project: TrainingProject) -> TrainingProject:
                 scheduled.extend(_add_fixed_blocks(project, day, week, trainer))
                 cursor = snap_minutes_to_quarter(parse_time(settings.day_start), "ceil")
                 week_days = _trainer_week_days(project, trainer, week)
-                if week_days and day == week_days[0] and settings.monday_arrival_enabled:
+                if project.delivery_mode != "remote" and week_days and day == week_days[0] and settings.monday_arrival_enabled:
                     cursor = snap_minutes_to_quarter(max(cursor, parse_time(settings.monday_arrival_end)), "ceil")
                 cursor_by_lane[(week, day, trainer)] = cursor
         initialized_weeks.add(week)

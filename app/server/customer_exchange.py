@@ -121,6 +121,7 @@ def _view_data(project: TrainingProject) -> dict:
         "location": project.location if project.customer_data_required else "",
         "product": _product_name(project),
         "start_date": project.start_date.isoformat() if project.start_date else "",
+        "delivery_mode": project.delivery_mode,
         "settings": project.settings.model_dump(mode="json"),
         "trainers": trainers,
         "weeks": weeks,
@@ -136,6 +137,11 @@ def _customer_baseline(project: TrainingProject) -> TrainingProject:
     baseline.topics = [item for item in baseline.topics if item.product_id == baseline.product_id]
     baseline.unscheduled_topics = [item for item in baseline.unscheduled_topics if item.product_id == baseline.product_id]
     baseline.warnings = []
+    if baseline.delivery_mode == "remote":
+        baseline.blocks = [
+            block for block in baseline.blocks
+            if block.type not in {BlockType.arrival, BlockType.departure}
+        ]
     return baseline
 
 def _script_safe_json(value: object) -> str:

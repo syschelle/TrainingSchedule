@@ -103,6 +103,7 @@ class TrainerWeekAvailability(BaseModel):
 class TrainingProject(BaseModel):
     title: str = "DeepUnity Schulungsplan"
     project_mode: Literal["training_plan", "service_calculation"] = "training_plan"
+    delivery_mode: Literal["onsite", "remote"] = "onsite"
     customer_data_required: bool = True
     customer_name: str = ""
     location: str = ""

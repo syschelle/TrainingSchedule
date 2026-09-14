@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.4.9 - 2026-09-14
+
+### Remote- oder Vor-Ort-Schulungen pro Projekt
+
+- In **Stammdaten → Projekt** wurde eine gekoppelte Button-Auswahl fuer **Vor Ort** und **Remote** hinzugefuegt.
+- Die aktive Auswahl wird gruen, die jeweils andere Auswahl rot dargestellt.
+- `delivery_mode` wird als Projektinformation gespeichert; Standard und Fallback fuer alte Projektdateien ist `onsite`.
+- Bei `remote` erzeugt der Planner keine Anreise- oder Abreisebloecke und reserviert keine Reisezeit.
+- Beim direkten Umschalten auf Remote entfernt das Frontend bestehende Reisebloecke aus dem aktuell geladenen Plan.
+- Die Zeiteinstellungen und die Pruefansicht reagieren auf die gewaehlte Durchfuehrungsart.
+- Remote-Kundenpakete entfernen Anreise und Abreise auch aus aelteren bzw. bereits vorhandenen Planstaenden und kennzeichnen die Durchfuehrungsart in der KundenHTML.
+- Regressionstests fuer Planner, Kundenpaket, Abwaertskompatibilitaet und Frontend ergaenzt.
+- Keine PostgreSQL-Migration erforderlich.
+
 ## v0.4.8 - 2026-09-04
 
 ### CodeQL-Sprachmatrix explizit festgelegt

@@ -1,7 +1,21 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.4.8**
+Aktuelle Version: **v0.4.9**
 
+
+## Aenderungen v0.4.9
+
+- In **Stammdaten → Projekt** gibt es eine gekoppelte Auswahl **Vor Ort / Remote**.
+- Genau eine Durchfuehrungsart ist aktiv: die aktive Auswahl wird gruen, die inaktive rot dargestellt.
+- **Vor Ort** bleibt das bisherige Verhalten mit den konfigurierten Anreise- und Abreisezeiten.
+- **Remote** plant keine Anreise- oder Abreisebloecke und reserviert dafuer auch keine Zeit am ersten bzw. letzten Schulungstag.
+- Beim Umschalten eines bestehenden Plans auf Remote werden vorhandene Anreise-/Abreisebloecke unmittelbar aus dem aktuellen Plan entfernt; fuer einen vollstaendig neu berechneten Plan bleibt `Plan neu erstellen` massgeblich.
+- Der Schritt **Zeiten** blendet bei Remote die Reisezeit-Einstellungen aus und zeigt stattdessen, dass An- und Abreise nicht erforderlich sind.
+- Die Pruefansicht zeigt die Durchfuehrungsart sowie `Nicht erforderlich` fuer An-/Abreise bei Remote.
+- Die Offline-Kundenplanung kennzeichnet das Projekt als **Remote** bzw. **Vor Ort**; Remote-Kundenpakete enthalten keine Anreise-/Abreisebloecke.
+- Alte Projektdateien ohne Durchfuehrungsart bleiben kompatibel und werden als **Vor Ort** geladen.
+- Regressionstests fuer Planner, Kundenexport, Altprojekt-Kompatibilitaet und Frontend-Auswahl ergaenzt.
+- Keine PostgreSQL-Migration erforderlich.
 
 ## Aenderungen v0.4.8
 

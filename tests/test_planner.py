@@ -488,3 +488,27 @@ def test_v046_final_lunch_never_overlaps_long_training_block():
     lunches = [block for block in planned.blocks if block.type == "lunch" and block.week == training.week and block.day == training.day and block.trainer == training.trainer]
     assert not any(block.start < training.end and training.start < block.end for block in lunches)
     assert any("Mittagspause fehlt" in warning for warning in planned.warnings)
+
+
+def test_v049_remote_training_omits_travel_blocks_and_starts_at_day_start():
+    project = TrainingProject(
+        delivery_mode="remote",
+        trainers=["Trainer A"],
+        topics=[topic("Remote Start", 60)],
+    )
+    planned = plan_project(project)
+    assert not any(block.type in {"arrival", "departure"} for block in planned.blocks)
+    training = next(block for block in planned.blocks if block.type == "training")
+    assert training.day == "Montag"
+    assert training.start == planned.settings.day_start
+
+
+def test_v049_onsite_remains_default_and_keeps_travel_blocks():
+    project = TrainingProject(
+        trainers=["Trainer A"],
+        topics=[topic("Vor Ort", 60)],
+    )
+    planned = plan_project(project)
+    assert planned.delivery_mode == "onsite"
+    assert any(block.type == "arrival" for block in planned.blocks)
+    assert any(block.type == "departure" for block in planned.blocks)

@@ -419,3 +419,24 @@ def test_v044_customer_package_rejects_internal_parked_training(monkeypatch):
     ]
     with pytest.raises(ValueError, match="parked_training_blocks"):
         build_customer_package(project)
+
+
+def test_v049_legacy_project_without_delivery_mode_defaults_to_onsite():
+    project = TrainingProject.model_validate({"title": "Legacy"})
+    assert project.delivery_mode == "onsite"
+
+
+def test_v049_remote_customer_package_removes_arrival_and_departure(monkeypatch):
+    monkeypatch.setenv("CUSTOMER_EXCHANGE_SECRET", "test-secret")
+    project = sample_project()
+    project.delivery_mode = "remote"
+    project.blocks.extend([
+        ScheduleBlock(id="arrival-legacy", type="arrival", week=1, day="Montag", title="Anreise", start="08:30", end="09:30", trainer="Trainer A"),
+        ScheduleBlock(id="departure-legacy", type="departure", week=1, day="Donnerstag", title="Abreise", start="15:00", end="17:00", trainer="Trainer A"),
+    ])
+    data = build_customer_package(project)
+    with ZipFile(BytesIO(data)) as archive:
+        payload = _package_payload_from_html(archive.read("index.html").decode("utf-8"))
+    assert payload["view"]["delivery_mode"] == "remote"
+    assert all(block["type"] not in {"arrival", "departure"} for block in payload["view"]["blocks"])
+    assert all(block["type"] not in {"arrival", "departure"} for block in payload["exchange"]["baseline"]["blocks"])
