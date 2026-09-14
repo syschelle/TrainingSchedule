@@ -1,60 +1,60 @@
-# Schulungsplantool – interne Tests und Freigabeprüfungen
+# Schulungsplantool – Internal Tests and Release Checks
 
-Stand: **v0.4.10**
+Status: **v0.4.10**
 
-Dieses Dokument beschreibt die Prüfungen, die vor der Bereitstellung einer neuen Version des Schulungsplantools durchgeführt werden. Es trennt zwischen den automatisierten Regressionstests im Repository, zusätzlichen Syntax-/Konfigurationsprüfungen und Prüfungen, die erst in GitHub CI vollständig möglich sind.
+This document describes the checks performed before a new version of Schulungsplantool is released. It distinguishes between automated regression tests in the repository, additional syntax/configuration checks, and checks that can only be fully completed in GitHub CI.
 
-## 1. Automatisierte Python-/Regressionstests
+## 1. Automated Python / Regression Tests
 
-Die komplette Test-Suite wird mit Pytest ausgeführt:
+The complete test suite is executed with Pytest:
 
 ```bash
 python -m pytest -q
 ```
 
-Für **v0.4.10** lautet das Ergebnis:
+For **v0.4.10**, the result is:
 
 ```text
 142 passed
 ```
 
-### Testaufteilung in v0.4.10
+### Test distribution in v0.4.10
 
-| Testdatei | Anzahl | Schwerpunkt |
+| Test file | Count | Focus |
 |---|---:|---|
-| `tests/test_static_paths.py` | 64 | Frontend-Struktur, UI-Regeln, Kalender, KundenHTML, Versionsregressionen |
-| `tests/test_planner.py` | 33 | automatische Planung, Pausen, Trainerverfügbarkeit, An-/Abreise, Remote/Vor-Ort |
-| `tests/test_project_export.py` | 25 | Projektdateien, PDF, KundenHTML, Rückimport, Manipulationsschutz |
-| `tests/test_content_catalog.py` | 10 | Schulungsinhalte, Produkte, Historie und Persistenz |
-| `tests/test_docx_training_content.py` | 6 | DOCX Import/Export und Schutz vor nicht unterstützten Inhalten |
-| `tests/test_codeql_workflow.py` | 2 | CodeQL-Konfiguration und Sprachmatrix |
-| `tests/test_security_regressions.py` | 2 | sicherheitsrelevante Regressionen |
-| **Gesamt** | **142** | |
+| `tests/test_static_paths.py` | 64 | Frontend structure, UI rules, calendar, customer HTML, version regressions |
+| `tests/test_planner.py` | 33 | Automatic planning, breaks, trainer availability, arrival/departure, remote/on-site |
+| `tests/test_project_export.py` | 25 | Project files, PDF, customer HTML, return import, tamper protection |
+| `tests/test_content_catalog.py` | 10 | Training content, products, history and persistence |
+| `tests/test_docx_training_content.py` | 6 | DOCX import/export and protection against unsupported content |
+| `tests/test_codeql_workflow.py` | 2 | CodeQL configuration and language matrix |
+| `tests/test_security_regressions.py` | 2 | Security-related regressions |
+| **Total** | **142** | |
 
-## 2. Wichtige fachliche Regressionstests
+## 2. Important Functional Regression Tests
 
-Die Test-Suite deckt unter anderem folgende fachliche Regeln ab:
+The test suite covers, among other things, the following business rules:
 
-- Anreise und Abreise werden bei **Vor-Ort-Schulungen** korrekt reserviert.
-- Bei **Remote-Schulungen** werden keine Anreise- oder Abreiseblöcke erzeugt.
-- Alte Projekte ohne Delivery-Mode bleiben kompatibel und werden als **Vor Ort** behandelt.
-- Schulungen werden auf dem 15-Minuten-Raster geplant.
-- In der KundenHTML müssen zwischen zwei Schulungsblöcken desselben Trainers mindestens **15 Minuten Pause** verbleiben.
-- Genau 15 Minuten Abstand werden akzeptiert; weniger als 15 Minuten werden beim Rückimport abgelehnt.
-- Unsichtbare Pausen- und Mittagspausenblöcke dürfen das Verschieben sichtbarer Blöcke in der KundenHTML nicht blockieren.
-- Geparkte Schulungsblöcke können auf einen gültigen Schulungstag zurückverschoben werden.
-- Schulungsblöcke auf nicht verfügbaren Trainertagen werden als geparkt erkannt.
-- Ein Kunden-Rückimport darf die Dauer eines Blocks nicht manipulieren.
-- Manipulationen an der signierten Ausgangsbasis werden abgelehnt.
-- Sichtbare Blöcke dürfen sich nicht überschneiden.
-- Automatisch erzeugte Mittagspausen dürfen keine Schulungsblöcke überlagern.
-- Trainerverfügbarkeiten, einschließlich expliziter Freitage, werden berücksichtigt.
-- Mehrere Trainer können parallel geplant werden, ohne sich gegenseitig fälschlich zu blockieren.
-- Projektdateien können exportiert und wieder eingelesen werden, ohne den Planungszustand zu verlieren.
+- Arrival and departure are reserved correctly for **on-site training**.
+- **Remote training** does not create arrival or departure blocks.
+- Older projects without a delivery mode remain compatible and default to **On-site**.
+- Training sessions are planned on a 15-minute grid.
+- In the customer HTML, there must be at least **15 minutes of break time** between two training blocks assigned to the same trainer.
+- Exactly 15 minutes of separation is accepted; less than 15 minutes is rejected during return import.
+- Hidden break and lunch blocks must not prevent visible blocks from being moved in the customer HTML.
+- Parked training blocks can be moved back to a valid training day.
+- Training blocks placed on unavailable trainer days are recognized as parked.
+- A customer return import must not allow manipulation of a block's duration.
+- Manipulation of the signed source data is rejected.
+- Visible blocks must not overlap.
+- Automatically generated lunch breaks must not overlap training blocks.
+- Trainer availability, including explicitly unavailable days, is respected.
+- Multiple trainers can be planned in parallel without incorrectly blocking each other.
+- Project files can be exported and imported again without losing planning state.
 
-## 3. JavaScript-Syntaxprüfung
+## 3. JavaScript Syntax Checks
 
-Zusätzlich werden alle aktuell verwendeten JavaScript-Dateien mit Node.js syntaktisch geprüft:
+All currently used JavaScript files are additionally checked for syntax errors with Node.js:
 
 ```bash
 node --check app/static/app.js
@@ -62,11 +62,11 @@ node --check app/static/calendar.js
 node --check app/customer_assets/app.js
 ```
 
-Damit werden unter anderem Syntaxfehler erkannt, die erst im Browser auffallen würden.
+This catches, among other things, syntax errors that might otherwise only become visible in the browser.
 
-## 4. GitHub-Workflow-/YAML-Prüfung
+## 4. GitHub Workflow / YAML Validation
 
-Die GitHub-Workflow-Dateien werden auf gültige YAML-Struktur geprüft:
+The GitHub workflow files are checked for valid YAML structure:
 
 ```text
 .github/workflows/ci.yml
@@ -74,24 +74,24 @@ Die GitHub-Workflow-Dateien werden auf gültige YAML-Struktur geprüft:
 .github/workflows/release-image.yml
 ```
 
-Zusätzlich enthält die Pytest-Suite Regressionstests für den CodeQL-Workflow. Dabei wird insbesondere geprüft, dass nur die vorgesehenen CodeQL-Sprachen verwendet werden und `actions` nicht versehentlich wieder als eigene Analyse-Sprache aktiviert wird.
+The Pytest suite also contains regression tests for the CodeQL workflow. In particular, it verifies that only the intended CodeQL languages are configured and that `actions` is not accidentally re-enabled as a separate analysis language.
 
 ## 5. CodeQL
 
-CodeQL ist für folgende Sprachen konfiguriert:
+CodeQL is configured for the following languages:
 
 ```text
 python
 javascript-typescript
 ```
 
-Die eigentliche CodeQL-Analyse läuft in GitHub Actions. Lokal bzw. in der internen Prüfungsumgebung kann die GitHub-CodeQL-Infrastruktur nicht vollständig nachgebildet werden.
+The actual CodeQL analysis runs in GitHub Actions. The GitHub CodeQL infrastructure cannot be fully reproduced locally or in the internal test environment.
 
-Vor dem Taggen einer neuen Version sollte deshalb kontrolliert werden, dass die CodeQL-Jobs in GitHub erfolgreich abgeschlossen wurden.
+Before tagging a new version, the CodeQL jobs in GitHub should therefore be verified as successful.
 
-## 6. Docker-/Compose-Prüfungen
+## 6. Docker / Compose Checks
 
-GitHub CI führt zusätzlich folgende Prüfungen aus:
+GitHub CI additionally runs the following checks:
 
 ```bash
 docker compose -f docker-compose.yml config >/dev/null
@@ -99,60 +99,60 @@ docker compose -f docker-compose.images.yml config >/dev/null
 docker build --build-arg APP_VERSION="$(cat VERSION)" -t schulungsplantool:ci .
 ```
 
-Damit werden beide Compose-Dateien validiert und das Anwendungsimage gebaut.
+These checks validate both Compose files and build the application image.
 
-**Wichtig:** Wenn in der internen Ausführungsumgebung kein Docker-CLI vorhanden ist, können diese Prüfungen dort nicht ausgeführt werden. In diesem Fall werden sie nicht als lokal bestanden bezeichnet; maßgeblich ist dann der GitHub-CI-Lauf.
+**Important:** If no Docker CLI is available in the internal execution environment, these checks cannot be run there. In that case, they are not reported as locally passed; the GitHub CI run is authoritative.
 
-## 7. Release-Prüfung vor dem Tag
+## 7. Release Checks Before Tagging
 
-Vor dem Erstellen eines Tags sollte mindestens Folgendes erfüllt sein:
+Before creating a release tag, at least the following should be true:
 
-- `python -m pytest -q` ist vollständig grün.
-- JavaScript-Syntaxprüfungen sind grün.
-- GitHub-Workflow-YAML ist gültig.
-- GitHub CI ist grün.
-- CodeQL ist grün.
-- Die Versionsnummer in `VERSION` entspricht der vorgesehenen Release-Version.
-- Erst danach wird der Git-Tag erstellt und gepusht.
+- `python -m pytest -q` is fully green.
+- JavaScript syntax checks are green.
+- GitHub workflow YAML is valid.
+- GitHub CI is green.
+- CodeQL is green.
+- The version number in `VERSION` matches the intended release version.
+- Only after that should the Git tag be created and pushed.
 
-Empfohlener Ablauf:
+Recommended process:
 
 ```bash
 git add .
-git commit -m "Release vX.Y.Z: <Beschreibung>"
+git commit -m "Release vX.Y.Z: <description>"
 git push origin main
 ```
 
-Danach CI und CodeQL kontrollieren. Wenn beide erfolgreich sind:
+Then verify CI and CodeQL. If both complete successfully:
 
 ```bash
 git tag -a vX.Y.Z -m "Schulungsplantool vX.Y.Z"
 git push origin vX.Y.Z
 ```
 
-## 8. Zusätzliche Prüfungen bei Änderungen an der KundenHTML
+## 8. Additional Checks for Customer HTML Changes
 
-Wenn Drag & Drop, Parken, Remote/Vor-Ort oder der Rückimport verändert werden, werden zusätzlich gezielte Regressionstests ergänzt. Typische Szenarien sind:
+When drag & drop, parking, remote/on-site behavior, or return import is changed, additional targeted regression tests are added. Typical scenarios include:
 
-1. Block innerhalb desselben Tages verschieben.
-2. Block auf einen anderen gültigen Tag verschieben.
-3. Geparkten Block wieder auf einen gültigen Tag zurückholen.
-4. Zielposition liegt auf einer unsichtbaren Pause.
-5. Zielposition würde weniger als 15 Minuten Abstand zur vorherigen Schulung erzeugen.
-6. Zielposition würde weniger als 15 Minuten Abstand zur folgenden Schulung erzeugen.
-7. Genau 15 Minuten Abstand müssen akzeptiert werden.
-8. Überlappungen sichtbarer Blöcke müssen abgelehnt werden.
-9. Die Dauer des verschobenen Blocks muss unverändert bleiben.
-10. Bei Remote-Projekten dürfen keine An-/Abreiseblöcke auftauchen.
+1. Move a block within the same day.
+2. Move a block to another valid day.
+3. Move a parked block back to a valid day.
+4. Target position overlaps a hidden break.
+5. Target position would create less than 15 minutes of separation from the previous training block.
+6. Target position would create less than 15 minutes of separation from the following training block.
+7. Exactly 15 minutes of separation must be accepted.
+8. Overlaps between visible blocks must be rejected.
+9. The duration of the moved block must remain unchanged.
+10. Remote projects must not contain arrival or departure blocks.
 
-## 9. Bekannte Hinweise in v0.4.10
+## 9. Known Notes in v0.4.10
 
-Die aktuelle Test-Suite meldet zwei `DeprecationWarning`-Hinweise von FastAPI bezüglich `@app.on_event("startup")`. Diese Warnungen führen nicht zu einem Testfehler, sollten aber in einer späteren Version auf FastAPI-Lifespan-Handler umgestellt werden.
+The current test suite reports two `DeprecationWarning` messages from FastAPI regarding `@app.on_event("startup")`. These warnings do not cause test failures, but the code should be migrated to FastAPI lifespan handlers in a later version.
 
 ```text
 142 passed, 2 warnings
 ```
 
-## 10. Grundsatz für zukünftige Versionen
+## 10. Principle for Future Releases
 
-Eine Version wird nicht allein deshalb als erfolgreich geprüft bezeichnet, weil einzelne Tests bestanden haben. Für eine Freigabe werden die verfügbaren lokalen Prüfungen vollständig ausgeführt und GitHub CI sowie CodeQL anschließend separat kontrolliert. Wenn eine Prüfung wegen fehlender Laufzeitwerkzeuge – zum Beispiel Docker – nicht möglich ist, wird dies ausdrücklich angegeben.
+A version is not considered fully verified merely because individual tests passed. For a release, all available local checks are executed, followed by separate verification of GitHub CI and CodeQL. If a check cannot be performed because a required runtime tool is unavailable — for example Docker — this is stated explicitly.
