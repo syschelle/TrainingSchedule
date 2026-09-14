@@ -440,3 +440,68 @@ def test_v049_remote_customer_package_removes_arrival_and_departure(monkeypatch)
     assert payload["view"]["delivery_mode"] == "remote"
     assert all(block["type"] not in {"arrival", "departure"} for block in payload["view"]["blocks"])
     assert all(block["type"] not in {"arrival", "departure"} for block in payload["exchange"]["baseline"]["blocks"])
+
+
+
+def _customer_gap_project() -> TrainingProject:
+    return TrainingProject(
+        title="Kundenplanung Pausenabstand",
+        customer_name="Musterklinik",
+        location="Berlin",
+        trainers=["Trainer A"],
+        start_date="2026-09-07",
+        blocks=[
+            ScheduleBlock(
+                id="training-a", type="training", week=1, day="Montag", title="Thema A",
+                start="09:00", end="10:00", trainer="Trainer A",
+            ),
+            ScheduleBlock(
+                id="break-a", type="break", week=1, day="Montag", title="Pause",
+                start="10:00", end="10:25", trainer="Trainer A",
+            ),
+            ScheduleBlock(
+                id="training-b", type="training", week=1, day="Montag", title="Thema B",
+                start="11:00", end="12:00", trainer="Trainer A",
+            ),
+        ],
+    )
+
+
+def test_v0410_customer_return_accepts_exactly_15_minute_training_gap_and_removes_stale_hidden_break(monkeypatch):
+    monkeypatch.setenv("CUSTOMER_EXCHANGE_SECRET", "test-secret")
+    project = _customer_gap_project()
+    package = build_customer_package(project)
+    payload = _customer_return_from_package(package, [{
+        "block_id": "training-b", "week": 1, "day": "Montag", "trainer": "Trainer A",
+        "start": "10:15", "end": "11:15",
+    }])
+    updated = apply_customer_return(payload)
+    moved = next(block for block in updated.blocks if block.id == "training-b")
+    assert (moved.start, moved.end) == ("10:15", "11:15")
+    assert all(block.id != "break-a" for block in updated.blocks)
+
+
+def test_v0410_customer_return_rejects_training_gap_shorter_than_15_minutes(monkeypatch):
+    import pytest
+    monkeypatch.setenv("CUSTOMER_EXCHANGE_SECRET", "test-secret")
+    package = build_customer_package(_customer_gap_project())
+    payload = _customer_return_from_package(package, [{
+        "block_id": "training-b", "week": 1, "day": "Montag", "trainer": "Trainer A",
+        "start": "10:00", "end": "11:00",
+    }])
+    with pytest.raises(ValueError, match="training_break_too_short"):
+        apply_customer_return(payload)
+
+
+def test_v0410_customer_html_ignores_hidden_pause_reservations_for_drag_and_autoplaces_all_visible_blocks(monkeypatch):
+    monkeypatch.setenv("CUSTOMER_EXCHANGE_SECRET", "test-secret")
+    data = build_customer_package(_customer_gap_project())
+    with ZipFile(BytesIO(data)) as archive:
+        html = archive.read("index.html").decode("utf-8")
+    assert "const MIN_TRAINING_GAP = 15;" in html
+    assert "VISIBLE_TYPES.has(other.type)" in html
+    assert "function trainingGapConflict" in html
+    assert "function placementConflict" in html
+    assert "if(hit){" in html
+    assert "hit&&wasParked&&targetAvailable" not in html
+    assert "mindestens 15 Minuten Pause" in html

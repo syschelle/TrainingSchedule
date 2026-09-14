@@ -1,6 +1,18 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.4.9**
+Aktuelle Version: **v0.4.10**
+
+
+## Aenderungen v0.4.10
+
+- Die Offline-Kundenplanung blockiert sichtbare Schulungs-, Anreise- und Abreisebloecke nicht mehr wegen unsichtbarer Pause-/Mittagspausen-Reservierungen.
+- Beim Drag-and-drop wird bei einer belegten oder fuer Schulungen zu engen Zielposition automatisch der naechstgelegene gueltige 15-Minuten-Slot desselben Tages verwendet.
+- Zwischen zwei Schulungsbloecken desselben Trainers muessen in der Kundenplanung mindestens **15 Minuten Pause** verbleiben.
+- Diese 15-Minuten-Regel wird sowohl im Browser als auch beim geschuetzten Rueckimport serverseitig geprueft.
+- Ueberlappende, intern erzeugte Pause-/Mittagspausen-Bloecke werden beim Rueckimport automatisch entfernt, wenn sie nach einer Kundenverschiebung mit einem sichtbaren Block kollidieren. Damit koennen unsichtbare Reservierungen keine gueltige Kundenverschiebung mehr verhindern.
+- Echte Ueberlappungen sichtbarer Bloecke, ungueltige Trainer-Tage, Veraenderungen der Blockdauer und Zeiten ausserhalb des 15-Minuten-Rasters bleiben weiterhin gesperrt.
+- Regressionstests fuer 15-Minuten-Abstand, versteckte Pausen und allgemeine Auto-Platzierung ergaenzt.
+- Keine PostgreSQL-Migration erforderlich.
 
 
 ## Aenderungen v0.4.9

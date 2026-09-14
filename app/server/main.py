@@ -35,7 +35,7 @@ from .rules import format_time, minutes_between, parse_time, snap_minutes_to_qua
 BASE_DIR = Path(__file__).resolve().parents[1]
 STATIC_DIR = BASE_DIR / "static"
 MAX_UPLOAD_MB = int(os.environ.get("MAX_UPLOAD_MB", "25"))
-APP_VERSION = os.environ.get("APP_VERSION", "0.4.9")
+APP_VERSION = os.environ.get("APP_VERSION", "0.4.10")
 MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
 
 app = FastAPI(title="Schulungsplantool", version=APP_VERSION)
@@ -335,6 +335,7 @@ async def import_customer_package(file: UploadFile = File(...)) -> dict:
             "outside_working_hours": "Die Kundenplanung enthält einen Block außerhalb der Arbeitszeit.",
             "trainer_day_unavailable": "Die Kundenplanung enthält noch geparkte Schulungsblöcke auf nicht verfügbaren Trainer-Tagen.",
             "overlap": "Die Kundenplanung enthält überlappende Blöcke.",
+            "training_break_too_short": "Zwischen zwei Schulungsblöcken müssen mindestens 15 Minuten Pause liegen.",
             "block_not_allowed": "Die Kundenplanung enthält einen unbekannten oder nicht verschiebbaren Block.",
             "duplicate_move": "Ein Schulungsblock wurde mehrfach in der Rückgabedatei angegeben.",
         }

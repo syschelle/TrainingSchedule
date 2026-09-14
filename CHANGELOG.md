@@ -1,5 +1,19 @@
 # Changelog
 
+
+## v0.4.10 - 2026-09-14
+
+### Kunden-DnD vereinheitlicht und Mindestpause von 15 Minuten
+
+- Die Offline-Kundenplanung behandelt unsichtbare Pause- und Mittagspausen-Bloecke nicht mehr als harte Drag-and-drop-Sperren fuer sichtbare Bloecke.
+- Schulungs-, Anreise- und Abreisebloecke koennen auf belegten Zielpositionen automatisch in den naechstgelegenen freien 15-Minuten-Slot verschoben werden, sofern auf dem Zieltag ausreichend Platz vorhanden ist.
+- Fuer Schulungsbloecke gilt in der Kundenplanung jetzt explizit ein Mindestabstand von 15 Minuten zu anderen Schulungsbloecken desselben Trainers am selben Tag.
+- Der Rueckimport prueft dieselbe 15-Minuten-Regel serverseitig und lehnt manipulierte Rueckgabedateien mit kuerzerem Abstand ab.
+- Verdeckte, vom Planner erzeugte Pause-/Mittagspausen-Reservierungen, die nach einer gueltigen Kundenverschiebung mit sichtbaren Bloecken kollidieren, werden beim Import entfernt statt die Rueckgabe abzulehnen.
+- Echte sichtbare Ueberlappungen und die bisherigen Sicherheitspruefungen bleiben erhalten.
+- Regressionstests ergaenzt.
+- Keine PostgreSQL-Migration erforderlich.
+
 ## v0.4.9 - 2026-09-14
 
 ### Remote- oder Vor-Ort-Schulungen pro Projekt

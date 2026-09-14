@@ -18,6 +18,7 @@ from .rules import DISPLAY_WEEKDAYS, format_time, minutes_between, parse_time
 BASE_DIR = Path(__file__).resolve().parents[1]
 CUSTOMER_ASSETS_DIR = BASE_DIR / "customer_assets"
 DEFAULT_DEV_SECRET = "schulungsplantool-development-customer-exchange-secret"
+MIN_CUSTOMER_TRAINING_GAP_MINUTES = 15
 
 
 def _secret() -> bytes:
@@ -201,6 +202,43 @@ def _overlap(left: ScheduleBlock, right: ScheduleBlock) -> bool:
     return parse_time(left.start) < parse_time(right.end) and parse_time(right.start) < parse_time(left.end)
 
 
+def _same_lane(left: ScheduleBlock, right: ScheduleBlock) -> bool:
+    return left.week == right.week and left.day == right.day and left.trainer == right.trainer
+
+
+def _remove_hidden_customer_conflicts(project: TrainingProject) -> None:
+    """Drop stale generated pause/lunch reservations that now collide with visible customer moves.
+
+    Pause and lunch blocks are hidden in the offline customer calendar. They must not make an
+    otherwise valid drag-and-drop operation impossible. The visible schedule is authoritative
+    after a customer move; conflicting derived reservations are removed and can be adjusted in
+    the main planner afterwards.
+    """
+    visible_types = {BlockType.training, BlockType.arrival, BlockType.departure}
+    hidden_types = {BlockType.break_block, BlockType.lunch}
+    visible = [block for block in project.blocks if block.type in visible_types]
+    project.blocks = [
+        block
+        for block in project.blocks
+        if block.type not in hidden_types
+        or not any(_same_lane(block, other) and _overlap(block, other) for other in visible)
+    ]
+
+
+def _validate_customer_training_gaps(project: TrainingProject) -> None:
+    lanes: dict[tuple[int, str, str], list[ScheduleBlock]] = {}
+    for block in project.blocks:
+        if block.type != BlockType.training:
+            continue
+        lanes.setdefault((block.week, block.day, block.trainer), []).append(block)
+    for blocks in lanes.values():
+        ordered = sorted(blocks, key=lambda item: parse_time(item.start))
+        for left, right in zip(ordered, ordered[1:]):
+            gap = parse_time(right.start) - parse_time(left.end)
+            if gap < MIN_CUSTOMER_TRAINING_GAP_MINUTES:
+                raise ValueError("training_break_too_short")
+
+
 def apply_customer_return(payload: CustomerPlanningReturn) -> TrainingProject:
     baseline = verify_customer_exchange(payload)
     updated = baseline.model_copy(deep=True)
@@ -245,16 +283,19 @@ def apply_customer_return(payload: CustomerPlanningReturn) -> TrainingProject:
     ):
         raise ValueError("trainer_day_unavailable")
 
-    relevant = [
+    visible = [
         block for block in updated.blocks
-        if block.type in {BlockType.training, BlockType.arrival, BlockType.departure, BlockType.break_block, BlockType.lunch}
+        if block.type in {BlockType.training, BlockType.arrival, BlockType.departure}
     ]
-    for index, left in enumerate(relevant):
-        for right in relevant[index + 1:]:
-            if left.week != right.week or left.day != right.day or left.trainer != right.trainer:
+    for index, left in enumerate(visible):
+        for right in visible[index + 1:]:
+            if not _same_lane(left, right):
                 continue
             if _overlap(left, right):
                 raise ValueError("overlap")
+
+    _validate_customer_training_gaps(updated)
+    _remove_hidden_customer_conflicts(updated)
 
     baseline_warnings = set(validate_project(baseline))
     new_warnings = [warning for warning in validate_project(updated) if warning not in baseline_warnings]

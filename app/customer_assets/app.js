@@ -7,6 +7,7 @@
   const DAY_INDEX = Object.fromEntries(DAYS.map((name,index)=>[name,index]));
   const HOUR_HEIGHT = 72;
   const SNAP = 15;
+  const MIN_TRAINING_GAP = 15;
   const remoteTraining = view.delivery_mode === "remote";
   const VISIBLE_TYPES = new Set(["training","arrival","departure"]);
   const MOVABLE_TYPES = new Set(["training","arrival","departure"]);
@@ -37,13 +38,22 @@
   function dayAvailable(week,trainer,day){ if(!dayIsOnOrAfterStart(week,day))return false; const record=availabilityRecord(week,trainer); const weekdays=record&&Array.isArray(record.weekdays)?record.weekdays:DAYS.slice(0,4); return weekdays.includes(day); }
   function parkedTrainingBlocks(){ return blocks.filter(block=>block.type==="training"&&!dayAvailable(block.week,block.trainer,block.day)); }
   function laneBlocks(week,trainer,day){ return blocks.filter(b=>VISIBLE_TYPES.has(b.type)&&Number(b.week)===Number(week)&&b.trainer===trainer&&b.day===day).sort((a,b)=>a.start.localeCompare(b.start)); }
-  function conflict(moving,target){ return blocks.find(other => other.id!==moving.id && Number(other.week)===Number(target.week) && other.day===target.day && other.trainer===target.trainer && toMinutes(target.start)<toMinutes(other.end) && toMinutes(other.start)<toMinutes(target.end)); }
+  function sameLane(left,right){ return Number(left.week)===Number(right.week)&&left.day===right.day&&left.trainer===right.trainer; }
+  function visibleConflict(moving,target){
+    return blocks.find(other => other.id!==moving.id && VISIBLE_TYPES.has(other.type) && sameLane(other,target) && toMinutes(target.start)<toMinutes(other.end) && toMinutes(other.start)<toMinutes(target.end));
+  }
+  function trainingGapConflict(moving,target){
+    if(moving.type!=="training")return null;
+    const targetStart=toMinutes(target.start), targetEnd=toMinutes(target.end);
+    return blocks.find(other => other.id!==moving.id && other.type==="training" && sameLane(other,target) && targetStart<toMinutes(other.end)+MIN_TRAINING_GAP && toMinutes(other.start)<targetEnd+MIN_TRAINING_GAP);
+  }
+  function placementConflict(moving,target){ return visibleConflict(moving,target)||trainingGapConflict(moving,target); }
   function nearestFreeStart(moving,week,day,trainer,preferredStart){
     const length=duration(moving); const dayStart=toMinutes(view.settings.day_start), dayEnd=toMinutes(view.settings.day_end);
     const candidates=[];
     for(let start=dayStart;start+length<=dayEnd;start+=SNAP){
       const target={...moving,week,day,trainer,start:formatTime(start),end:formatTime(start+length)};
-      if(!conflict(moving,target)) candidates.push(start);
+      if(!placementConflict(moving,target)) candidates.push(start);
     }
     if(!candidates.length)return null;
     return candidates.sort((left,right)=>Math.abs(left-preferredStart)-Math.abs(right-preferredStart)||left-right)[0];
@@ -76,17 +86,16 @@
     document.querySelectorAll('.day-body').forEach(body=>{
       body.addEventListener('dragover',event=>{event.preventDefault();body.classList.add('drop-target');}); body.addEventListener('dragleave',()=>body.classList.remove('drop-target'));
       body.addEventListener('drop',event=>{ event.preventDefault(); body.classList.remove('drop-target'); const block=blocks.find(item=>item.id===(draggedId||event.dataTransfer.getData('text/plain'))); if(!block||!MOVABLE_TYPES.has(block.type))return;
-        const wasParked=block.type==="training"&&!dayAvailable(block.week,block.trainer,block.day);
-        const week=Number(body.dataset.week), day=body.dataset.day, trainer=body.dataset.trainer; const targetAvailable=dayAvailable(week,trainer,day);
+        const week=Number(body.dataset.week), day=body.dataset.day, trainer=body.dataset.trainer;
         const rect=body.getBoundingClientRect(); const length=duration(block); const dayStart=toMinutes(view.settings.day_start), dayEnd=toMinutes(view.settings.day_end); let start=snap(dayStart+((event.clientY-rect.top)/HOUR_HEIGHT)*60-dragOffsetMinutes); start=Math.max(dayStart,Math.min(start,dayEnd-length));
-        let target={...block,week,day,trainer,start:formatTime(start),end:formatTime(start+length)}; let hit=conflict(block,target); let autoPlaced=false;
-        if(hit&&wasParked&&targetAvailable){
+        let target={...block,week,day,trainer,start:formatTime(start),end:formatTime(start+length)}; let hit=placementConflict(block,target); let autoPlaced=false;
+        if(hit){
           const fallbackStart=nearestFreeStart(block,week,day,trainer,start);
-          if(fallbackStart===null){setStatus("Auf diesem verfügbaren Tag gibt es keinen ausreichend großen freien Bereich für diesen Schulungsblock.","error");return;}
-          target={...block,week,day,trainer,start:formatTime(fallbackStart),end:formatTime(fallbackStart+length)}; hit=conflict(block,target); autoPlaced=true;
+          if(fallbackStart===null){setStatus(block.type==="training"?"Auf diesem Tag gibt es keinen ausreichend großen freien Bereich mit mindestens 15 Minuten Pause zu anderen Schulungsblöcken.":"Auf diesem Tag gibt es keinen ausreichend großen freien Bereich für diesen Block.","error");return;}
+          target={...block,week,day,trainer,start:formatTime(fallbackStart),end:formatTime(fallbackStart+length)}; hit=placementConflict(block,target); autoPlaced=true;
         }
-        if(hit){const hidden=hit.type==="break"||hit.type==="lunch";setStatus(hidden?"Der Zielbereich ist nicht verfügbar.":`Der Zielbereich ist durch „${hit.title||hit.type}“ belegt.`,"error");return;}
-        Object.assign(block,target); draggedId=""; dragOffsetMinutes=0; if(block.type==="training"&&!dayAvailable(block.week,block.trainer,block.day)){setStatus("Schulungsblock geparkt. Für die Rückgabedatei muss er wieder auf einen verfügbaren Trainer-Tag verschoben werden.","error");}else if(block.type==="training"&&autoPlaced){setStatus("Geparkter Schulungsblock wurde auf dem gültigen Tag automatisch in den nächstgelegenen freien Bereich verschoben.","ok");}else{setStatus(block.type==="training"?"Schulungsblock verschoben.":block.type==="arrival"?"Anreise verschoben.":"Abreise verschoben.","ok");} render();
+        if(hit){setStatus("Der Block kann an dieser Position nicht abgelegt werden.","error");return;}
+        Object.assign(block,target); draggedId=""; dragOffsetMinutes=0; if(block.type==="training"&&!dayAvailable(block.week,block.trainer,block.day)){setStatus("Schulungsblock geparkt. Für die Rückgabedatei muss er wieder auf einen verfügbaren Trainer-Tag verschoben werden.","error");}else if(block.type==="training"&&autoPlaced){setStatus(`Schulungsblock verschoben. Die Position wurde automatisch auf den nächstgelegenen freien 15-Minuten-Slot mit mindestens ${MIN_TRAINING_GAP} Minuten Pause angepasst.`,"ok");}else if(autoPlaced){setStatus(block.type==="arrival"?"Anreise wurde automatisch in den nächstgelegenen freien Bereich verschoben.":"Abreise wurde automatisch in den nächstgelegenen freien Bereich verschoben.","ok");}else{setStatus(block.type==="training"?"Schulungsblock verschoben.":block.type==="arrival"?"Anreise verschoben.":"Abreise verschoben.","ok");} render();
       });
     });
   }
@@ -94,7 +103,7 @@
   function download(){ const parked=parkedTrainingBlocks(); if(parked.length){setStatus(`${parked.length} Schulungsblock${parked.length===1?" ist":"e sind"} noch auf nicht verfügbaren Trainer-Tagen geparkt. Bitte zuerst auf verfügbare Tage verschieben.`,"error");return;} const now=new Date(); const date=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`; const time=`${String(now.getHours()).padStart(2,"0")}${String(now.getMinutes()).padStart(2,"0")}`; const payload={format:"schulungsplantool-customer-return",schema_version:1,returned_at:now.toISOString(),exchange:source.exchange,moves:changedMoves()}; const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}); const url=URL.createObjectURL(blob); const link=document.createElement("a"); link.href=url; link.download=`${safePart(view.customer,"kunde")}_${safePart(view.location,"standort")}_${safePart(view.product,"produkt")}_kundenplanung_${date}_${time}.json`; link.click(); URL.revokeObjectURL(url); setStatus("Rückgabedatei wurde erstellt.","ok"); }
   $("#download").addEventListener("click",download); $("#reset").addEventListener("click",()=>{blocks=JSON.parse(JSON.stringify(baseline));setStatus("Ausgangsplanung wiederhergestellt.");render();});
   setStatus(remoteTraining
-    ? "Remote-Schulungen können per Drag & Drop verschoben werden. Rötliche Tage sind Parkflächen; geparkte Schulungen müssen vor der Rückgabe wieder auf verfügbare Tage verschoben werden."
-    : "Schulungen sowie An- und Abreise können per Drag & Drop verschoben werden. Rötliche Tage sind Parkflächen; geparkte Schulungen müssen vor der Rückgabe wieder auf verfügbare Tage verschoben werden.");
+    ? "Remote-Schulungen können per Drag & Drop verschoben werden. Zwischen Schulungsblöcken bleiben mindestens 15 Minuten Pause. Rötliche Tage sind Parkflächen; geparkte Schulungen müssen vor der Rückgabe wieder auf verfügbare Tage verschoben werden."
+    : "Schulungen sowie An- und Abreise können per Drag & Drop verschoben werden. Zwischen Schulungsblöcken bleiben mindestens 15 Minuten Pause. Rötliche Tage sind Parkflächen; geparkte Schulungen müssen vor der Rückgabe wieder auf verfügbare Tage verschoben werden.");
   render();
 })();

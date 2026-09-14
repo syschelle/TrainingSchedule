@@ -1620,3 +1620,15 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Keine PostgreSQL-Migration erforderlich.
 - Version auf `v0.4.9` erhoeht.
 
+
+
+## Erweiterung v0.4.10 - Kundenplanung frei verschiebbar mit Mindestpause
+
+- In der Offline-KundenHTML sollen alle sichtbaren, dafuer vorgesehenen Bloecke (Schulung sowie bei Vor-Ort Anreise/Abreise) verlaesslich per Drag-and-drop verschiebbar sein.
+- Unsichtbare Pause- und Mittagspausen-Bloecke duerfen eine ansonsten gueltige Verschiebung nicht blockieren.
+- Ist die gewuenschte Zielposition belegt oder verletzt sie den Mindestabstand, soll automatisch der naechstgelegene gueltige 15-Minuten-Slot desselben Tages gesucht werden.
+- Zwischen zwei Schulungsbloecken desselben Trainers am selben Tag muessen mindestens 15 Minuten Pause liegen.
+- Der Rueckimport muss diese Regel serverseitig erneut pruefen.
+- Verdeckte Pause-/Mittagspausen-Reservierungen, die durch eine Kundenverschiebung ungueltig werden, duerfen beim Import entfernt werden, damit sie den sichtbaren Plan nicht blockieren.
+- Echte sichtbare Ueberlappungen, nicht verfuegbare Trainer-Tage, geaenderte Blockdauern und Zeiten ausserhalb des 15-Minuten-Rasters bleiben ungueltig.
+- Version auf `v0.4.10` erhoeht.
