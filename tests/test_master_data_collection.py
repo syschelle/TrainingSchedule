@@ -70,3 +70,14 @@ def test_project_master_data_collection_is_backward_compatible_and_serializable(
     assert dumped["master_data_collection_enabled"] is True
     assert dumped["master_data_blocks"][0]["completed"] is True
     assert dumped["master_data_blocks"][0]["notes"] == "Ergebnis"
+
+
+def test_master_data_collection_is_a_first_class_project_mode():
+    project = TrainingProject.model_validate({
+        "title": "Erhebung",
+        "project_mode": "master_data_collection",
+        "master_data_collection_enabled": False,
+    })
+    assert project.project_mode == "master_data_collection"
+    assert project.master_data_collection_enabled is True
+    assert project.customer_data_required is True

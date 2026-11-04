@@ -1,7 +1,21 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.5.0-beta.1** (Pre-Release)
+Aktuelle Version: **v0.5.0-beta.2** (Pre-Release)
 
+
+## Aenderungen v0.5.0-beta.2 (Pre-Release)
+
+- **Stammdatenerhebung** ist jetzt ein eigener Verwendungszweck und steht in der Auswahl bewusst **vor** `Schulungsplanung mit Kundendaten`.
+- Der Verwendungszweck ist direkt in den sichtbaren Projektstammdaten erreichbar und nicht mehr nur als versteckte Zusatzoption unter `Weitere Angaben`.
+- Fuer Stammdatenerhebungs-Projekte lautet der gefuehrte Ablauf `Produkt -> Projekt -> Stammdatenerhebung`; Personen-, Schulungs- und Zeitplanung sind in dieser Phase nicht erforderlich.
+- Der Weiter-Button im Projektschritt fuehrt direkt zur projektbezogenen Stammdatenerhebung.
+- Fuer die reine Stammdatenerhebung sind Produkt, Kunde und Erhebungsdatum ausreichend; der Standort ist in dieser Phase optional.
+- In der linken Projektnavigation steht `Stammdatenerhebung` vor `Schulungsplan`; bei einem reinen Stammdatenerhebungs-Projekt wird der Schulungsplan ausgeblendet.
+- Der Kopfbereich wechselt im Stammdatenerhebungs-Modus von `Schulungsplan` auf `Stammdatenerhebung`.
+- Ein vorhandener Stammdatenerhebungs-Snapshot bleibt erhalten, wenn das Projekt spaeter auf `Schulungsplanung mit Kundendaten` umgestellt wird. Dadurch kann die Erhebung als vorgelagerte Projektphase genutzt werden.
+- Der bestehende optionale Stammdatenerhebungs-Schalter bleibt fuer Schulungsplan-Projekte erhalten, wenn Erhebung und Planung parallel in derselben Projektdatei weitergefuehrt werden sollen.
+- Docker-Pre-Releases aktualisieren den Image-Tag `latest` nicht mehr. `latest` wird nur noch bei stabilen Versionstags ohne Pre-Release-Suffix gesetzt.
+- Regressionstests fuer Projektmodus, Navigationsreihenfolge, gefuehrten Ablauf und Docker-Pre-Release-Tagging ergaenzt.
 
 ## Aenderungen v0.5.0-beta.1 (Pre-Release)
 

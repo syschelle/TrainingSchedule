@@ -102,7 +102,7 @@ class TrainerWeekAvailability(BaseModel):
 
 class TrainingProject(BaseModel):
     title: str = "DeepUnity Schulungsplan"
-    project_mode: Literal["training_plan", "service_calculation"] = "training_plan"
+    project_mode: Literal["master_data_collection", "training_plan", "service_calculation"] = "training_plan"
     delivery_mode: Literal["onsite", "remote"] = "onsite"
     customer_data_required: bool = True
     customer_name: str = ""
@@ -126,6 +126,9 @@ class TrainingProject(BaseModel):
 
     @model_validator(mode="after")
     def normalize_trainers(self) -> "TrainingProject":
+        self.customer_data_required = self.project_mode != "service_calculation"
+        if self.project_mode == "master_data_collection":
+            self.master_data_collection_enabled = True
         cleaned: list[str] = []
         for value in self.trainers:
             name = str(value).strip()

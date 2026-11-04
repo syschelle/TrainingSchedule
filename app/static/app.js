@@ -110,7 +110,8 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#backToInput").addEventListener("click", () => navigatePage("input"));
   $("#headerInputView").addEventListener("click", () => navigatePage("input"));
   $("#headerPlanView").addEventListener("click", () => {
-    if (project.blocks.length) navigatePage("plan");
+    if (project.project_mode === "master_data_collection") navigatePage("collection");
+    else if (project.blocks.length) navigatePage("plan");
     else setWorkflowStep("review");
   });
   $("#reviewChangedInputs").addEventListener("click", () => setWorkflowStep("review"));
@@ -195,24 +196,31 @@ function render() {
 
 function renderHeader() {
   const product = currentProduct();
+  const masterDataMode = project.project_mode === "master_data_collection";
   const headerProduct = $("#headerProduct");
   const headerContext = $("#headerContext");
   if (headerProduct) headerProduct.textContent = product.name;
   const contextParts = [project.customer_name, project.location].filter(Boolean);
-  if (headerContext) headerContext.textContent = contextParts.length ? contextParts.join(" · ") : "Neues Schulungsprojekt";
+  if (headerContext) headerContext.textContent = contextParts.length ? contextParts.join(" · ") : "Neues Projekt";
   const inputButton = $("#headerInputView");
   const planButton = $("#headerPlanView");
   if (inputButton) inputButton.classList.toggle("active", currentPage === "input");
   if (planButton) {
-    planButton.classList.toggle("active", currentPage === "plan");
-    planButton.disabled = !project.blocks.length;
-    planButton.title = project.blocks.length ? "Vorhandenen Schulungsplan anzeigen" : "Noch kein Schulungsplan erstellt";
+    planButton.textContent = masterDataMode ? "Stammdatenerhebung" : "Schulungsplan";
+    planButton.classList.toggle("active", masterDataMode ? currentPage === "collection" : currentPage === "plan");
+    planButton.disabled = masterDataMode ? !project.master_data_collection_enabled : !project.blocks.length;
+    planButton.title = masterDataMode
+      ? "Projektbezogene Stammdatenerhebung öffnen"
+      : project.blocks.length ? "Vorhandenen Schulungsplan anzeigen" : "Noch kein Schulungsplan erstellt";
   }
   const existingPlanButton = $("#showExistingPlan");
-  if (existingPlanButton) existingPlanButton.disabled = !project.blocks.length;
+  if (existingPlanButton) {
+    existingPlanButton.hidden = masterDataMode;
+    existingPlanButton.disabled = !project.blocks.length;
+  }
   const status = $("#planSyncStatus");
   if (status) {
-    status.hidden = !project.blocks.length;
+    status.hidden = masterDataMode || !project.blocks.length;
     status.textContent = planInputsDirty ? "● Eingaben geändert" : "✓ Plan aktuell";
     status.classList.toggle("is-dirty", planInputsDirty);
   }
@@ -220,19 +228,20 @@ function renderHeader() {
 
 function renderBaseFields() {
   const customerDisabled = project.project_mode === "service_calculation";
+  const masterDataMode = project.project_mode === "master_data_collection";
   const base = $("#base-fields");
   const advanced = $("#project-advanced-fields");
   if (!base || !advanced) return;
   base.innerHTML = [
+    modeSelector(),
     customerDisabled ? "" : field("customer_name", "Kunde", project.customer_name),
     customerDisabled ? "" : field("location", "Standort", project.location),
-    field("start_date", "Startdatum", project.start_date || "", "date"),
-    deliveryModeSelector()
+    field("start_date", masterDataMode ? "Erhebung am" : "Startdatum", project.start_date || "", "date"),
+    masterDataMode ? "" : deliveryModeSelector()
   ].join("");
   advanced.innerHTML = [
-    field("title", "Schulungsbezeichnung", project.title, "text", true),
-    modeSelector(),
-    masterDataCollectionSelector()
+    field("title", masterDataMode ? "Projektbezeichnung" : "Schulungsbezeichnung", project.title, "text", true),
+    project.project_mode === "training_plan" ? masterDataCollectionSelector() : ""
   ].join("");
   document.querySelectorAll("#base-fields input[data-field-name], #project-advanced-fields input[data-field-name]").forEach((input) => input.addEventListener("input", updateProjectField));
   document.querySelectorAll("[data-delivery-mode]").forEach((button) => button.addEventListener("click", updateDeliveryMode));
@@ -240,6 +249,8 @@ function renderBaseFields() {
   if (masterDataToggle) masterDataToggle.addEventListener("change", updateMasterDataCollectionEnabled);
   const mode = $("#projectMode");
   if (mode) mode.addEventListener("change", updateProjectMode);
+  const projectNextButton = document.querySelector('[data-workflow-panel="project"] [data-workflow-next]');
+  if (projectNextButton) projectNextButton.textContent = masterDataMode ? "Zur Stammdatenerhebung" : "Weiter";
   applyWorkflowFieldErrors();
 }
 
@@ -508,9 +519,11 @@ function modeSelector() {
   return `<label class="field field-wide" data-field="project_mode">
     <span>Verwendungszweck</span>
     <select id="projectMode">
+      <option value="master_data_collection" ${project.project_mode === "master_data_collection" ? "selected" : ""}>Stammdatenerhebung</option>
       <option value="training_plan" ${project.project_mode === "training_plan" ? "selected" : ""}>Schulungsplanung mit Kundendaten</option>
       <option value="service_calculation" ${project.project_mode === "service_calculation" ? "selected" : ""}>Dienstleistungskalkulation ohne Kundendaten</option>
     </select>
+    <small>${project.project_mode === "master_data_collection" ? "Stammdatenerhebung als vorgelagerte Projektphase vor der Schulungsplanung." : ""}</small>
   </label>`;
 }
 
@@ -634,19 +647,33 @@ function markPlanningInputsChanged() {
 function renderWorkflowProgress() {
   const progress = $("#workflowProgress");
   if (!progress) return;
-  progress.hidden = !["input", "plan"].includes(currentPage);
-  const currentIndex = workflowSteps.findIndex((step) => step.id === currentWorkflowStep);
-  progress.innerHTML = workflowSteps.map((step, index) => {
-    const complete = workflowStepIsComplete(step.id);
-    const current = currentPage === "input" && step.id === currentWorkflowStep;
+  const masterDataMode = project.project_mode === "master_data_collection";
+  const steps = masterDataMode
+    ? [
+        { id: "product", label: "Produkt", number: 1 },
+        { id: "project", label: "Projekt", number: 2 },
+        { id: "collection", label: "Stammdatenerhebung", number: 3 }
+      ]
+    : workflowSteps;
+  progress.hidden = masterDataMode ? !["input", "collection"].includes(currentPage) : !["input", "plan"].includes(currentPage);
+  const currentId = masterDataMode && currentPage === "collection" ? "collection" : currentWorkflowStep;
+  const currentIndex = steps.findIndex((step) => step.id === currentId);
+  progress.innerHTML = steps.map((step, index) => {
+    const complete = step.id === "collection"
+      ? Boolean(project.master_data_collection_enabled && (project.master_data_blocks || []).length)
+      : workflowStepIsComplete(step.id);
+    const current = step.id === currentId;
     const stateClass = current ? "current" : complete ? "complete" : index < currentIndex ? "visited" : "pending";
     const marker = complete && !current ? "✓" : String(step.number);
     return `<button type="button" class="workflow-progress-step ${stateClass}" data-workflow-step="${step.id}" aria-current="${current ? "step" : "false"}">
       <span class="workflow-progress-marker">${marker}</span>
       <span class="workflow-progress-label">${step.label}</span>
-    </button>${index < workflowSteps.length - 1 ? `<span class="workflow-progress-line ${complete ? "complete" : ""}" aria-hidden="true"></span>` : ""}`;
+    </button>${index < steps.length - 1 ? `<span class="workflow-progress-line ${complete ? "complete" : ""}" aria-hidden="true"></span>` : ""}`;
   }).join("");
-  progress.querySelectorAll("[data-workflow-step]").forEach((button) => button.addEventListener("click", () => setWorkflowStep(button.dataset.workflowStep)));
+  progress.querySelectorAll("[data-workflow-step]").forEach((button) => button.addEventListener("click", () => {
+    if (button.dataset.workflowStep === "collection") navigatePage("collection");
+    else setWorkflowStep(button.dataset.workflowStep);
+  }));
 }
 
 function renderWorkflowPanels() {
@@ -684,6 +711,12 @@ function setWorkflowStep(step) {
 
 function advanceWorkflow(nextStep) {
   if (!validateWorkflowStep(currentWorkflowStep, true)) return;
+  if (currentWorkflowStep === "project" && project.project_mode === "master_data_collection") {
+    project.master_data_collection_enabled = true;
+    syncProjectMasterDataFromTemplate({ silent: true });
+    navigatePage("collection");
+    return;
+  }
   setWorkflowStep(nextStep);
 }
 
@@ -692,6 +725,7 @@ function workflowStepIsComplete(step) {
   if (step === "project") {
     if (!project.start_date) return false;
     if (project.project_mode === "service_calculation") return true;
+    if (project.project_mode === "master_data_collection") return Boolean(String(project.customer_name || "").trim());
     return Boolean(String(project.customer_name || "").trim() && String(project.location || "").trim());
   }
   if (step === "people") {
@@ -717,7 +751,7 @@ function validateWorkflowStep(step, focus = false) {
   } else if (step === "project" && !workflowStepIsComplete("project")) {
     if (!project.start_date) { message = "Bitte ein Startdatum auswählen."; focusSelector = '[data-field="start_date"] input'; }
     else if (project.project_mode !== "service_calculation" && !String(project.customer_name || "").trim()) { message = "Bitte den Kunden eintragen."; focusSelector = '[data-field="customer_name"] input'; }
-    else { message = "Bitte den Standort eintragen."; focusSelector = '[data-field="location"] input'; }
+    else if (project.project_mode === "training_plan" && !String(project.location || "").trim()) { message = "Bitte den Standort eintragen."; focusSelector = '[data-field="location"] input'; }
   } else if (step === "people" && !workflowStepIsComplete("people")) {
     if (!activeTrainers().length) { message = "Bitte mindestens einen Trainer eintragen."; focusSelector = ".trainer-name-input"; }
     else { message = "Bitte Teilnehmerzahlen eintragen."; focusSelector = "#participant-group-panel input[type=number]"; }
@@ -954,6 +988,13 @@ function updateProjectField(event) {
 function updateProjectMode(event) {
   project.project_mode = event.target.value;
   project.customer_data_required = project.project_mode !== "service_calculation";
+  if (project.project_mode === "master_data_collection") {
+    project.master_data_collection_enabled = true;
+    if (project.title === "DeepUnity Schulungsplan") project.title = "DeepUnity Stammdatenerhebung";
+    syncProjectMasterDataFromTemplate({ silent: true });
+  } else if (project.project_mode === "training_plan" && project.title === "DeepUnity Stammdatenerhebung") {
+    project.title = "DeepUnity Schulungsplan";
+  }
   if (!project.customer_data_required) {
     project.customer_name = "";
     project.location = "";
@@ -1240,7 +1281,7 @@ function renderProjectMasterDataCollection() {
   if (!container) return;
   if (syncButton) syncButton.disabled = !project.master_data_collection_enabled;
   if (!project.master_data_collection_enabled) {
-    container.innerHTML = `<div class="master-data-disabled"><strong>Stammdatenerhebung ist für dieses Projekt nicht aktiviert.</strong><p class="muted">Aktiviere sie unter Eingabe → Stammdaten → Projekt → Weitere Angaben.</p></div>`;
+    container.innerHTML = `<div class="master-data-disabled"><strong>Stammdatenerhebung ist für dieses Projekt nicht aktiviert.</strong><p class="muted">Wähle unter Eingabe → Projekt den Verwendungszweck „Stammdatenerhebung“ oder aktiviere sie in einem Schulungsprojekt.</p></div>`;
     return;
   }
   const items = (project.master_data_blocks || []).slice().sort((a, b) => Number(a.sort_order) - Number(b.sort_order));
@@ -1460,6 +1501,9 @@ function closeSideMenu() {
 }
 
 function navigatePage(page) {
+  if (page === "plan" && project.project_mode === "master_data_collection") {
+    page = "collection";
+  }
   if (page === "plan" && !project.blocks.length) {
     closeSideMenu();
     setWorkflowStep("review");
@@ -1905,6 +1949,8 @@ function renderPages() {
 
 function renderNavigation() {
   document.querySelectorAll("[data-page]").forEach((button) => {
+    const isPlan = button.dataset.page === "plan";
+    button.hidden = isPlan && project.project_mode === "master_data_collection";
     button.classList.toggle("active", button.dataset.page === currentPage);
   });
 }
@@ -2904,8 +2950,9 @@ function renderPreview() {
 }
 
 function normalizeProjectState() {
+  project.project_mode = ["master_data_collection", "training_plan", "service_calculation"].includes(project.project_mode) ? project.project_mode : "training_plan";
   project.delivery_mode = project.delivery_mode === "remote" ? "remote" : "onsite";
-  project.master_data_collection_enabled = Boolean(project.master_data_collection_enabled);
+  project.master_data_collection_enabled = project.project_mode === "master_data_collection" || Boolean(project.master_data_collection_enabled);
   project.master_data_blocks = Array.isArray(project.master_data_blocks) ? project.master_data_blocks : [];
   project.blocks = Array.isArray(project.blocks) ? project.blocks : [];
   if (project.delivery_mode === "remote") {

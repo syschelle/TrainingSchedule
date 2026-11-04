@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.5.0-beta.2 - 2026-11-04
+
+### Pre-Release: Stammdatenerhebung als vorgelagerter Projektmodus sichtbar gemacht
+
+- `Stammdatenerhebung` als eigenen Verwendungszweck vor `Schulungsplanung mit Kundendaten` eingefuegt.
+- Verwendungszweck aus `Weitere Angaben` in die sichtbaren Projektstammdaten gezogen.
+- Fuer diesen Modus den gefuehrten Ablauf auf `Produkt -> Projekt -> Stammdatenerhebung` reduziert.
+- Projektnavigation auf `Eingabe -> Stammdatenerhebung -> Schulungsplan` umgestellt; der Schulungsplan wird im reinen Stammdatenerhebungs-Modus ausgeblendet.
+- Kopfbereich und Weiter-Navigation fuehren im Stammdatenerhebungs-Modus direkt zur Erhebung.
+- Fuer diesen Modus werden nur Produkt, Kunde und Erhebungsdatum vorausgesetzt; Standort und Schulungsparameter sind keine Pflichtangaben.
+- Stammdatenerhebung wird beim Auswaehlen dieses Modus automatisch aktiviert und aus der Produktvorlage initialisiert.
+- Beim spaeteren Wechsel auf Schulungsplanung bleibt der Projekt-Snapshot erhalten.
+- Backend-Modell akzeptiert `master_data_collection` als eigenen Projektmodus und normalisiert dabei die Erhebung auf aktiv.
+- Docker-Release-Workflow setzt `latest` nicht mehr fuer Pre-Release-Versionen mit `-` im Versionsstring.
+- Regressionstests ergaenzt; lokale Suite: 152 Tests bestanden.
+- Pre-Release-Version `v0.5.0-beta.2`.
+
 ## v0.5.0-beta.1 - 2026-11-04
 
 ### Pre-Release: erweiterbare Stammdatenerhebung

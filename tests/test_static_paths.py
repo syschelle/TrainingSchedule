@@ -730,3 +730,22 @@ def test_master_data_collection_pages_and_api_are_wired():
     assert 'master_data_collection_enabled' in javascript
     assert 'data-project-master-completed' in javascript
     assert 'data-project-master-notes' in javascript
+
+
+def test_beta2_master_data_collection_precedes_training_planning_in_project_flow():
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    project_nav = html.split('<p class="menu-section-label">Projekt</p>', 1)[1].split('</nav>', 1)[0]
+    assert project_nav.index('data-page="collection"') < project_nav.index('data-page="plan"')
+    mode_fragment = javascript.split('function modeSelector()', 1)[1].split('function productEditor()', 1)[0]
+    assert mode_fragment.index('value="master_data_collection"') < mode_fragment.index('value="training_plan"')
+    assert 'Zur Stammdatenerhebung' in javascript
+    assert '{ id: "collection", label: "Stammdatenerhebung", number: 3 }' in javascript
+    assert 'if (currentWorkflowStep === "project" && project.project_mode === "master_data_collection")' in javascript
+    assert 'page = "collection"' in javascript
+    assert 'project.project_mode === "master_data_collection") return Boolean(String(project.customer_name || "").trim())' in javascript
+
+
+def test_prerelease_docker_publish_does_not_move_latest_tag():
+    workflow = (STATIC_DIR.parents[1] / ".github" / "workflows" / "release-image.yml").read_text(encoding="utf-8")
+    assert "type=raw,value=latest,enable=${{ github.ref_type == 'tag' && !contains(steps.version.outputs.version, '-') }}" in workflow

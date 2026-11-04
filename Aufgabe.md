@@ -1650,3 +1650,21 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Neue PostgreSQL-Tabelle `master_data_blocks`, die beim Start automatisch angelegt wird.
 - `TESTING.md` und `SECURITY.md` werden im Repository-Root gepflegt.
 - Version als Pre-Release auf `v0.5.0-beta.1` erhoeht.
+
+## Erweiterung v0.5.0-beta.2 - Stammdatenerhebung vor der Schulungsplanung (Pre-Release)
+
+- `Stammdatenerhebung` muss ein eigener Verwendungszweck des Projekts sein und in der Auswahl vor `Schulungsplanung mit Kundendaten` stehen.
+- Der Verwendungszweck muss direkt in den sichtbaren Projektstammdaten erreichbar sein und darf fuer diesen Hauptfall nicht nur unter `Weitere Angaben` versteckt sein.
+- Im Stammdatenerhebungs-Modus besteht der gefuehrte Projektablauf aus `Produkt -> Projekt -> Stammdatenerhebung`.
+- Trainer-/Teilnehmer-, Schulungs- und Zeitschritte duerfen fuer die reine Stammdatenerhebung nicht als Pflichtschritte erscheinen.
+- Der Weiter-Button des Projektschritts fuehrt direkt zur Stammdatenerhebung.
+- Fuer die Stammdatenerhebung sind Produkt, Kunde und Erhebungsdatum Pflicht; der Standort ist optional und wird erst fuer die Schulungsplanung zwingend.
+- In der Projektnavigation muss `Stammdatenerhebung` vor `Schulungsplan` stehen.
+- Im reinen Stammdatenerhebungs-Modus wird der Schulungsplan ausgeblendet und der Header bietet stattdessen direkten Zugriff auf die Stammdatenerhebung.
+- Die Stammdatenerhebung wird bei Auswahl dieses Verwendungszwecks automatisch aktiviert und aus der aktiven Produktvorlage initialisiert.
+- Ein bereits ausgefuellter Projekt-Snapshot bleibt erhalten, wenn spaeter auf `Schulungsplanung mit Kundendaten` umgestellt wird. So kann die Stammdatenerhebung als vorgelagerte Projektphase genutzt werden.
+- Fuer Schulungsplan-Projekte darf die Stammdatenerhebung weiterhin optional parallel mitgefuehrt werden.
+- Pre-Release-Docker-Tags duerfen den Image-Tag `latest` nicht aktualisieren; `latest` ist stabilen Versionen vorbehalten.
+- `TESTING.md` und `SECURITY.md` muessen auf v0.5.0-beta.2 aktualisiert werden.
+- Version als Pre-Release auf `v0.5.0-beta.2` erhoeht.
+
