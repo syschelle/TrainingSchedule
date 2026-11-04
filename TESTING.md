@@ -1,6 +1,6 @@
 # Schulungsplantool – Internal Tests and Release Checks
 
-Status: **v0.5.0-beta.9 (Pre-Release)**
+Status: **v0.5.0-beta.10 (Pre-Release)**
 
 This document describes the checks performed before a Schulungsplantool release or pre-release. It is updated together with the current application version.
 
@@ -12,10 +12,10 @@ Run the complete suite with:
 python -m pytest -q
 ```
 
-For **v0.5.0-beta.9**, the current local result is:
+For **v0.5.0-beta.10**, the current local result is:
 
 ```text
-165 passed, 2 warnings
+166 passed, 2 warnings
 ```
 
 The two warnings are the known FastAPI deprecation warnings for `@app.on_event("startup")`; they are not test failures.
@@ -30,10 +30,10 @@ The two warnings are the known FastAPI deprecation warnings for `@app.on_event("
 | `tests/test_content_catalog.py` | 10 | Training contents, products, history and persistence |
 | `tests/test_docx_training_content.py` | 6 | DOCX import/export and unsupported-content protection |
 | `tests/test_master_data_collection.py` | 11 | Master-data template seed, extension, ordering, deletion and project compatibility |
-| `tests/test_release_docs.py` | 2 | Root TESTING/SECURITY documentation and version consistency |
+| `tests/test_release_docs.py` | 3 | Root TESTING/SECURITY documentation and version consistency |
 | `tests/test_codeql_workflow.py` | 2 | CodeQL configuration and language matrix |
 | `tests/test_security_regressions.py` | 2 | Security-related regressions |
-| **Total** | **165** | |
+| **Total** | **166** | |
 
 ## 2. Master Data Collection Regression Coverage
 

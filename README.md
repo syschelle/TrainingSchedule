@@ -1,8 +1,15 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.5.0-beta.9** (Pre-Release)
+Aktuelle Version: **v0.5.0-beta.10** (Pre-Release)
 
 
+
+## Aenderungen v0.5.0-beta.10 (Pre-Release)
+
+- Neu gepackter Pre-Release-Stand auf Basis des vollstaendig korrigierten beta.9-Quellstands.
+- Alle Runtime-, Frontend-, Server-, Docker- und Compose-Versionsangaben wurden konsistent auf `0.5.0-beta.10` angehoben.
+- Die beta.9-Funktionen fuer lokale Entwurfssicherung, Warnhinweis, kompaktere Stammdatenkacheln und verbesserte Linkdarstellung bleiben unveraendert enthalten.
+- Der Versionskonsistenz-Regressionsschutz bleibt aktiv.
 
 ## Aenderungen v0.5.0-beta.9 (Pre-Release)
 

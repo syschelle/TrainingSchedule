@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.5.0-beta.10 - 2026-11-04
+
+### Pre-Release: repackaged beta with consistent runtime versioning
+
+- Vollstaendig neu gepackter Pre-Release auf Basis des korrigierten beta.9-Standes.
+- Versionsangaben in Frontend, Server, Dockerfile und beiden Compose-Dateien auf `0.5.0-beta.10` synchronisiert.
+- Lokale Entwurfssicherung, roter Aktualisierungswarnhinweis, kompaktere Stammdatenkacheln und verbesserte Linkdarstellung bleiben enthalten.
+- Der generische Versionskonsistenz-Test schuetzt weiterhin vor auseinanderlaufenden Runtime-Versionen.
+- `TESTING.md` und `SECURITY.md` auf v0.5.0-beta.10 aktualisiert.
+
+
 ## v0.5.0-beta.9 - 2026-11-04
 
 ### Pre-Release: polished master-data collection UX and local draft protection
@@ -11,7 +22,8 @@
 - Der aktuelle Projektstand inklusive Stammdatenerhebung wird jetzt browserlokal als Entwurf zwischengespeichert und beim erneuten Oeffnen automatisch wiederhergestellt.
 - Die automatische Entwurfssicherung wird bei Eingabeaenderungen und unmittelbar vor dem Verlassen bzw. Aktualisieren der Seite ausgefuehrt.
 - Zwei neue Frontend-Regressionstests pruefen Warnhinweis, lokale Entwurfssicherung und das neue Link-Rendering.
-- Lokale Suite: 165 Tests bestanden.
+- Versionskonsistenz zwischen `VERSION`, Frontend-Assets, Server-Fallback, Dockerfile und Compose-Dateien wird jetzt durch einen eigenen Regressionstest abgesichert.
+- Lokale Suite: 166 Tests bestanden.
 - `TESTING.md` und `SECURITY.md` auf v0.5.0-beta.9 aktualisiert.
 - Pre-Release-Version `v0.5.0-beta.9`.
 

@@ -1741,3 +1741,9 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Textblock-Kacheln in der Stammdatenerhebung kompakter machen.
 - Browserlokale Zwischenspeicherung fuer die Stammdatenerhebung bzw. den Projektstand ergaenzen.
 - Roten Hinweis `Seite nicht aktualisieren` / `Datenverlust` im Terminbereich anzeigen.
+
+## Update v0.5.0-beta.10
+
+- Korrigierten beta.9-Stand als neuen Pre-Release sauber neu paketieren.
+- Alle ausgelieferten Versionsreferenzen konsistent auf beta.10 setzen.
+- Bestehende beta.9-Funktionen unveraendert uebernehmen.
