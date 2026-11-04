@@ -6,9 +6,9 @@
   <meta name="referrer" content="no-referrer">
   <meta name="robots" content="noindex, nofollow">
   <title>Schulungsplantool</title>
-  <link rel="stylesheet" href="styles.css?v=0.4.10">
-  <script defer src="calendar.js?v=0.4.10"></script>
-  <script defer src="app.js?v=0.4.10"></script>
+  <link rel="stylesheet" href="styles.css?v=0.5.0-beta.1">
+  <script defer src="calendar.js?v=0.5.0-beta.1"></script>
+  <script defer src="app.js?v=0.5.0-beta.1"></script>
 </head>
 <body>
   <header class="topbar">
@@ -27,7 +27,7 @@
       </div>
       <div class="topbar-actions">
         <span id="planSyncStatus" class="plan-sync-status" hidden></span>
-        <span class="version">v0.4.10</span>
+        <span class="version">v0.5.0-beta.1</span>
       </div>
     </div>
     <nav id="workflowProgress" class="workflow-progress" aria-label="Fortschritt der Planung"></nav>
@@ -39,11 +39,13 @@
       <nav class="menu-nav">
         <button type="button" data-page="input" class="menu-nav-button active">Eingabe</button>
         <button type="button" data-page="plan" class="menu-nav-button">Schulungsplan</button>
+        <button type="button" data-page="collection" class="menu-nav-button">Stammdatenerhebung</button>
       </nav>
       <p class="menu-section-label menu-section-spaced">Verwaltung</p>
       <nav class="menu-nav">
         <button type="button" data-page="products" class="menu-nav-button">Produktdaten</button>
         <button type="button" data-page="contents" class="menu-nav-button">Schulungsinhalte</button>
+        <button type="button" data-page="masterdata" class="menu-nav-button">Stammdaten-Vorlage</button>
       </nav>
     </aside>
 
@@ -166,6 +168,33 @@
           <div class="content-manager">
             <nav id="content-link-list" class="content-link-list" aria-label="Schulungsinhalte"></nav>
             <div id="content-detail" class="content-detail"></div>
+          </div>
+        </div>
+      </section>
+
+
+      <section id="collection-page" class="workspace app-page">
+        <div class="card">
+          <div class="card-heading">
+            <div><h2>Stammdatenerhebung</h2><p class="muted">Projektbezogene Erhebung auf Basis der Produktvorlage.</p></div>
+            <div class="card-heading-actions"><button type="button" id="syncMasterDataCollection" class="button button-secondary">Aus Vorlage ergänzen</button></div>
+          </div>
+          <div id="project-master-data-collection"></div>
+        </div>
+      </section>
+
+      <section id="masterdata-page" class="workspace app-page">
+        <div class="card">
+          <div class="card-heading">
+            <div><h2>Stammdaten-Vorlage</h2><p class="muted">Nummerierte und frei erweiterbare Blöcke für die Stammdatenerhebung.</p></div>
+            <div class="card-heading-actions">
+              <button type="button" id="addMasterDataBlock" class="button button-secondary">Block anlegen</button>
+              <span id="master-data-status" class="muted">Vorlage wird geladen.</span>
+            </div>
+          </div>
+          <div class="content-manager">
+            <nav id="master-data-link-list" class="content-link-list" aria-label="Stammdatenblöcke"></nav>
+            <div id="master-data-detail" class="content-detail"></div>
           </div>
         </div>
       </section>
@@ -298,7 +327,7 @@
   </div>
 
   <footer>
-    <span>Schulungsplantool v0.4.10</span>
+    <span>Schulungsplantool v0.5.0-beta.1</span>
   </footer>
 </body>
 </html>

@@ -51,7 +51,8 @@ def test_calendar_uses_start_date_and_dach_holiday_helper() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     calendar_js = (STATIC_DIR / "calendar.js").read_text(encoding="utf-8")
-    assert 'src="calendar.js?v=0.4.10"' in html
+    version = (STATIC_DIR.parents[1] / "VERSION").read_text(encoding="utf-8").strip()
+    assert f'src="calendar.js?v={version}"' in html
     assert "TrainingCalendar.dateForCalendarDay(project.start_date, week, day)" in javascript
     assert 'class="calendar-date"' in javascript
     assert 'class="calendar-holiday"' in javascript
@@ -715,3 +716,17 @@ def test_v049_delivery_mode_buttons_are_linked_and_remote_disables_travel_planni
     assert '.delivery-mode-button.active {' in css
     assert 'background: var(--success-soft);' in css
     assert 'background: var(--danger-soft);' in css
+
+
+def test_master_data_collection_pages_and_api_are_wired():
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    assert 'data-page="collection"' in html
+    assert 'data-page="masterdata"' in html
+    assert 'id="addMasterDataBlock"' in html
+    assert 'id="syncMasterDataCollection"' in html
+    assert 'fetch("api/master-data-blocks")' in javascript
+    assert 'api/master-data-blocks/${encodeURIComponent(item.id)}' in javascript
+    assert 'master_data_collection_enabled' in javascript
+    assert 'data-project-master-completed' in javascript
+    assert 'data-project-master-notes' in javascript

@@ -1632,3 +1632,21 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Verdeckte Pause-/Mittagspausen-Reservierungen, die durch eine Kundenverschiebung ungueltig werden, duerfen beim Import entfernt werden, damit sie den sichtbaren Plan nicht blockieren.
 - Echte sichtbare Ueberlappungen, nicht verfuegbare Trainer-Tage, geaenderte Blockdauern und Zeiten ausserhalb des 15-Minuten-Rasters bleiben ungueltig.
 - Version auf `v0.4.10` erhoeht.
+
+
+## Erweiterung v0.5.0-beta.1 - Stammdatenerhebung als erweiterbare Produktvorlage (Pre-Release)
+
+- Neben den Schulungsinhalten gibt es eine eigene produktbezogene Stammdaten-Vorlage.
+- Fuer DeepUnity PACS werden initial die 17 Themenbloecke aus `CL_Stammdaten_Erhebung` angelegt.
+- Jeder Block besitzt eine frei editierbare Reihenfolgenummer, Titel, Aktiv-Status, Farbe und frei erweiterbaren Markdown-Inhalt.
+- Neue Stammdatenbloecke koennen jederzeit hinzugefuegt und bestehende Bloecke geloescht werden.
+- Beim Aendern der Reihenfolge wird die gesamte Produktvorlage lueckenlos neu nummeriert.
+- Bereits manuell bearbeitete Vorlageninhalte duerfen durch das Initial-Seeding nicht ueberschrieben werden.
+- In `Stammdaten -> Projekt -> Weitere Angaben` kann die Stammdatenerhebung projektspezifisch aktiviert werden.
+- Bei Aktivierung werden die aktiven Vorlagenbloecke als Projekt-Snapshot uebernommen.
+- Jeder Projektblock speichert `Erledigt` und projektspezifische Notizen.
+- Spaetere Vorlagenaenderungen ueberschreiben bestehende Projekt-Snapshots nicht. Mit `Aus Vorlage ergaenzen` werden nur noch fehlende aktive Bloecke nachgezogen.
+- Alte Projektdateien ohne diese Felder bleiben kompatibel.
+- Neue PostgreSQL-Tabelle `master_data_blocks`, die beim Start automatisch angelegt wird.
+- `TESTING.md` und `SECURITY.md` werden im Repository-Root gepflegt.
+- Version als Pre-Release auf `v0.5.0-beta.1` erhoeht.

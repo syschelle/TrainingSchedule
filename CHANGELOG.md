@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.5.0-beta.1 - 2026-11-04
+
+### Pre-Release: erweiterbare Stammdatenerhebung
+
+- Produktbezogene Verwaltung fuer nummerierte Stammdatenbloecke hinzugefuegt.
+- DeepUnity PACS startet mit 17 editierbaren Bloecken aus der bereitgestellten Stammdatenerhebung.
+- Bloecke koennen hinzugefuegt, geloescht, deaktiviert, eingefarbt und frei neu nummeriert werden; die Sortierung wird serverseitig auf eine lueckenlose Reihenfolge normalisiert.
+- Blockinhalte werden als frei erweiterbares Markdown gespeichert.
+- Projekte koennen die Stammdatenerhebung optional aktivieren. Beim Aktivieren wird eine projektbezogene Kopie der aktiven Vorlage erzeugt.
+- Projektbloecke speichern Erledigt-Status und Notizen unabhaengig von spaeteren Vorlagenaenderungen.
+- `Aus Vorlage ergaenzen` uebernimmt nur fehlende aktive Vorlagenbloecke und ueberschreibt keine bestehenden Projektergebnisse.
+- Neue PostgreSQL-Tabelle `master_data_blocks`; automatische Anlage und initiales Seeding beim Start.
+- Alte Projektdateien bleiben kompatibel und erhalten standardmaessig keine aktivierte Stammdatenerhebung.
+- `TESTING.md` und `SECURITY.md` werden im Repository-Root mitgefuehrt.
+- Pre-Release-Version `v0.5.0-beta.1`.
 
 ## v0.4.10 - 2026-09-14
 

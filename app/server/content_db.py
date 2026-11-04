@@ -29,6 +29,10 @@ class ProductRecord(Base):
         back_populates="product",
         cascade="all, delete-orphan",
     )
+    master_data_blocks: Mapped[list[MasterDataBlockRecord]] = relationship(
+        back_populates="product",
+        cascade="all, delete-orphan",
+    )
 
 
 class TrainingContentRecord(Base):
@@ -56,6 +60,20 @@ class TrainingContentRecord(Base):
         back_populates="content",
         cascade="all, delete-orphan",
     )
+
+
+class MasterDataBlockRecord(Base):
+    __tablename__ = "master_data_blocks"
+
+    id: Mapped[str] = mapped_column(String(120), primary_key=True)
+    product_id: Mapped[str] = mapped_column(ForeignKey("products.id"), index=True, nullable=False)
+    sort_order: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    title: Mapped[str] = mapped_column(String(240), nullable=False)
+    active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    background_color: Mapped[str] = mapped_column(String(20), default="#eef6ff", nullable=False)
+    markdown_content: Mapped[str] = mapped_column(Text, default="", nullable=False)
+
+    product: Mapped[ProductRecord] = relationship(back_populates="master_data_blocks")
 
 
 class TrainingContentRevisionRecord(Base):
@@ -215,6 +233,27 @@ DEFAULT_TRAINING_CONTENTS = [
 ]
 
 
+DEFAULT_MASTER_DATA_BLOCKS = [
+    {"id": 'uebersicht-installation-deepunity-client', "product_id": "deepunity-pacs", "sort_order": 1, "title": 'Übersicht Installation DeepUnity Client', "active": True, "background_color": "#eef6ff", "markdown_content": '- Vorstellung der DeepUnity Client Versionen und Lizenzierung\n- Das Konzept zur Verteilung der DeepUnity Software über den DU Webdeployer wurde erläutert.\n- Die Dokumente „DeepUnity Webdeployer – Gebrauchsanweisung“ und DeepUnity Webdeployer-Ordnerstruktur wurde an den Kunden übergeben und besprochen.'},
+    {"id": 'rechte-und-rollenkonzept', "product_id": "deepunity-pacs", "sort_order": 2, "title": 'Rechte- und Rollenkonzept', "active": True, "background_color": "#eef6ff", "markdown_content": '- Die Standard-Rollen und deren zugehörigen Berechtigungen wurden anhand des Dokumentes „DeepUnity_Rollen_und_Berechtigungen“ vorgestellt und gemeinsam auf die Anforderungen des Hauses abgestimmt.\n- Die notwendigen Anpassungen für das Haus sind detailliert im Dokument „DeepUnity_Rollen_und_Berechtigungen“ notiert. Die Anpassungen umfassen folgende Punkte: Bitte Thema/Beschreibung eingeben\n- Offen sind folgende Punkte: Bitte Thema/Beschreibung eingeben'},
+    {"id": 'authentifizierung-deepunity-software', "product_id": "deepunity-pacs", "sort_order": 3, "title": 'Authentifizierung DeepUnity-Software', "active": True, "background_color": "#eef6ff", "markdown_content": '- Die unterschiedlichen Möglichkeiten der Authentifizierung werden vorgestellt: unter anderem DeepUnity Server, LDAP-Authentifizierung bei Microsoft Active Directory Services oder Authentifizierung über die Orbis-Datenbank\n- Das Dokument „DeepUnity Fragebogen Benutzerauthentifizierung“ wurde erläutert.\n- Die Authentifizierung wird über bitte ausfüllen erfolgen.'},
+    {"id": 'einrichtung-deepunity-viewer', "product_id": "deepunity-pacs", "sort_order": 4, "title": 'Einrichtung DeepUnity Viewer', "active": True, "background_color": "#eef6ff", "markdown_content": '- Die grundlegenden Funktionalitäten des DeepUnity Viewers wurden erklärt. Weiterhin sind die Möglichkeiten des Aufrufs des DeepUnity Viewers aus führenden Systemen (Parameter StudyInstanceUID, Auftragsnummer, Patienten-ID) geklärt.\n- Der Einsatz einer DeepUnity RL.exe ist vorgeschrieben und wurde erklärt.\n- Die Suchfunktionalität des DUViewers wurde beschrieben und soll folgendermaßen eingerichtet werden: bitte ausfüllen\n- Das Haus verwendet Citrix für Orbis und DUViewer: bitte ausfüllen\n- Offen sind folgende Punkte: Bitte Thema/Beschreibung eingeben'},
+    {"id": 'einrichtung-von-arbeitslisten', "product_id": "deepunity-pacs", "sort_order": 5, "title": 'Einrichtung von Arbeitslisten', "active": True, "background_color": "#eef6ff", "markdown_content": '- Das Konzept der unterschiedlichen Arbeitslisten (geplante Arbeitslisten, Standard Arbeitslisten, Benutzer-Arbeitslisten) wurde erklärt.\n- Für die Erstellung der Arbeitslisten für Bild-Demonstrationen sind folgende Informationen pro Arbeitsliste notwendig: Frequenz, Startzeitpunkt, automatische/manuelle Befüllung, durch automatische Befüllung enthaltene Bilddaten (Fachabteilungen, Stationen, Modalitäten), Rollenzuordnung\n- Auflistung der anzulegenden Arbeitslisten: bitte ausfüllen\n- Offen sind folgende Punkte: Bitte Thema/Beschreibung eingeben'},
+    {"id": 'zentrale-konfiguration-deepunity-clients', "product_id": "deepunity-pacs", "sort_order": 6, "title": 'Zentrale Konfiguration des DeepUnity Clients', "active": True, "background_color": "#eef6ff", "markdown_content": '- Benennung des Ansprechpartners für die Client-Konfiguration: bitte ausfüllen\n- Layout des Clients, Arbeitslisten, Sendeziele und Kommunikation mit Fremdsystemen'},
+    {"id": 'definition-von-fensterwerten', "product_id": "deepunity-pacs", "sort_order": 7, "title": 'Definition von Fensterwerten', "active": True, "background_color": "#eef6ff", "markdown_content": '- Zur Verwendung der Standard-Fensterwerte können F-Tasten mit Fensterwerten belegt werden.\n- Standard Werte für Window und Level sind enthalten und können über die F-Tasten abgerufen werden.\n- Anpassung der Fensterwerte auf folgende Werte: bitte ausfüllen\n- Offen sind folgende Punkte: Bitte Thema/Beschreibung eingeben'},
+    {"id": 'export-und-importmoeglichkeiten', "product_id": "deepunity-pacs", "sort_order": 8, "title": 'Export- und Importmöglichkeiten', "active": True, "background_color": "#eef6ff", "markdown_content": '- Die Möglichkeiten zum Import und Export von Daten mit der DeepUnity-Software wurden erläutert.\n- Die Berechtigungen für den Import und Export wurden entsprechend gesetzt.\n- Die Arbeitsplätze, die für den Import und Export verwendet werden sollen, sind definiert.'},
+    {"id": 'deepunity-media-creator', "product_id": "deepunity-pacs", "sort_order": 9, "title": 'DeepUnity Media Creator (falls vorhanden)', "active": True, "background_color": "#eef6ff", "markdown_content": '- Labelgestaltung definiert? (Link zum Dokument: 32238723)'},
+    {"id": 'import-mit-worklist', "product_id": "deepunity-pacs", "sort_order": 10, "title": 'Import mit Worklist (falls vorhanden)', "active": True, "background_color": "#eef6ff", "markdown_content": '- Definition der Rechner und des verwendeten Softwaremoduls (DeepUnity XChange oder DeepUnity Client)'},
+    {"id": 'anpassung-ris-leistungsbaum', "product_id": "deepunity-pacs", "sort_order": 11, "title": 'Anpassung RIS-Leistungsbaum', "active": True, "background_color": "#eef6ff", "markdown_content": '- Für Import und Export sollen folgenden Leistungen angelegt werden. Die Leistungen werden durch bitte ausfüllen angelegt.'},
+    {"id": 'software-abnahme-konstanzpruefung', "product_id": "deepunity-pacs", "sort_order": 12, "title": 'Software zur Abnahme- und Konstanzprüfung an Bildschirmwiedergabegeräten', "active": True, "background_color": "#eef6ff", "markdown_content": '- Definition der BWG für Monitorabnahme\n- Leuchtdichtemessgerät vorhanden?\n- Definition des Mitarbeiters (Kunde) für Konstanzprüfung (Einweisung planen!)'},
+    {"id": 'hectec-medicad', "product_id": "deepunity-pacs", "sort_order": 13, "title": 'HecTec mediCAD (falls vorhanden)', "active": True, "background_color": "#eef6ff", "markdown_content": '- Clientlizenz: Rechner, auf denen mediCAD installiert werden müssen definiert werden\n- MediCAD muss min. 6.xxx als Version haben.\n- Netzwerklizenz: Festlegung Lizenzserver'},
+    {"id": 'zusaetzliche-plugins', "product_id": "deepunity-pacs", "sort_order": 14, "title": 'Zusätzliche Plugins (falls vorhanden)', "active": True, "background_color": "#eef6ff", "markdown_content": '- Zusätzliche Plugins, die gekauft wurden: bitte ausfüllen\n- Bei DU Clinical Applications ist die Installation eines zusätzlichen Moduls am Rechner erforderlich. An folgenden Rechner wird das Modul eingesetzt.\n- Folgende Anwender sollen zu folgendem Zeitpunkt im Plugin geschult werden: bitte ausfüllen'},
+    {"id": 'schulungsplanung', "product_id": "deepunity-pacs", "sort_order": 15, "title": 'Schulungsplanung', "active": True, "background_color": "#eef6ff", "markdown_content": '- Schulungen können als Onlineschulungen oder als Präsenzschulung durchgeführt werden. Was wird bevorzugt? bitte ausfüllen\n- Eine Anpassung der Schulungsplanung nach Abstimmung der Berechtigungen ist nicht notwendig/ notwendig: bitte ausfüllen\n- Die Schulungsplanung ist abgeschlossen, Die KeyUser aus der Radiologie sind benannt. Folgende Fragen zu den Schulungen konnten geklärt werden.\n- Definition des KeyUsers erfolgt? (Beispiel: Konfiguration von Bildbeschriftungen, Hanging-Protokollen, Werkzeuge)'},
+    {"id": 'bedingungen-remotekonfiguration', "product_id": "deepunity-pacs", "sort_order": 16, "title": 'Bedingungen für Remotekonfiguration des Systems', "active": True, "background_color": "#eef6ff", "markdown_content": 'Remoteserver min. WindowsServer16 -> TLS 1.0 wird sonst nicht unterstützt'},
+    {"id": 'fragen-und-offene-punkte', "product_id": "deepunity-pacs", "sort_order": 17, "title": 'Fragen und Offene Punkte', "active": True, "background_color": "#eef6ff", "markdown_content": 'Anwenderfragen'},
+]
+
+
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
@@ -272,6 +311,11 @@ def seed_database(session: Session) -> None:
         else:
             record_values = {**item, "participant_group_ids": json.dumps(item.get("participant_group_ids", []))}
             session.add(TrainingContentRecord(**record_values))
+
+    for item in DEFAULT_MASTER_DATA_BLOCKS:
+        existing = session.get(MasterDataBlockRecord, item["id"])
+        if not existing:
+            session.add(MasterDataBlockRecord(**item))
     session.commit()
 
 
@@ -314,6 +358,97 @@ def create_training_content(session: Session, product_id: str, title: str) -> di
     session.commit()
     session.refresh(record)
     return training_content_to_dict(record)
+
+
+def list_master_data_blocks(session: Session, product_id: str | None = None, include_inactive: bool = True) -> list[dict]:
+    statement = select(MasterDataBlockRecord).order_by(
+        MasterDataBlockRecord.product_id, MasterDataBlockRecord.sort_order, MasterDataBlockRecord.title
+    )
+    if product_id:
+        statement = statement.where(MasterDataBlockRecord.product_id == product_id)
+    if not include_inactive:
+        statement = statement.where(MasterDataBlockRecord.active.is_(True))
+    return [master_data_block_to_dict(item) for item in session.scalars(statement).all()]
+
+
+def get_master_data_block(session: Session, block_id: str) -> dict | None:
+    record = session.get(MasterDataBlockRecord, block_id)
+    return master_data_block_to_dict(record) if record else None
+
+
+def create_master_data_block(session: Session, product_id: str, title: str) -> dict:
+    if not session.get(ProductRecord, product_id):
+        raise ValueError("product_not_found")
+    current = session.scalars(
+        select(MasterDataBlockRecord).where(MasterDataBlockRecord.product_id == product_id)
+    ).all()
+    record = MasterDataBlockRecord(
+        id=unique_master_data_block_id(session, slugify(title)),
+        product_id=product_id,
+        sort_order=len(current) + 1,
+        title=title.strip(),
+        active=True,
+        background_color="#eef6ff",
+        markdown_content="",
+    )
+    session.add(record)
+    session.commit()
+    session.refresh(record)
+    return master_data_block_to_dict(record)
+
+
+def update_master_data_block(session: Session, block_id: str, values: dict) -> dict | None:
+    record = session.get(MasterDataBlockRecord, block_id)
+    if not record:
+        return None
+    product_id = record.product_id
+    record.title = str(values.get("title", record.title)).strip() or record.title
+    record.active = bool(values.get("active", record.active))
+    record.background_color = clean_master_data_color(values.get("background_color"))
+    record.markdown_content = str(values.get("markdown_content", record.markdown_content) or "")
+    requested_order = max(1, int(values.get("sort_order", record.sort_order)))
+    records = list(session.scalars(
+        select(MasterDataBlockRecord)
+        .where(MasterDataBlockRecord.product_id == product_id)
+        .order_by(MasterDataBlockRecord.sort_order, MasterDataBlockRecord.title)
+    ).all())
+    records = [item for item in records if item.id != record.id]
+    records.insert(min(requested_order - 1, len(records)), record)
+    for index, item in enumerate(records, start=1):
+        item.sort_order = index
+    session.commit()
+    session.refresh(record)
+    return master_data_block_to_dict(record)
+
+
+def delete_master_data_block(session: Session, block_id: str) -> bool:
+    record = session.get(MasterDataBlockRecord, block_id)
+    if not record:
+        return False
+    product_id = record.product_id
+    session.delete(record)
+    session.flush()
+    records = session.scalars(
+        select(MasterDataBlockRecord)
+        .where(MasterDataBlockRecord.product_id == product_id)
+        .order_by(MasterDataBlockRecord.sort_order, MasterDataBlockRecord.title)
+    ).all()
+    for index, item in enumerate(records, start=1):
+        item.sort_order = index
+    session.commit()
+    return True
+
+
+def master_data_block_to_dict(item: MasterDataBlockRecord) -> dict:
+    return {
+        "id": item.id,
+        "product_id": item.product_id,
+        "sort_order": item.sort_order,
+        "title": item.title,
+        "active": bool(item.active),
+        "background_color": item.background_color or "#eef6ff",
+        "markdown_content": item.markdown_content or "",
+    }
 
 
 def get_training_content(session: Session, content_id: str) -> dict | None:
@@ -490,6 +625,22 @@ def unique_content_id(session: Session, base_id: str) -> str:
     candidate = base_id
     counter = 2
     while session.get(TrainingContentRecord, candidate):
+        candidate = f"{base_id}-{counter}"
+        counter += 1
+    return candidate
+
+
+def clean_master_data_color(value: str | None) -> str:
+    if isinstance(value, str) and re.fullmatch(r"#[0-9a-fA-F]{6}", value.strip()):
+        return value.strip().lower()
+    return "#eef6ff"
+
+
+def unique_master_data_block_id(session: Session, base_id: str) -> str:
+    base_id = f"master-{base_id}" if not base_id.startswith("master-") else base_id
+    candidate = base_id
+    counter = 2
+    while session.get(MasterDataBlockRecord, candidate):
         candidate = f"{base_id}-{counter}"
         counter += 1
     return candidate

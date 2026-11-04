@@ -121,6 +121,8 @@ class TrainingProject(BaseModel):
     trainer_availability: list[TrainerWeekAvailability] = Field(default_factory=list)
     unscheduled_topics: list[TrainingTopic] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
+    master_data_collection_enabled: bool = False
+    master_data_blocks: list[ProjectMasterDataBlock] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def normalize_trainers(self) -> "TrainingProject":
@@ -170,6 +172,29 @@ class TrainingContentMarkdownUpdate(BaseModel):
 class TrainingContentCreate(BaseModel):
     product_id: str
     title: str
+
+
+class MasterDataBlockCreate(BaseModel):
+    product_id: str
+    title: str
+
+
+class MasterDataBlockUpdate(BaseModel):
+    title: str
+    sort_order: int = Field(ge=1)
+    active: bool = True
+    background_color: str = "#eef6ff"
+    markdown_content: str = ""
+
+
+class ProjectMasterDataBlock(BaseModel):
+    id: str
+    sort_order: int = Field(ge=1)
+    title: str
+    markdown_content: str = ""
+    background_color: str = "#eef6ff"
+    completed: bool = False
+    notes: str = ""
 
 
 class ProductCreate(BaseModel):

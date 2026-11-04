@@ -1,7 +1,26 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.4.10**
+Aktuelle Version: **v0.5.0-beta.1** (Pre-Release)
 
+
+## Aenderungen v0.5.0-beta.1 (Pre-Release)
+
+- Neue produktbezogene **Stammdaten-Vorlage** unter Verwaltung.
+- Fuer DeepUnity PACS werden die 17 nummerierten Themenbloecke aus der bereitgestellten `CL_Stammdaten_Erhebung` als initiale, frei editierbare Vorlage angelegt.
+- Stammdatenbloecke koennen beliebig erweitert, umbenannt, aktiviert/deaktiviert, farblich markiert, geloescht und ueber eine explizite Reihenfolgenummer neu sortiert werden.
+- Inhalte/Checkpunkte eines Blocks werden als Markdown gepflegt und koennen damit flexibel erweitert werden.
+- Unter **Stammdaten → Projekt → Weitere Angaben** kann die Stammdatenerhebung projektspezifisch aktiviert werden.
+- Die Projektansicht **Stammdatenerhebung** uebernimmt aktive Vorlagenbloecke als Snapshot mit `Erledigt`-Status und projektspezifischen Notizen.
+- Mit **Aus Vorlage ergaenzen** koennen spaeter neu angelegte Vorlagenbloecke in ein bestehendes Projekt uebernommen werden, ohne bereits ausgefuellte Projektbloecke zu ueberschreiben.
+- Alte Projektdateien bleiben kompatibel; Stammdatenerhebung ist dort standardmaessig deaktiviert.
+- PostgreSQL erhaelt die neue Tabelle `master_data_blocks`; sie wird beim Start automatisch angelegt und mit der DeepUnity-PACS-Initialvorlage befuellt, ohne spaetere manuelle Aenderungen zu ueberschreiben.
+- `TESTING.md` und `SECURITY.md` werden ab diesem Pre-Release im Repository-Root mitgefuehrt.
+
+## Documentation
+
+- [Testing and release checks](TESTING.md)
+- [Security policy](SECURITY.md)
+- [License](LICENSE)
 
 ## Aenderungen v0.4.10
 
@@ -302,7 +321,7 @@ Die Entwicklungsabhaengigkeit `pytest` ist auf `9.1.1` aktualisiert. Damit liegt
 
 Dieser Stand aktualisiert die direkt verwendeten Pakete `python-multipart` auf `0.0.32` und `pypdf` auf `6.16.2`. Die von CodeQL gemeldeten polynomialen regulaeren Ausdruecke im DOCX-Export wurden durch deterministische Parser fuer Markdown-Ueberschriften, Listen und Inline-Formatierung ersetzt. `requirements-dev.txt` referenziert die Runtime-Abhaengigkeiten nicht mehr; CI installiert `requirements.txt` und `requirements-dev.txt` separat.
 
-Lokale Webanwendung zur Erstellung, Bearbeitung, Validierung und zum Export mehrtaegiger Schulungsplaene. Die Anwendung laeuft vollstaendig in Docker und verwendet PostgreSQL fuer den strukturierten Schulungsinhalte-Katalog.
+Lokale Webanwendung zur Erstellung, Bearbeitung, Validierung und zum Export mehrtaegiger Schulungsplaene. Die Anwendung laeuft vollstaendig in Docker und verwendet PostgreSQL fuer den strukturierten Schulungsinhalte- und Stammdatenerhebungs-Katalog.
 
 ## Funktionen
 
@@ -322,7 +341,7 @@ Lokale Webanwendung zur Erstellung, Bearbeitung, Validierung und zum Export mehr
 - PDF-Export im A4-Querformat als Kalenderansicht
 - Offline-Kundenplanung als ZIP mit Rueckimport der Kundenverschiebungen
 - exportier- und wieder importierbare Projektdatei fuer einen exakten Planungsstand
-- PostgreSQL-Katalog fuer dauerhaft gepflegte Schulungsinhalte
+- PostgreSQL-Katalog fuer dauerhaft gepflegte Schulungsinhalte und Stammdaten-Vorlagen
 - Markdown-Editor fuer detaillierte Schulungspunkte je Schulungsinhalt
 - persistente Aenderungshistorie mit Wiederherstellung gespeicherter Markdown-Staende
 - DOCX-Export und -Import fuer Schulungspunkte mit strengem Inhaltsfilter
@@ -331,7 +350,7 @@ Lokale Webanwendung zur Erstellung, Bearbeitung, Validierung und zum Export mehr
 
 Hochgeladene Excel-, PDF- oder DOCX-Dateien werden nicht in PostgreSQL oder Docker-Volumes abgelegt. Die Import-APIs verarbeiten Uploads nur im Request-Speicher. Der Quellordner `Aufgabe/`, lokale Quelldokumente sowie `Aufgabe.md` werden durch `.dockerignore` nicht in das Anwendungsimage uebernommen.
 
-Persistiert wird ausschliesslich das PostgreSQL-Volume fuer strukturierte Produkt- und Schulungsinhalte. Dazu gehoeren auch die Markdown-Schulungspunkte und deren Aenderungshistorie.
+Persistiert wird ausschliesslich das PostgreSQL-Volume fuer strukturierte Produktdaten, Schulungsinhalte und Stammdaten-Vorlagen. Dazu gehoeren auch die Markdown-Schulungspunkte, deren Aenderungshistorie und die nummerierten Stammdatenbloecke.
 
 ## Voraussetzungen
 

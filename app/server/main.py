@@ -13,29 +13,33 @@ from sqlalchemy.orm import Session
 
 from .content_db import (
     create_product,
+    create_master_data_block,
+    delete_master_data_block,
     create_training_content,
     db_session,
     get_training_content,
+    list_master_data_blocks,
     init_database,
     list_products,
     list_training_content_history,
     list_training_contents,
     restore_training_content_revision,
     update_training_content,
+    update_master_data_block,
     update_training_content_markdown,
 )
 from .docx_content import DOCX_MIME, DocxContentError, export_training_content_docx, import_training_content_docx
 from .customer_exchange import apply_customer_return, build_customer_package
 from .exporter import export_pdf
 from .importer import build_project_from_uploads
-from .models import CustomerPlanningReturn, ExportRequest, ProductCreate, ProjectFile, TrainingContentCreate, TrainingContentMarkdownUpdate, TrainingContentUpdate, TrainingProject
+from .models import CustomerPlanningReturn, ExportRequest, MasterDataBlockCreate, MasterDataBlockUpdate, ProductCreate, ProjectFile, TrainingContentCreate, TrainingContentMarkdownUpdate, TrainingContentUpdate, TrainingProject
 from .planner import plan_project, validate_project
 from .rules import format_time, minutes_between, parse_time, snap_minutes_to_quarter
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 STATIC_DIR = BASE_DIR / "static"
 MAX_UPLOAD_MB = int(os.environ.get("MAX_UPLOAD_MB", "25"))
-APP_VERSION = os.environ.get("APP_VERSION", "0.4.10")
+APP_VERSION = os.environ.get("APP_VERSION", "0.5.0-beta.1")
 MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
 
 app = FastAPI(title="Schulungsplantool", version=APP_VERSION)
@@ -69,6 +73,38 @@ def add_product(payload: ProductCreate, session: Session = Depends(db_session)) 
     if not payload.name.strip():
         raise HTTPException(status_code=400, detail="Produktname ist erforderlich.")
     return create_product(session, payload.name, payload.description)
+
+
+@app.get("/api/master-data-blocks")
+def master_data_blocks(product_id: str | None = None, session: Session = Depends(db_session)) -> dict:
+    return {"items": list_master_data_blocks(session, product_id)}
+
+
+@app.post("/api/master-data-blocks")
+def add_master_data_block(payload: MasterDataBlockCreate, session: Session = Depends(db_session)) -> dict:
+    if not payload.product_id.strip() or not payload.title.strip():
+        raise HTTPException(status_code=400, detail="Produkt und Titel sind erforderlich.")
+    try:
+        return create_master_data_block(session, payload.product_id, payload.title)
+    except ValueError as error:
+        if str(error) == "product_not_found":
+            raise HTTPException(status_code=404, detail="Produkt wurde nicht gefunden.") from error
+        raise
+
+
+@app.put("/api/master-data-blocks/{block_id}")
+def save_master_data_block(block_id: str, payload: MasterDataBlockUpdate, session: Session = Depends(db_session)) -> dict:
+    updated = update_master_data_block(session, block_id, payload.model_dump())
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Stammdatenblock wurde nicht gefunden.")
+    return updated
+
+
+@app.delete("/api/master-data-blocks/{block_id}", status_code=204)
+def remove_master_data_block(block_id: str, session: Session = Depends(db_session)) -> Response:
+    if not delete_master_data_block(session, block_id):
+        raise HTTPException(status_code=404, detail="Stammdatenblock wurde nicht gefunden.")
+    return Response(status_code=204)
 
 
 @app.get("/api/training-contents")

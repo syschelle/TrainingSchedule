@@ -27,8 +27,10 @@ let cutBlockId = null;
 const calendarHourHeight = 76;
 const calendarSnapMinutes = 15;
 let trainingContents = [];
+let masterDataBlocks = [];
 let catalogProducts = [];
 let selectedContentId = null;
+let selectedMasterDataBlockId = null;
 let markdownEditorContentId = null;
 let markdownPendingChangeType = "saved";
 let blockEditorBlockId = null;
@@ -86,7 +88,9 @@ function makeDefaultProject() {
     manual_weeks: [],
     trainer_availability: [],
     unscheduled_topics: [],
-    warnings: []
+    warnings: [],
+    master_data_collection_enabled: false,
+    master_data_blocks: []
   };
 }
 
@@ -111,6 +115,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   $("#reviewChangedInputs").addEventListener("click", () => setWorkflowStep("review"));
   $("#addTrainingContent").addEventListener("click", addTrainingContent);
+  $("#addMasterDataBlock").addEventListener("click", addMasterDataBlock);
+  $("#syncMasterDataCollection").addEventListener("click", () => syncProjectMasterDataFromTemplate());
   $("#closeMarkdownEditor").addEventListener("click", closeMarkdownEditor);
   $("#cancelMarkdownEditor").addEventListener("click", closeMarkdownEditor);
   $("#saveMarkdownEditor").addEventListener("click", saveMarkdownEditor);
@@ -160,6 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
   render();
   loadProducts();
   loadTrainingContents();
+  loadMasterDataBlocks();
 });
 
 function setStatus(text) {
@@ -177,6 +184,8 @@ function render() {
   renderWorkflowReview();
   renderProductMenu();
   renderContentCatalog();
+  renderMasterDataCatalog();
+  renderProjectMasterDataCollection();
   renderTabs();
   renderPages();
   renderNavigation();
@@ -222,10 +231,13 @@ function renderBaseFields() {
   ].join("");
   advanced.innerHTML = [
     field("title", "Schulungsbezeichnung", project.title, "text", true),
-    modeSelector()
+    modeSelector(),
+    masterDataCollectionSelector()
   ].join("");
   document.querySelectorAll("#base-fields input[data-field-name], #project-advanced-fields input[data-field-name]").forEach((input) => input.addEventListener("input", updateProjectField));
   document.querySelectorAll("[data-delivery-mode]").forEach((button) => button.addEventListener("click", updateDeliveryMode));
+  const masterDataToggle = $("#masterDataCollectionEnabled");
+  if (masterDataToggle) masterDataToggle.addEventListener("change", updateMasterDataCollectionEnabled);
   const mode = $("#projectMode");
   if (mode) mode.addEventListener("change", updateProjectMode);
   applyWorkflowFieldErrors();
@@ -601,6 +613,18 @@ function checkboxSetting(name, label, value) {
   </label>`;
 }
 
+
+function masterDataCollectionSelector() {
+  return `<label class="field checkbox-field field-wide"><span>Stammdatenerhebung</span><span class="split-training-option"><input id="masterDataCollectionEnabled" type="checkbox" ${project.master_data_collection_enabled ? "checked" : ""}><span>Stammdatenerhebung für dieses Projekt verwenden</span></span></label>`;
+}
+
+function updateMasterDataCollectionEnabled(event) {
+  project.master_data_collection_enabled = Boolean(event.target.checked);
+  if (project.master_data_collection_enabled) syncProjectMasterDataFromTemplate({ silent: true });
+  markPlanningInputsChanged();
+  render();
+}
+
 function markPlanningInputsChanged() {
   if (project.blocks.length) planInputsDirty = true;
   renderHeader();
@@ -891,7 +915,7 @@ function renderWorkflowReview() {
       <span class="review-status-icon" aria-hidden="true">${ready ? "✓" : "!"}</span>
     </div>
     <div class="review-grid">
-      ${reviewCard("Projekt", [["Produkt", product.name], ["Start", dateLabel], ["Standort", project.location || "—"], ["Durchführung", project.delivery_mode === "remote" ? "Remote" : "Vor Ort"]], "project")}
+      ${reviewCard("Projekt", [["Produkt", product.name], ["Start", dateLabel], ["Standort", project.location || "—"], ["Durchführung", project.delivery_mode === "remote" ? "Remote" : "Vor Ort"], ["Stammdatenerhebung", project.master_data_collection_enabled ? `${(project.master_data_blocks || []).length} Blöcke` : "Nicht aktiviert"]], "project")}
       ${reviewCard("Personen", [["Trainer", trainers.length ? trainers.join(", ") : "—"], ["Teilnehmer", String(participants)], ["Gruppen", String(groups.length)]], "people")}
       ${reviewCard("Schulungen", [["Ausgewählt", `${trainingCount} ${trainingCount === 1 ? "Schulungsinhalt" : "Schulungsinhalte"}`]], "training")}
       ${reviewCard("Zeiten", [["Schulungstag", `${project.settings.day_start}–${project.settings.day_end}`], ["Anreise", project.delivery_mode === "remote" ? "Nicht erforderlich" : project.settings.monday_arrival_enabled ? `${project.settings.monday_arrival_start}–${project.settings.monday_arrival_end}` : "Aus"], ["Abreise", project.delivery_mode === "remote" ? "Nicht erforderlich" : project.settings.thursday_departure_enabled ? `${project.settings.thursday_departure_start}–${project.settings.thursday_departure_end}` : "Aus"]], "time")}
@@ -977,6 +1001,8 @@ function selectProjectProduct(productId) {
   const selectedProductId = currentProduct().id;
   project.topics = (project.topics || []).filter((item) => (item.product_id || selectedProductId) === selectedProductId);
   selectedContentId = firstContentForCurrentProduct()?.id || null;
+  selectedMasterDataBlockId = firstMasterDataBlockForCurrentProduct()?.id || null;
+  if (project.master_data_collection_enabled) { project.master_data_blocks = []; syncProjectMasterDataFromTemplate({ silent: true }); }
 }
 
 function updateParticipantGroupField(event) {
@@ -1069,6 +1095,175 @@ async function loadTrainingContents() {
     const status = $("#catalog-status");
     if (status) status.textContent = "Katalog nicht erreichbar.";
   }
+}
+
+
+async function loadMasterDataBlocks() {
+  try {
+    const response = await fetch("api/master-data-blocks");
+    if (!response.ok) throw new Error("master-data");
+    masterDataBlocks = (await response.json()).items || [];
+    selectedMasterDataBlockId = firstMasterDataBlockForCurrentProduct()?.id || selectedMasterDataBlockId;
+    if (project.master_data_collection_enabled && !(project.master_data_blocks || []).length) {
+      syncProjectMasterDataFromTemplate({ silent: true });
+    }
+    render();
+  } catch (error) {
+    masterDataBlocks = [];
+    const status = $("#master-data-status");
+    if (status) status.textContent = "Stammdaten-Vorlage nicht erreichbar.";
+  }
+}
+
+function firstMasterDataBlockForCurrentProduct() {
+  return masterDataBlocks
+    .filter((item) => item.product_id === currentProduct().id)
+    .sort((a, b) => Number(a.sort_order) - Number(b.sort_order))[0];
+}
+
+function renderMasterDataCatalog() {
+  const linkList = $("#master-data-link-list");
+  const detail = $("#master-data-detail");
+  const status = $("#master-data-status");
+  if (!linkList || !detail) return;
+  const product = currentProduct();
+  const items = masterDataBlocks
+    .filter((item) => item.product_id === product.id)
+    .sort((a, b) => Number(a.sort_order) - Number(b.sort_order));
+  if (!items.some((item) => item.id === selectedMasterDataBlockId)) selectedMasterDataBlockId = items[0]?.id || null;
+  if (status) status.textContent = items.length ? `${items.length} Blöcke für ${product.name}` : "Noch keine Stammdatenblöcke für dieses Produkt.";
+  linkList.innerHTML = items.length ? items.map(masterDataLink).join("") : `<p class="muted">Keine Blöcke.</p>`;
+  linkList.querySelectorAll("[data-master-data-link]").forEach((button) => button.addEventListener("click", selectMasterDataBlock));
+  const item = items.find((candidate) => candidate.id === selectedMasterDataBlockId);
+  detail.innerHTML = item ? masterDataCard(item) : `<p class="muted">Für ${escapeHtml(product.name)} sind noch keine Stammdatenblöcke hinterlegt.</p>`;
+  detail.querySelectorAll("[data-master-data]").forEach((input) => input.addEventListener(input.type === "checkbox" ? "change" : "input", updateMasterDataDraft));
+  detail.querySelectorAll("[data-save-master-data]").forEach((button) => button.addEventListener("click", saveMasterDataBlock));
+  detail.querySelectorAll("[data-delete-master-data]").forEach((button) => button.addEventListener("click", deleteMasterDataBlock));
+}
+
+function masterDataLink(item) {
+  return `<button type="button" class="content-link ${item.id === selectedMasterDataBlockId ? "active" : ""}" data-master-data-link="${escapeHtml(item.id)}"><strong>${Number(item.sort_order)}. ${escapeHtml(item.title)}</strong><span>${item.active ? "Aktiv" : "Inaktiv"}</span></button>`;
+}
+
+function selectMasterDataBlock(event) {
+  selectedMasterDataBlockId = event.currentTarget.dataset.masterDataLink;
+  renderMasterDataCatalog();
+}
+
+function masterDataCard(item) {
+  return `<article class="content-card">
+    <div class="content-card-title master-data-card-title">
+      <label class="field master-data-order-field"><span>Reihenfolge</span><input data-master-data="${item.id}" data-key="sort_order" type="number" min="1" step="1" value="${Number(item.sort_order)}"></label>
+      <label class="field"><span>Titel</span><input data-master-data="${item.id}" data-key="title" value="${escapeHtml(item.title)}"></label>
+      <label class="field color-field"><span>Farbe</span><input data-master-data="${item.id}" data-key="background_color" type="color" value="${escapeHtml(item.background_color || "#eef6ff")}"></label>
+      <label class="field checkbox-field master-data-active-field"><span>Aktiv</span><input data-master-data="${item.id}" data-key="active" type="checkbox" ${item.active ? "checked" : ""}></label>
+    </div>
+    <label class="field"><span>Inhalt / Checkpunkte (Markdown)</span><textarea data-master-data="${item.id}" data-key="markdown_content" rows="14">${escapeHtml(item.markdown_content || "")}</textarea></label>
+    <div class="master-data-toolbar">
+      <button type="button" class="button button-ghost" data-delete-master-data="${item.id}">Block löschen</button>
+      <button type="button" class="button button-secondary" data-save-master-data="${item.id}">Speichern</button>
+    </div>
+  </article>`;
+}
+
+function updateMasterDataDraft(event) {
+  const item = masterDataBlocks.find((candidate) => candidate.id === event.target.dataset.masterData);
+  if (!item) return;
+  const key = event.target.dataset.key;
+  if (event.target.type === "checkbox") item[key] = event.target.checked;
+  else if (key === "sort_order") item[key] = Math.max(1, Number(event.target.value || 1));
+  else item[key] = event.target.value;
+}
+
+async function addMasterDataBlock() {
+  const product = currentProduct();
+  const title = prompt("Titel des neuen Stammdatenblocks", "Neuer Stammdatenblock");
+  if (!title || !title.trim()) return;
+  const response = await fetch("api/master-data-blocks", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ product_id: product.id, title: title.trim() })
+  });
+  if (!response.ok) return window.alert("Stammdatenblock konnte nicht angelegt werden.");
+  const created = await response.json();
+  masterDataBlocks.push(created);
+  selectedMasterDataBlockId = created.id;
+  render();
+}
+
+async function saveMasterDataBlock(event) {
+  const item = masterDataBlocks.find((candidate) => candidate.id === event.currentTarget.dataset.saveMasterData);
+  if (!item) return;
+  const button = event.currentTarget;
+  button.disabled = true; button.textContent = "Speichern...";
+  const response = await fetch(`api/master-data-blocks/${encodeURIComponent(item.id)}`, {
+    method: "PUT", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title: item.title, sort_order: Number(item.sort_order || 1), active: Boolean(item.active), background_color: item.background_color || "#eef6ff", markdown_content: item.markdown_content || "" })
+  });
+  if (!response.ok) { button.disabled = false; button.textContent = "Fehler"; return; }
+  await loadMasterDataBlocks();
+}
+
+async function deleteMasterDataBlock(event) {
+  const id = event.currentTarget.dataset.deleteMasterData;
+  const item = masterDataBlocks.find((candidate) => candidate.id === id);
+  if (!item || !window.confirm(`Stammdatenblock „${item.title}“ wirklich löschen? Bereits in Projekten gespeicherte Kopien bleiben erhalten.`)) return;
+  const response = await fetch(`api/master-data-blocks/${encodeURIComponent(id)}`, { method: "DELETE" });
+  if (!response.ok) return window.alert("Stammdatenblock konnte nicht gelöscht werden.");
+  masterDataBlocks = masterDataBlocks.filter((candidate) => candidate.id !== id);
+  selectedMasterDataBlockId = firstMasterDataBlockForCurrentProduct()?.id || null;
+  await loadMasterDataBlocks();
+}
+
+function syncProjectMasterDataFromTemplate(options = {}) {
+  project.master_data_blocks = Array.isArray(project.master_data_blocks) ? project.master_data_blocks : [];
+  const existingIds = new Set(project.master_data_blocks.map((item) => item.id));
+  const template = masterDataBlocks
+    .filter((item) => item.product_id === currentProduct().id && item.active)
+    .sort((a, b) => Number(a.sort_order) - Number(b.sort_order));
+  let added = 0;
+  template.forEach((item) => {
+    if (existingIds.has(item.id)) return;
+    project.master_data_blocks.push({ id: item.id, sort_order: Number(item.sort_order), title: item.title, markdown_content: item.markdown_content || "", background_color: item.background_color || "#eef6ff", completed: false, notes: "" });
+    added += 1;
+  });
+  project.master_data_blocks.sort((a, b) => Number(a.sort_order) - Number(b.sort_order));
+  if (!options.silent) {
+    if (added) markPlanningInputsChanged();
+    window.alert(added ? `${added} Stammdatenblock${added === 1 ? "" : "e"} aus der Vorlage ergänzt.` : "Die Projekt-Erhebung enthält bereits alle aktiven Vorlagenblöcke.");
+    render();
+  }
+}
+
+function renderProjectMasterDataCollection() {
+  const container = $("#project-master-data-collection");
+  const syncButton = $("#syncMasterDataCollection");
+  if (!container) return;
+  if (syncButton) syncButton.disabled = !project.master_data_collection_enabled;
+  if (!project.master_data_collection_enabled) {
+    container.innerHTML = `<div class="master-data-disabled"><strong>Stammdatenerhebung ist für dieses Projekt nicht aktiviert.</strong><p class="muted">Aktiviere sie unter Eingabe → Stammdaten → Projekt → Weitere Angaben.</p></div>`;
+    return;
+  }
+  const items = (project.master_data_blocks || []).slice().sort((a, b) => Number(a.sort_order) - Number(b.sort_order));
+  container.innerHTML = items.length ? `<div class="master-data-project-list">${items.map(projectMasterDataBlock).join("")}</div>` : `<div class="master-data-disabled"><strong>Noch keine Blöcke übernommen.</strong><p class="muted">Mit „Aus Vorlage ergänzen“ werden die aktiven Blöcke des aktuellen Produkts übernommen.</p></div>`;
+  container.querySelectorAll("[data-project-master-completed]").forEach((input) => input.addEventListener("change", updateProjectMasterDataBlock));
+  container.querySelectorAll("[data-project-master-notes]").forEach((input) => input.addEventListener("input", updateProjectMasterDataBlock));
+}
+
+function projectMasterDataBlock(item) {
+  return `<article class="master-data-project-block" style="border-left-color:${escapeHtml(item.background_color || "#eef6ff")}">
+    <div class="master-data-project-heading"><strong>${Number(item.sort_order)}. ${escapeHtml(item.title)}</strong><label class="master-data-completed"><input type="checkbox" data-project-master-completed="${escapeHtml(item.id)}" ${item.completed ? "checked" : ""}> Erledigt</label></div>
+    <div class="master-data-project-content markdown-preview">${renderMarkdown(item.markdown_content || "")}</div>
+    <label class="field master-data-project-notes"><span>Notizen / Ergebnisse</span><textarea data-project-master-notes="${escapeHtml(item.id)}">${escapeHtml(item.notes || "")}</textarea></label>
+  </article>`;
+}
+
+function updateProjectMasterDataBlock(event) {
+  const id = event.target.dataset.projectMasterCompleted || event.target.dataset.projectMasterNotes;
+  const item = (project.master_data_blocks || []).find((candidate) => candidate.id === id);
+  if (!item) return;
+  if (event.target.dataset.projectMasterCompleted) item.completed = event.target.checked;
+  else item.notes = event.target.value;
+  markPlanningInputsChanged();
 }
 
 function syncTopicsFromCatalog() {
@@ -2710,6 +2905,8 @@ function renderPreview() {
 
 function normalizeProjectState() {
   project.delivery_mode = project.delivery_mode === "remote" ? "remote" : "onsite";
+  project.master_data_collection_enabled = Boolean(project.master_data_collection_enabled);
+  project.master_data_blocks = Array.isArray(project.master_data_blocks) ? project.master_data_blocks : [];
   project.blocks = Array.isArray(project.blocks) ? project.blocks : [];
   if (project.delivery_mode === "remote") {
     project.blocks = project.blocks.filter((block) => !["arrival", "departure"].includes(block.type));
