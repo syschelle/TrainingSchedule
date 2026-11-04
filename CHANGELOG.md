@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.5.0-beta.6 - 2026-11-04
+
+### Pre-Release: optionale strukturierte Antworten pro Stammdatenblock
+
+- Jeder Stammdatenblock kann optional einen Antworttyp definieren: `none`, `text`, `select`, `checkboxes` oder `yes_no`.
+- Die Vorlagen-Konfiguration bietet dafuer eine sichtbare Auswahl `Keine strukturierte Antwort`, `Freitext`, `Select`, `Checkboxen` und `Ja / Nein`.
+- Bei `Select` und `Checkboxen` werden frei definierbare Optionen gespeichert; die UI verwendet eine Option pro Zeile und entfernt leere bzw. doppelte Eintraege.
+- Antworttyp und Optionen werden in den Projekt-Snapshot kopiert. Dadurch bleiben bereits angelegte Erhebungen von spaeteren Vorlagenaenderungen unberuehrt.
+- Projektbloecke speichern Freitextantworten bzw. ausgewaehlte Einzel-/Mehrfachwerte zusaetzlich zu `Erledigt` und `Notizen / Ergebnisse`.
+- Bestehende Projektdateien bleiben kompatibel und erhalten fuer alte Bloecke automatisch `answer_type=none`.
+- Die bestehende PostgreSQL-Tabelle `master_data_blocks` wird beim Start automatisch um `answer_type` und `answer_options` erweitert.
+- Regressionstests fuer Antworttypen, Snapshots, Altprojekt-Kompatibilitaet und automatische Datenbankerweiterung ergaenzt.
+- Lokale Suite: 160 Tests bestanden.
+- Pre-Release-Version `v0.5.0-beta.6`.
+
+
 ## v0.5.0-beta.5 - 2026-11-04
 
 ### Pre-Release: Projektstammdaten in der Stammdatenerhebung aktualisieren

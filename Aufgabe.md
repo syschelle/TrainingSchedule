@@ -1694,3 +1694,18 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - `TESTING.md` und `SECURITY.md` muessen auf v0.5.0-beta.5 aktualisiert werden.
 - Version als Pre-Release auf `v0.5.0-beta.5` erhoeht.
 
+
+
+## Erweiterung v0.5.0-beta.6 - Strukturierte Antworten pro Stammdatenblock (Pre-Release)
+
+- Jeder Stammdatenblock kann optional einen strukturierten Antworttyp besitzen.
+- Unterstuetzte Typen: keine strukturierte Antwort, Freitext, Select (Einzelauswahl), Checkboxen (Mehrfachauswahl) und Ja/Nein.
+- Fuer Select und Checkboxen muessen die Antwortoptionen in der Stammdaten-Vorlage frei definierbar sein.
+- Die Konfiguration erfolgt einfach als eine Option pro Zeile; leere und doppelte Optionen werden normalisiert.
+- `Erledigt` und `Notizen / Ergebnisse` bleiben unabhaengig vom Antworttyp vorhanden.
+- Antworttyp und Optionen werden beim Uebernehmen aus der Vorlage in das Projekt als Snapshot gespeichert und danach durch spaetere Vorlagenaenderungen nicht automatisch ueberschrieben.
+- Projektbloecke speichern die konkrete Freitextantwort bzw. die ausgewaehlten Einzel-/Mehrfachwerte.
+- Alte Vorlagen und Projektdateien ohne neue Felder bleiben kompatibel und verhalten sich wie `Keine strukturierte Antwort`.
+- Bestehende PostgreSQL-Installationen werden beim Start automatisch um `answer_type` und `answer_options` in `master_data_blocks` erweitert; keine manuelle Migration.
+- `TESTING.md` und `SECURITY.md` werden auf v0.5.0-beta.6 aktualisiert.
+- Version als Pre-Release auf `v0.5.0-beta.6` erhoeht.

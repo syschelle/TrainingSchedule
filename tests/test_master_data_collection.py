@@ -1,9 +1,9 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import Session
 
 from app.server.content_db import (
     Base, DEFAULT_MASTER_DATA_BLOCKS, create_master_data_block, delete_master_data_block,
-    list_master_data_blocks, seed_database, update_master_data_block,
+    ensure_master_data_block_columns, list_master_data_blocks, seed_database, update_master_data_block,
 )
 from app.server.models import TrainingProject
 
@@ -26,9 +26,12 @@ def test_master_data_blocks_are_extendable_reorderable_and_deletable():
         moved = update_master_data_block(session, created["id"], {
             "title": created["title"], "sort_order": 2, "active": True,
             "background_color": "#abcdef", "markdown_content": "- Neuer Punkt",
+            "answer_type": "select", "answer_options": ["Online", "Präsenz", "Hybrid", "Online"],
         })
         assert moved is not None
         assert moved["sort_order"] == 2
+        assert moved["answer_type"] == "select"
+        assert moved["answer_options"] == ["Online", "Präsenz", "Hybrid"]
         items = list_master_data_blocks(session, "deepunity-pacs")
         assert [item["sort_order"] for item in items] == list(range(1, 19))
         assert items[1]["id"] == created["id"]
@@ -101,3 +104,51 @@ def test_master_data_collection_appointment_metadata_is_serializable():
     assert dumped["master_data_collection_start_time"] == "09:30"
     assert dumped["master_data_collection_duration_minutes"] == 240
     assert dumped["master_data_collection_completed"] is True
+
+
+def test_project_master_data_block_keeps_structured_answer_snapshot():
+    project = TrainingProject.model_validate({
+        "master_data_collection_enabled": True,
+        "master_data_blocks": [{
+            "id": "master-auth", "sort_order": 3, "title": "Authentifizierung",
+            "markdown_content": "- Verfahren abstimmen",
+            "answer_type": "checkboxes",
+            "answer_options": ["DeepUnity Server", "LDAP", "ORBIS"],
+            "answer_selected": ["LDAP", "ORBIS"],
+            "answer_text": "",
+            "completed": True,
+            "notes": "Kunde prüft Gruppenstruktur",
+        }],
+    })
+    dumped = project.model_dump(mode="json")["master_data_blocks"][0]
+    assert dumped["answer_type"] == "checkboxes"
+    assert dumped["answer_options"] == ["DeepUnity Server", "LDAP", "ORBIS"]
+    assert dumped["answer_selected"] == ["LDAP", "ORBIS"]
+    assert dumped["completed"] is True
+    assert dumped["notes"] == "Kunde prüft Gruppenstruktur"
+
+
+def test_old_project_master_data_blocks_default_to_no_structured_answer():
+    project = TrainingProject.model_validate({
+        "master_data_blocks": [{
+            "id": "legacy", "sort_order": 1, "title": "Alt", "markdown_content": "Text"
+        }]
+    })
+    block = project.master_data_blocks[0]
+    assert block.answer_type == "none"
+    assert block.answer_options == []
+    assert block.answer_text == ""
+    assert block.answer_selected == []
+
+
+def test_master_data_answer_columns_are_added_to_existing_database(monkeypatch):
+    import app.server.content_db as content_db
+
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    with engine.begin() as connection:
+        connection.execute(text("CREATE TABLE master_data_blocks (id VARCHAR(120) PRIMARY KEY, product_id VARCHAR(120) NOT NULL, sort_order INTEGER NOT NULL, title VARCHAR(240) NOT NULL, active BOOLEAN NOT NULL, background_color VARCHAR(20) NOT NULL, markdown_content TEXT NOT NULL)"))
+    monkeypatch.setattr(content_db, "engine", engine)
+    ensure_master_data_block_columns()
+    columns = {column["name"] for column in inspect(engine).get_columns("master_data_blocks")}
+    assert "answer_type" in columns
+    assert "answer_options" in columns

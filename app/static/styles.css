@@ -3151,3 +3151,14 @@ body.modal-open {
 .master-data-disabled { padding: 18px; border: 1px dashed var(--line); border-radius: var(--radius); background: #f8fafc; }
 .master-data-toolbar { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
 @media (max-width: 760px) { .master-data-card-title { grid-template-columns: 1fr; } .master-data-project-heading { align-items: flex-start; flex-direction: column; } .master-data-appointment-heading { flex-direction: column; } .master-data-context { grid-template-columns: 1fr; } .master-data-session-intro { flex-direction: column; gap: 2px; } }
+
+/* Strukturierte Antworten in der Stammdatenerhebung */
+.master-data-answer-config { display: grid; grid-template-columns: minmax(220px, .7fr) minmax(320px, 1.3fr); gap: 14px; align-items: start; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.master-data-answer-config small { display: block; margin-top: 5px; color: var(--muted); }
+.master-data-answer { margin: 12px 0; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: #fbfdff; }
+.master-data-answer textarea { min-height: 78px; }
+.master-data-answer-checkboxes { display: grid; gap: 8px; }
+.master-data-answer-checkboxes legend { padding: 0 4px; font-size: .8rem; font-weight: 850; color: var(--muted); }
+.master-data-answer-checkboxes label { display: flex; gap: 8px; align-items: center; font-weight: 700; }
+.master-data-answer-checkboxes input { width: auto; }
+@media (max-width: 760px) { .master-data-answer-config { grid-template-columns: 1fr; } }

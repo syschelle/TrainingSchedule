@@ -72,6 +72,8 @@ class MasterDataBlockRecord(Base):
     active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     background_color: Mapped[str] = mapped_column(String(20), default="#eef6ff", nullable=False)
     markdown_content: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    answer_type: Mapped[str] = mapped_column(String(20), default="none", nullable=False)
+    answer_options: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
 
     product: Mapped[ProductRecord] = relationship(back_populates="master_data_blocks")
 
@@ -266,6 +268,7 @@ def db_session() -> Iterator[Session]:
 def init_database() -> None:
     Base.metadata.create_all(engine)
     ensure_training_content_columns()
+    ensure_master_data_block_columns()
     with SessionLocal() as session:
         seed_database(session)
         prune_training_content_history(session)
@@ -286,6 +289,15 @@ def ensure_training_content_columns() -> None:
             connection.execute(text("ALTER TABLE training_contents ADD COLUMN background_color VARCHAR(20) DEFAULT '#eaf8f2' NOT NULL"))
         if "markdown_content" not in columns:
             connection.execute(text("ALTER TABLE training_contents ADD COLUMN markdown_content TEXT DEFAULT '' NOT NULL"))
+
+
+def ensure_master_data_block_columns() -> None:
+    columns = {column["name"] for column in inspect(engine).get_columns("master_data_blocks")}
+    with engine.begin() as connection:
+        if "answer_type" not in columns:
+            connection.execute(text("ALTER TABLE master_data_blocks ADD COLUMN answer_type VARCHAR(20) DEFAULT 'none' NOT NULL"))
+        if "answer_options" not in columns:
+            connection.execute(text("ALTER TABLE master_data_blocks ADD COLUMN answer_options TEXT DEFAULT '[]' NOT NULL"))
 
 
 def seed_database(session: Session) -> None:
@@ -390,6 +402,8 @@ def create_master_data_block(session: Session, product_id: str, title: str) -> d
         active=True,
         background_color="#eef6ff",
         markdown_content="",
+        answer_type="none",
+        answer_options="[]",
     )
     session.add(record)
     session.commit()
@@ -406,6 +420,8 @@ def update_master_data_block(session: Session, block_id: str, values: dict) -> d
     record.active = bool(values.get("active", record.active))
     record.background_color = clean_master_data_color(values.get("background_color"))
     record.markdown_content = str(values.get("markdown_content", record.markdown_content) or "")
+    record.answer_type = clean_master_data_answer_type(values.get("answer_type", record.answer_type))
+    record.answer_options = json.dumps(clean_master_data_answer_options(values.get("answer_options", parse_answer_options(record.answer_options))), ensure_ascii=False)
     requested_order = max(1, int(values.get("sort_order", record.sort_order)))
     records = list(session.scalars(
         select(MasterDataBlockRecord)
@@ -448,6 +464,8 @@ def master_data_block_to_dict(item: MasterDataBlockRecord) -> dict:
         "active": bool(item.active),
         "background_color": item.background_color or "#eef6ff",
         "markdown_content": item.markdown_content or "",
+        "answer_type": clean_master_data_answer_type(item.answer_type),
+        "answer_options": parse_answer_options(item.answer_options),
     }
 
 
@@ -628,6 +646,44 @@ def unique_content_id(session: Session, base_id: str) -> str:
         candidate = f"{base_id}-{counter}"
         counter += 1
     return candidate
+
+
+MASTER_DATA_ANSWER_TYPES = {"none", "text", "select", "checkboxes", "yes_no"}
+
+
+def clean_master_data_answer_type(value: object) -> str:
+    answer_type = str(value or "none").strip().lower()
+    return answer_type if answer_type in MASTER_DATA_ANSWER_TYPES else "none"
+
+
+def clean_master_data_answer_options(values: object) -> list[str]:
+    if isinstance(values, str):
+        try:
+            decoded = json.loads(values)
+            if isinstance(decoded, list):
+                values = decoded
+            else:
+                values = values.splitlines()
+        except (json.JSONDecodeError, TypeError):
+            values = values.splitlines()
+    if not isinstance(values, list):
+        return []
+    cleaned: list[str] = []
+    for value in values:
+        option = str(value).strip()
+        if option and option not in cleaned:
+            cleaned.append(option)
+    return cleaned
+
+
+def parse_answer_options(value: str | None) -> list[str]:
+    if not value:
+        return []
+    try:
+        decoded = json.loads(value)
+    except (json.JSONDecodeError, TypeError):
+        return clean_master_data_answer_options(value)
+    return clean_master_data_answer_options(decoded)
 
 
 def clean_master_data_color(value: str | None) -> str:

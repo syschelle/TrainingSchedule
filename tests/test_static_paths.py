@@ -785,3 +785,18 @@ def test_beta5_collection_refreshes_project_customer_context_when_page_opens():
     assert 'project.customer_name || "—"' in appointment
     assert 'project.project_number || "—"' in appointment
 
+
+
+def test_beta6_master_data_blocks_support_optional_structured_answers():
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    css = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
+    assert 'Antworttyp (optional)' in javascript
+    assert 'value="text"' in javascript
+    assert 'value="select"' in javascript
+    assert 'value="checkboxes"' in javascript
+    assert 'value="yes_no"' in javascript
+    assert 'Eine Option pro Zeile' in javascript
+    assert 'answer_options: normalizeMasterDataAnswerOptions' in javascript
+    assert 'data-project-master-answer-select' in javascript
+    assert 'data-project-master-answer-checkbox' in javascript
+    assert '.master-data-answer-config' in css

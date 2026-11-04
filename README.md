@@ -1,6 +1,18 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.5.0-beta.5** (Pre-Release)
+Aktuelle Version: **v0.5.0-beta.6** (Pre-Release)
+
+
+## Aenderungen v0.5.0-beta.6 (Pre-Release)
+
+- Stammdatenbloecke koennen jetzt optional einen **strukturierten Antworttyp** definieren.
+- Verfuegbar sind `Keine strukturierte Antwort`, `Freitext`, `Select`, `Checkboxen` und `Ja / Nein`.
+- Fuer `Select` und `Checkboxen` koennen die Auswahlmoeglichkeiten frei in der Stammdaten-Vorlage definiert werden (eine Option pro Zeile).
+- Die konfigurierte Antwortart und ihre Optionen werden beim Uebernehmen in ein Projekt als Snapshot gespeichert. Spaetere Vorlagenaenderungen veraendern bestehende Projekt-Erhebungen nicht.
+- In der Kundenerhebung werden automatisch das passende Freitextfeld, Select oder die Checkboxen dargestellt.
+- `Erledigt` und `Notizen / Ergebnisse` bleiben unabhaengig vom strukturierten Antwortfeld erhalten.
+- Bestehende Vorlagen und alte Projektdateien bleiben kompatibel und verwenden standardmaessig `Keine strukturierte Antwort`.
+- PostgreSQL erhaelt beim Start automatisch die neuen Spalten `answer_type` und `answer_options`; keine manuelle SQL-Migration ist erforderlich.
 
 
 ## Aenderungen v0.5.0-beta.5 (Pre-Release)
@@ -45,6 +57,7 @@ Aktuelle Version: **v0.5.0-beta.5** (Pre-Release)
 - Fuer DeepUnity PACS werden die 17 nummerierten Themenbloecke aus der bereitgestellten `CL_Stammdaten_Erhebung` als initiale, frei editierbare Vorlage angelegt.
 - Stammdatenbloecke koennen beliebig erweitert, umbenannt, aktiviert/deaktiviert, farblich markiert, geloescht und ueber eine explizite Reihenfolgenummer neu sortiert werden.
 - Inhalte/Checkpunkte eines Blocks werden als Markdown gepflegt und koennen damit flexibel erweitert werden.
+- Ab beta.6 kann jeder Block optional ein strukturiertes Antwortfeld (Freitext, Select, Checkboxen oder Ja/Nein) enthalten; Select-/Checkbox-Optionen sind frei definierbar.
 - Unter **Stammdaten → Projekt → Weitere Angaben** kann die Stammdatenerhebung projektspezifisch aktiviert werden.
 - Die Projektansicht **Stammdatenerhebung** uebernimmt aktive Vorlagenbloecke als Snapshot mit `Erledigt`-Status und projektspezifischen Notizen.
 - Mit **Aus Vorlage ergaenzen** koennen spaeter neu angelegte Vorlagenbloecke in ein bestehendes Projekt uebernommen werden, ohne bereits ausgefuellte Projektbloecke zu ueberschreiben.

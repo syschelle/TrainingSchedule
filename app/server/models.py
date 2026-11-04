@@ -199,6 +199,8 @@ class MasterDataBlockUpdate(BaseModel):
     active: bool = True
     background_color: str = "#eef6ff"
     markdown_content: str = ""
+    answer_type: Literal["none", "text", "select", "checkboxes", "yes_no"] = "none"
+    answer_options: list[str] = Field(default_factory=list)
 
 
 class ProjectMasterDataBlock(BaseModel):
@@ -207,6 +209,10 @@ class ProjectMasterDataBlock(BaseModel):
     title: str
     markdown_content: str = ""
     background_color: str = "#eef6ff"
+    answer_type: Literal["none", "text", "select", "checkboxes", "yes_no"] = "none"
+    answer_options: list[str] = Field(default_factory=list)
+    answer_text: str = ""
+    answer_selected: list[str] = Field(default_factory=list)
     completed: bool = False
     notes: str = ""
 

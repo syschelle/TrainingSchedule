@@ -6,7 +6,8 @@ Schulungsplantool is in active development. Security fixes are provided for the 
 
 | Version | Supported |
 |---|---|
-| v0.5.0-beta.5 | ✅ Current pre-release |
+| v0.5.0-beta.6 | ✅ Current pre-release |
+| v0.5.0-beta.5 | ⚠️ Superseded pre-release |
 | v0.5.0-beta.4 | ⚠️ Superseded pre-release |
 | v0.5.0-beta.3 | ⚠️ Superseded pre-release |
 | v0.5.0-beta.1 | ⚠️ Superseded pre-release |
@@ -67,7 +68,7 @@ GitHub Default Setup must remain disabled so Advanced Setup can upload results w
 
 ## Data Persistence Note
 
-The PostgreSQL database stores product/training catalogs and the new product-bound master-data templates. Project snapshots are still carried in exported project files unless otherwise persisted by the application. Protect database backups and exported project files according to the sensitivity of the contained customer/project information.
+The PostgreSQL database stores product/training catalogs and the product-bound master-data templates, including configured structured-answer types and selectable options. Project snapshots and the actual collected answers are carried in exported project files unless otherwise persisted by the application. Structured answers and notes may contain customer/project information, so protect database backups and exported project files according to their sensitivity.
 
 ## Release Handling
 
@@ -82,4 +83,4 @@ For security-relevant releases:
 
 ## Current Policy Version
 
-This policy reflects **Schulungsplantool v0.5.0-beta.5**.
+This policy reflects **Schulungsplantool v0.5.0-beta.6**.

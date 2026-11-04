@@ -1190,6 +1190,8 @@ function selectMasterDataBlock(event) {
 }
 
 function masterDataCard(item) {
+  const answerType = item.answer_type || "none";
+  const optionTypes = ["select", "checkboxes"].includes(answerType);
   return `<article class="content-card">
     <div class="content-card-title master-data-card-title">
       <label class="field master-data-order-field"><span>Reihenfolge</span><input data-master-data="${item.id}" data-key="sort_order" type="number" min="1" step="1" value="${Number(item.sort_order)}"></label>
@@ -1198,6 +1200,16 @@ function masterDataCard(item) {
       <label class="field checkbox-field master-data-active-field"><span>Aktiv</span><input data-master-data="${item.id}" data-key="active" type="checkbox" ${item.active ? "checked" : ""}></label>
     </div>
     <label class="field"><span>Inhalt / Checkpunkte (Markdown)</span><textarea data-master-data="${item.id}" data-key="markdown_content" rows="14">${escapeHtml(item.markdown_content || "")}</textarea></label>
+    <div class="master-data-answer-config">
+      <label class="field"><span>Antworttyp (optional)</span><select data-master-data="${item.id}" data-key="answer_type">
+        <option value="none" ${answerType === "none" ? "selected" : ""}>Keine strukturierte Antwort</option>
+        <option value="text" ${answerType === "text" ? "selected" : ""}>Freitext</option>
+        <option value="select" ${answerType === "select" ? "selected" : ""}>Select (eine Auswahl)</option>
+        <option value="checkboxes" ${answerType === "checkboxes" ? "selected" : ""}>Checkboxen (mehrere Auswahlen)</option>
+        <option value="yes_no" ${answerType === "yes_no" ? "selected" : ""}>Ja / Nein</option>
+      </select><small>„Erledigt“ und Notizen bleiben zusätzlich verfügbar.</small></label>
+      ${optionTypes ? `<label class="field"><span>Auswahlmöglichkeiten</span><textarea data-master-data="${item.id}" data-key="answer_options_text" rows="6" placeholder="Eine Option pro Zeile">${escapeHtml((item.answer_options || []).join("\n"))}</textarea><small>Eine Option pro Zeile. Leerzeilen und doppelte Einträge werden beim Speichern entfernt.</small></label>` : ""}
+    </div>
     <div class="master-data-toolbar">
       <button type="button" class="button button-ghost" data-delete-master-data="${item.id}">Block löschen</button>
       <button type="button" class="button button-secondary" data-save-master-data="${item.id}">Speichern</button>
@@ -1211,7 +1223,18 @@ function updateMasterDataDraft(event) {
   const key = event.target.dataset.key;
   if (event.target.type === "checkbox") item[key] = event.target.checked;
   else if (key === "sort_order") item[key] = Math.max(1, Number(event.target.value || 1));
+  else if (key === "answer_options_text") item.answer_options = normalizeMasterDataAnswerOptions(event.target.value.split(/\r?\n/));
   else item[key] = event.target.value;
+  if (key === "answer_type") renderMasterDataCatalog();
+}
+
+function normalizeMasterDataAnswerOptions(values) {
+  const result = [];
+  (Array.isArray(values) ? values : []).forEach((value) => {
+    const option = String(value || "").trim();
+    if (option && !result.includes(option)) result.push(option);
+  });
+  return result;
 }
 
 async function addMasterDataBlock() {
@@ -1236,7 +1259,7 @@ async function saveMasterDataBlock(event) {
   button.disabled = true; button.textContent = "Speichern...";
   const response = await fetch(`api/master-data-blocks/${encodeURIComponent(item.id)}`, {
     method: "PUT", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title: item.title, sort_order: Number(item.sort_order || 1), active: Boolean(item.active), background_color: item.background_color || "#eef6ff", markdown_content: item.markdown_content || "" })
+    body: JSON.stringify({ title: item.title, sort_order: Number(item.sort_order || 1), active: Boolean(item.active), background_color: item.background_color || "#eef6ff", markdown_content: item.markdown_content || "", answer_type: item.answer_type || "none", answer_options: normalizeMasterDataAnswerOptions(item.answer_options || []) })
   });
   if (!response.ok) { button.disabled = false; button.textContent = "Fehler"; return; }
   await loadMasterDataBlocks();
@@ -1262,7 +1285,7 @@ function syncProjectMasterDataFromTemplate(options = {}) {
   let added = 0;
   template.forEach((item) => {
     if (existingIds.has(item.id)) return;
-    project.master_data_blocks.push({ id: item.id, sort_order: Number(item.sort_order), title: item.title, markdown_content: item.markdown_content || "", background_color: item.background_color || "#eef6ff", completed: false, notes: "" });
+    project.master_data_blocks.push({ id: item.id, sort_order: Number(item.sort_order), title: item.title, markdown_content: item.markdown_content || "", background_color: item.background_color || "#eef6ff", answer_type: item.answer_type || "none", answer_options: normalizeMasterDataAnswerOptions(item.answer_options || []), answer_text: "", answer_selected: [], completed: false, notes: "" });
     added += 1;
   });
   project.master_data_blocks.sort((a, b) => Number(a.sort_order) - Number(b.sort_order));
@@ -1301,7 +1324,8 @@ function renderProjectMasterDataCollection() {
     ? `<div class="master-data-session-intro"><strong>${items.length} Themenblöcke</strong><span>Die Punkte werden im Kundentermin gemeinsam besprochen und dokumentiert.</span></div><div class="master-data-project-list">${items.map(projectMasterDataBlock).join("")}</div>`
     : `<div class="master-data-disabled"><strong>Noch keine Blöcke übernommen.</strong><p class="muted">Mit „Aus Vorlage ergänzen“ werden die aktiven Blöcke des aktuellen Produkts übernommen.</p></div>`;
   container.querySelectorAll("[data-project-master-completed]").forEach((input) => input.addEventListener("change", updateProjectMasterDataBlock));
-  container.querySelectorAll("[data-project-master-notes]").forEach((input) => input.addEventListener("input", updateProjectMasterDataBlock));
+  container.querySelectorAll("[data-project-master-notes], [data-project-master-answer-text]").forEach((input) => input.addEventListener("input", updateProjectMasterDataBlock));
+  container.querySelectorAll("[data-project-master-answer-select], [data-project-master-answer-checkbox]").forEach((input) => input.addEventListener("change", updateProjectMasterDataBlock));
 }
 
 function masterDataAppointmentFields() {
@@ -1333,16 +1357,44 @@ function projectMasterDataBlock(item) {
   return `<article class="master-data-project-block" style="border-left-color:${escapeHtml(item.background_color || "#eef6ff")}">
     <div class="master-data-project-heading"><strong>${Number(item.sort_order)}. ${escapeHtml(item.title)}</strong><label class="master-data-completed"><input type="checkbox" data-project-master-completed="${escapeHtml(item.id)}" ${item.completed ? "checked" : ""}> Erledigt</label></div>
     <div class="master-data-project-content markdown-preview">${renderMarkdown(item.markdown_content || "")}</div>
+    ${projectMasterDataAnswer(item)}
     <label class="field master-data-project-notes"><span>Notizen / Ergebnisse</span><textarea data-project-master-notes="${escapeHtml(item.id)}">${escapeHtml(item.notes || "")}</textarea></label>
   </article>`;
 }
 
+function projectMasterDataAnswer(item) {
+  const type = item.answer_type || "none";
+  const options = normalizeMasterDataAnswerOptions(item.answer_options || []);
+  const selected = Array.isArray(item.answer_selected) ? item.answer_selected : [];
+  if (type === "text") {
+    return `<label class="field master-data-answer"><span>Antwort</span><textarea data-project-master-answer-text="${escapeHtml(item.id)}" placeholder="Antwort dokumentieren">${escapeHtml(item.answer_text || "")}</textarea></label>`;
+  }
+  if (type === "select") {
+    return `<label class="field master-data-answer"><span>Auswahl</span><select data-project-master-answer-select="${escapeHtml(item.id)}"><option value="">Bitte auswählen</option>${options.map((option) => `<option value="${escapeHtml(option)}" ${selected[0] === option ? "selected" : ""}>${escapeHtml(option)}</option>`).join("")}</select></label>`;
+  }
+  if (type === "checkboxes") {
+    return `<fieldset class="master-data-answer master-data-answer-checkboxes"><legend>Auswahl</legend>${options.length ? options.map((option) => `<label><input type="checkbox" data-project-master-answer-checkbox="${escapeHtml(item.id)}" data-answer-option="${escapeHtml(option)}" ${selected.includes(option) ? "checked" : ""}> <span>${escapeHtml(option)}</span></label>`).join("") : `<span class="muted">Keine Auswahlmöglichkeiten in der Vorlage definiert.</span>`}</fieldset>`;
+  }
+  if (type === "yes_no") {
+    return `<label class="field master-data-answer"><span>Antwort</span><select data-project-master-answer-select="${escapeHtml(item.id)}"><option value="">Bitte auswählen</option><option value="Ja" ${selected[0] === "Ja" ? "selected" : ""}>Ja</option><option value="Nein" ${selected[0] === "Nein" ? "selected" : ""}>Nein</option></select></label>`;
+  }
+  return "";
+}
+
 function updateProjectMasterDataBlock(event) {
-  const id = event.target.dataset.projectMasterCompleted || event.target.dataset.projectMasterNotes;
+  const id = event.target.dataset.projectMasterCompleted || event.target.dataset.projectMasterNotes || event.target.dataset.projectMasterAnswerText || event.target.dataset.projectMasterAnswerSelect || event.target.dataset.projectMasterAnswerCheckbox;
   const item = (project.master_data_blocks || []).find((candidate) => candidate.id === id);
   if (!item) return;
   if (event.target.dataset.projectMasterCompleted) item.completed = event.target.checked;
-  else item.notes = event.target.value;
+  else if (event.target.dataset.projectMasterNotes) item.notes = event.target.value;
+  else if (event.target.dataset.projectMasterAnswerText) item.answer_text = event.target.value;
+  else if (event.target.dataset.projectMasterAnswerSelect) item.answer_selected = event.target.value ? [event.target.value] : [];
+  else if (event.target.dataset.projectMasterAnswerCheckbox) {
+    const option = event.target.dataset.answerOption;
+    const selected = new Set(Array.isArray(item.answer_selected) ? item.answer_selected : []);
+    if (event.target.checked) selected.add(option); else selected.delete(option);
+    item.answer_selected = [...selected];
+  }
   markPlanningInputsChanged();
 }
 

@@ -1,6 +1,6 @@
 # Schulungsplantool – Internal Tests and Release Checks
 
-Status: **v0.5.0-beta.5 (Pre-Release)**
+Status: **v0.5.0-beta.6 (Pre-Release)**
 
 This document describes the checks performed before a Schulungsplantool release or pre-release. It is updated together with the current application version.
 
@@ -12,10 +12,10 @@ Run the complete suite with:
 python -m pytest -q
 ```
 
-For **v0.5.0-beta.5**, the current local result is:
+For **v0.5.0-beta.6**, the current local result is:
 
 ```text
-156 passed, 2 warnings
+160 passed, 2 warnings
 ```
 
 The two warnings are the known FastAPI deprecation warnings for `@app.on_event("startup")`; they are not test failures.
@@ -24,16 +24,16 @@ The two warnings are the known FastAPI deprecation warnings for `@app.on_event("
 
 | Test file | Count | Focus |
 |---|---:|---|
-| `tests/test_static_paths.py` | 70 | Frontend structure, UI rules, calendar, customer HTML, version regressions, master-data UI wiring |
+| `tests/test_static_paths.py` | 71 | Frontend structure, UI rules, calendar, customer HTML, version regressions, master-data UI wiring |
 | `tests/test_planner.py` | 33 | Automatic planning, breaks, availability, arrival/departure, remote/on-site |
 | `tests/test_project_export.py` | 25 | Project files, PDF, customer HTML, return import and tamper protection |
 | `tests/test_content_catalog.py` | 10 | Training contents, products, history and persistence |
 | `tests/test_docx_training_content.py` | 6 | DOCX import/export and unsupported-content protection |
-| `tests/test_master_data_collection.py` | 6 | Master-data template seed, extension, ordering, deletion and project compatibility |
+| `tests/test_master_data_collection.py` | 9 | Master-data template seed, extension, ordering, deletion and project compatibility |
 | `tests/test_release_docs.py` | 2 | Root TESTING/SECURITY documentation and version consistency |
 | `tests/test_codeql_workflow.py` | 2 | CodeQL configuration and language matrix |
 | `tests/test_security_regressions.py` | 2 | Security-related regressions |
-| **Total** | **156** | |
+| **Total** | **160** | |
 
 ## 2. Master Data Collection Regression Coverage
 
@@ -56,6 +56,19 @@ The pre-release includes dedicated regression coverage for the customer master-d
 - the collection page explicitly continues with **Training Planning** afterward;
 - the page documents that Training Planning itself remains one topic of the collection;
 - the frontend remains wired to the `/api/master-data-blocks` template endpoints.
+
+### Beta.6 structured-answer coverage
+
+The suite additionally verifies that:
+
+- every template block can keep the legacy `none` answer type;
+- template blocks can store `text`, `select`, `checkboxes` and `yes_no` answer types;
+- Select/checkbox options are normalized and duplicate options are removed;
+- answer type and options are copied into a project snapshot;
+- project snapshots serialize free-text and selected checkbox values without losing completion state or notes;
+- old project files without the new fields default to no structured answer;
+- existing `master_data_blocks` databases are automatically extended with `answer_type` and `answer_options`;
+- the frontend exposes the answer-type selector, option editor and matching project input controls.
 
 
 ## 3. Beta.4 Layout Regression Coverage
@@ -172,7 +185,7 @@ Before creating a tag:
 
 For a pre-release, create a pre-release tag and mark the GitHub release as a pre-release.
 
-The Docker release workflow is also regression-tested so a pre-release version (for example `0.5.0-beta.5`) does **not** publish or move the `latest` image tag.
+The Docker release workflow is also regression-tested so a pre-release version (for example `0.5.0-beta.6`) does **not** publish or move the `latest` image tag.
 
 ## 12. Current Known Notes
 
