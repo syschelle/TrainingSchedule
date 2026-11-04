@@ -800,3 +800,17 @@ def test_beta6_master_data_blocks_support_optional_structured_answers():
     assert 'data-project-master-answer-select' in javascript
     assert 'data-project-master-answer-checkbox' in javascript
     assert '.master-data-answer-config' in css
+
+
+def test_beta8_master_data_blocks_support_optional_multiple_resource_links():
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    css = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
+    assert "Weiterführende Informationen" in javascript
+    assert "data-add-master-data-resource-link" in javascript
+    assert "data-delete-master-data-resource-link" in javascript
+    assert "normalizeMasterDataResourceLinks" in javascript
+    assert "resource_links: normalizeMasterDataResourceLinks" in javascript
+    assert 'target="_blank" rel="noopener noreferrer"' in javascript
+    assert "/^https?:\\/\\//i" in javascript
+    assert ".master-data-resource-row" in css
+    assert ".master-data-project-resources" in css

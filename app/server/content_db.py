@@ -74,6 +74,7 @@ class MasterDataBlockRecord(Base):
     markdown_content: Mapped[str] = mapped_column(Text, default="", nullable=False)
     answer_type: Mapped[str] = mapped_column(String(20), default="none", nullable=False)
     answer_options: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    resource_links: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
 
     product: Mapped[ProductRecord] = relationship(back_populates="master_data_blocks")
 
@@ -298,6 +299,8 @@ def ensure_master_data_block_columns() -> None:
             connection.execute(text("ALTER TABLE master_data_blocks ADD COLUMN answer_type VARCHAR(20) DEFAULT 'none' NOT NULL"))
         if "answer_options" not in columns:
             connection.execute(text("ALTER TABLE master_data_blocks ADD COLUMN answer_options TEXT DEFAULT '[]' NOT NULL"))
+        if "resource_links" not in columns:
+            connection.execute(text("ALTER TABLE master_data_blocks ADD COLUMN resource_links TEXT DEFAULT '[]' NOT NULL"))
 
 
 def seed_database(session: Session) -> None:
@@ -404,6 +407,7 @@ def create_master_data_block(session: Session, product_id: str, title: str) -> d
         markdown_content="",
         answer_type="none",
         answer_options="[]",
+        resource_links="[]",
     )
     session.add(record)
     session.commit()
@@ -422,6 +426,7 @@ def update_master_data_block(session: Session, block_id: str, values: dict) -> d
     record.markdown_content = str(values.get("markdown_content", record.markdown_content) or "")
     record.answer_type = clean_master_data_answer_type(values.get("answer_type", record.answer_type))
     record.answer_options = json.dumps(clean_master_data_answer_options(values.get("answer_options", parse_answer_options(record.answer_options))), ensure_ascii=False)
+    record.resource_links = json.dumps(clean_master_data_resource_links(values.get("resource_links", parse_master_data_resource_links(record.resource_links))), ensure_ascii=False)
     requested_order = max(1, int(values.get("sort_order", record.sort_order)))
     records = list(session.scalars(
         select(MasterDataBlockRecord)
@@ -466,6 +471,7 @@ def master_data_block_to_dict(item: MasterDataBlockRecord) -> dict:
         "markdown_content": item.markdown_content or "",
         "answer_type": clean_master_data_answer_type(item.answer_type),
         "answer_options": parse_answer_options(item.answer_options),
+        "resource_links": parse_master_data_resource_links(item.resource_links),
     }
 
 
@@ -684,6 +690,45 @@ def parse_answer_options(value: str | None) -> list[str]:
     except (json.JSONDecodeError, TypeError):
         return clean_master_data_answer_options(value)
     return clean_master_data_answer_options(decoded)
+
+
+def clean_master_data_resource_links(values: object) -> list[dict[str, str]]:
+    if isinstance(values, str):
+        try:
+            decoded = json.loads(values)
+            values = decoded if isinstance(decoded, list) else []
+        except (json.JSONDecodeError, TypeError):
+            return []
+    if not isinstance(values, list):
+        return []
+    cleaned: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for value in values:
+        if hasattr(value, "model_dump"):
+            value = value.model_dump()
+        if not isinstance(value, dict):
+            continue
+        url = str(value.get("url", "")).strip()
+        if not url.lower().startswith(("http://", "https://")):
+            continue
+        title = str(value.get("title", "")).strip() or url
+        description = str(value.get("description", "")).strip()
+        key = (title, url)
+        if key in seen:
+            continue
+        seen.add(key)
+        cleaned.append({"title": title, "url": url, "description": description})
+    return cleaned
+
+
+def parse_master_data_resource_links(value: str | None) -> list[dict[str, str]]:
+    if not value:
+        return []
+    try:
+        decoded = json.loads(value)
+    except (json.JSONDecodeError, TypeError):
+        return []
+    return clean_master_data_resource_links(decoded)
 
 
 def clean_master_data_color(value: str | None) -> str:

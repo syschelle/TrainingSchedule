@@ -6,7 +6,8 @@ Schulungsplantool is in active development. Security fixes are provided for the 
 
 | Version | Supported |
 |---|---|
-| v0.5.0-beta.7 | ✅ Current pre-release |
+| v0.5.0-beta.8 | ✅ Current pre-release |
+| v0.5.0-beta.7 | ⚠️ Superseded pre-release |
 | v0.5.0-beta.6 | ⚠️ Superseded pre-release |
 | v0.5.0-beta.5 | ⚠️ Superseded pre-release |
 | v0.5.0-beta.4 | ⚠️ Superseded pre-release |
@@ -50,6 +51,11 @@ Relevant reports include, but are not limited to:
 
 Please avoid destructive testing, service disruption, access to data you do not own, and public disclosure before a fix or mitigation is available.
 
+
+### Master Data resource links
+
+Structured links stored in Master Data blocks accept only `http://` and `https://` URLs. Schemes such as `javascript:` and `data:` are rejected by the API/data model and filtered from persisted link lists. Links rendered in the customer appointment use `target="_blank"` together with `rel="noopener noreferrer"` to prevent the newly opened page from controlling the Schulungsplantool tab.
+
 ## Secrets and Sensitive Data
 
 Never commit or publish passwords, API tokens, private keys, production credentials or unnecessary personal/customer data. Accidentally committed secrets must be considered compromised and rotated.
@@ -71,7 +77,7 @@ GitHub Default Setup must remain disabled so Advanced Setup can upload results w
 
 Runtime dependencies are pinned explicitly and are part of the release security review.
 
-For v0.5.0-beta.7, `pypdf` is pinned to `6.21.4`, replacing `6.16.2` after multiple GitHub/Dependabot advisories reported denial-of-service style issues in older pypdf releases. The application also keeps a per-upload size limit of 25 MB by default (`MAX_UPLOAD_MB`).
+Since v0.5.0-beta.7, `pypdf` is pinned to `6.21.4`, replacing `6.16.2` after multiple GitHub/Dependabot advisories reported denial-of-service style issues in older pypdf releases. v0.5.0-beta.8 retains this patched dependency level. The application also keeps a per-upload size limit of 25 MB by default (`MAX_UPLOAD_MB`).
 
 Dependency alerts should be reviewed before creating a release tag; security-relevant dependency updates require the normal CI, CodeQL and regression-test gate.
 
@@ -92,4 +98,4 @@ For security-relevant releases:
 
 ## Current Policy Version
 
-This policy reflects **Schulungsplantool v0.5.0-beta.7**.
+This policy reflects **Schulungsplantool v0.5.0-beta.8**.

@@ -1,6 +1,6 @@
 # Schulungsplantool – Internal Tests and Release Checks
 
-Status: **v0.5.0-beta.7 (Pre-Release)**
+Status: **v0.5.0-beta.8 (Pre-Release)**
 
 This document describes the checks performed before a Schulungsplantool release or pre-release. It is updated together with the current application version.
 
@@ -12,10 +12,10 @@ Run the complete suite with:
 python -m pytest -q
 ```
 
-For **v0.5.0-beta.7**, the current local result is:
+For **v0.5.0-beta.8**, the current local result is:
 
 ```text
-160 passed, 2 warnings
+163 passed, 2 warnings
 ```
 
 The two warnings are the known FastAPI deprecation warnings for `@app.on_event("startup")`; they are not test failures.
@@ -24,16 +24,16 @@ The two warnings are the known FastAPI deprecation warnings for `@app.on_event("
 
 | Test file | Count | Focus |
 |---|---:|---|
-| `tests/test_static_paths.py` | 71 | Frontend structure, UI rules, calendar, customer HTML, version regressions, master-data UI wiring |
+| `tests/test_static_paths.py` | 72 | Frontend structure, UI rules, calendar, customer HTML, version regressions, master-data UI wiring |
 | `tests/test_planner.py` | 33 | Automatic planning, breaks, availability, arrival/departure, remote/on-site |
 | `tests/test_project_export.py` | 25 | Project files, PDF, customer HTML, return import and tamper protection |
 | `tests/test_content_catalog.py` | 10 | Training contents, products, history and persistence |
 | `tests/test_docx_training_content.py` | 6 | DOCX import/export and unsupported-content protection |
-| `tests/test_master_data_collection.py` | 9 | Master-data template seed, extension, ordering, deletion and project compatibility |
+| `tests/test_master_data_collection.py` | 11 | Master-data template seed, extension, ordering, deletion and project compatibility |
 | `tests/test_release_docs.py` | 2 | Root TESTING/SECURITY documentation and version consistency |
 | `tests/test_codeql_workflow.py` | 2 | CodeQL configuration and language matrix |
 | `tests/test_security_regressions.py` | 2 | Security-related regressions |
-| **Total** | **160** | |
+| **Total** | **163** | |
 
 ## 2. Master Data Collection Regression Coverage
 
@@ -70,6 +70,20 @@ The suite additionally verifies that:
 - existing `master_data_blocks` databases are automatically extended with `answer_type` and `answer_options`;
 - the frontend exposes the answer-type selector, option editor and matching project input controls.
 
+
+
+### v0.5.0-beta.8 resource-link coverage
+
+The Master Data Collection tests additionally verify that:
+
+- a master-data block can contain zero, one or multiple structured resource links;
+- each link supports a title, URL and optional description;
+- resource links are copied into the project snapshot together with the master-data block;
+- legacy projects without `resource_links` continue to load with an empty list;
+- existing databases are automatically extended with the `resource_links` column;
+- non-HTTP(S) link schemes such as `javascript:` are rejected;
+- the frontend exposes add/remove controls and only renders the information section when links exist;
+- rendered links open in a new tab with `noopener noreferrer`.
 
 ## 3. Beta.4 Layout Regression Coverage
 
@@ -156,7 +170,7 @@ This is a supplemental smoke check in addition to the repository regression test
 
 The runtime dependency list is regression-tested for security-sensitive direct pins.
 
-For v0.5.0-beta.7, `requirements.txt` must contain:
+For v0.5.0-beta.8, `requirements.txt` must contain:
 
 ```text
 pypdf==6.21.4
@@ -201,7 +215,7 @@ Before creating a tag:
 
 For a pre-release, create a pre-release tag and mark the GitHub release as a pre-release.
 
-The Docker release workflow is also regression-tested so a pre-release version (for example `0.5.0-beta.7`) does **not** publish or move the `latest` image tag.
+The Docker release workflow is also regression-tested so a pre-release version (for example `0.5.0-beta.8`) does **not** publish or move the `latest` image tag.
 
 ## 13. Current Known Notes
 

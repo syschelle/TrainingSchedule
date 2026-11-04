@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.5.0-beta.8 - 2026-11-04
+
+### Pre-Release: optionale weiterfuehrende Links pro Stammdatenblock
+
+- Stammdatenbloecke unterstuetzen jetzt eine optionale Liste mit beliebig vielen weiterfuehrenden Links.
+- Jeder Link besitzt Titel, URL und eine optionale Beschreibung.
+- Die Vorlagenoberflaeche bietet `+ Link hinzufuegen` und `Entfernen` pro Eintrag.
+- Im Kundentermin wird `Weiterfuehrende Informationen` nur angezeigt, wenn tatsaechlich Links im Projektsnapshot vorhanden sind.
+- Linklisten werden mit dem Stammdatenblock in den Projektsnapshot kopiert und spaeter nicht durch Vorlagenaenderungen ueberschrieben.
+- Zulaessig sind ausschliesslich `http://`- und `https://`-Links; andere Schemes werden serverseitig abgelehnt bzw. verworfen.
+- Links im Kundentermin oeffnen mit `target=_blank` und `rel=noopener noreferrer`.
+- Bestehende Datenbanken werden automatisch um `resource_links` erweitert.
+- Lokale Suite: 163 Tests bestanden.
+- `TESTING.md` und `SECURITY.md` auf v0.5.0-beta.8 aktualisiert.
+- Pre-Release-Version `v0.5.0-beta.8`.
+
+
 ## v0.5.0-beta.7 - 2026-11-04
 
 ### Pre-Release: pypdf Security Update

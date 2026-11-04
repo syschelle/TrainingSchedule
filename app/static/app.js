@@ -1176,6 +1176,9 @@ function renderMasterDataCatalog() {
   const item = items.find((candidate) => candidate.id === selectedMasterDataBlockId);
   detail.innerHTML = item ? masterDataCard(item) : `<p class="muted">Für ${escapeHtml(product.name)} sind noch keine Stammdatenblöcke hinterlegt.</p>`;
   detail.querySelectorAll("[data-master-data]").forEach((input) => input.addEventListener(input.type === "checkbox" ? "change" : "input", updateMasterDataDraft));
+  detail.querySelectorAll("[data-master-data-resource-link]").forEach((input) => input.addEventListener("input", updateMasterDataResourceLink));
+  detail.querySelectorAll("[data-add-master-data-resource-link]").forEach((button) => button.addEventListener("click", addMasterDataResourceLink));
+  detail.querySelectorAll("[data-delete-master-data-resource-link]").forEach((button) => button.addEventListener("click", deleteMasterDataResourceLink));
   detail.querySelectorAll("[data-save-master-data]").forEach((button) => button.addEventListener("click", saveMasterDataBlock));
   detail.querySelectorAll("[data-delete-master-data]").forEach((button) => button.addEventListener("click", deleteMasterDataBlock));
 }
@@ -1192,6 +1195,7 @@ function selectMasterDataBlock(event) {
 function masterDataCard(item) {
   const answerType = item.answer_type || "none";
   const optionTypes = ["select", "checkboxes"].includes(answerType);
+  const resourceLinks = Array.isArray(item.resource_links) ? item.resource_links : [];
   return `<article class="content-card">
     <div class="content-card-title master-data-card-title">
       <label class="field master-data-order-field"><span>Reihenfolge</span><input data-master-data="${item.id}" data-key="sort_order" type="number" min="1" step="1" value="${Number(item.sort_order)}"></label>
@@ -1210,11 +1214,67 @@ function masterDataCard(item) {
       </select><small>„Erledigt“ und Notizen bleiben zusätzlich verfügbar.</small></label>
       ${optionTypes ? `<label class="field"><span>Auswahlmöglichkeiten</span><textarea data-master-data="${item.id}" data-key="answer_options_text" rows="6" placeholder="Eine Option pro Zeile">${escapeHtml((item.answer_options || []).join("\n"))}</textarea><small>Eine Option pro Zeile. Leerzeilen und doppelte Einträge werden beim Speichern entfernt.</small></label>` : ""}
     </div>
+    <section class="master-data-resource-config">
+      <div class="master-data-resource-heading"><div><strong>Weiterführende Informationen</strong><small>Optional. Beliebig viele Links pro Baustein.</small></div><button type="button" class="button button-ghost" data-add-master-data-resource-link="${item.id}">+ Link hinzufügen</button></div>
+      <div class="master-data-resource-list">${resourceLinks.length ? resourceLinks.map((link, index) => masterDataResourceEditorRow(item.id, link, index)).join("") : `<p class="muted">Keine weiterführenden Links hinterlegt.</p>`}</div>
+    </section>
     <div class="master-data-toolbar">
       <button type="button" class="button button-ghost" data-delete-master-data="${item.id}">Block löschen</button>
       <button type="button" class="button button-secondary" data-save-master-data="${item.id}">Speichern</button>
     </div>
   </article>`;
+}
+
+function masterDataResourceEditorRow(blockId, link, index) {
+  return `<div class="master-data-resource-row">
+    <label class="field"><span>Titel</span><input data-master-data-resource-link="${escapeHtml(blockId)}" data-link-index="${index}" data-link-key="title" value="${escapeHtml(link.title || "")}" placeholder="z. B. DeepUnity Dokumentation"></label>
+    <label class="field"><span>URL</span><input type="url" data-master-data-resource-link="${escapeHtml(blockId)}" data-link-index="${index}" data-link-key="url" value="${escapeHtml(link.url || "")}" placeholder="https://..."></label>
+    <label class="field master-data-resource-description"><span>Beschreibung (optional)</span><input data-master-data-resource-link="${escapeHtml(blockId)}" data-link-index="${index}" data-link-key="description" value="${escapeHtml(link.description || "")}" placeholder="Kurzer Hinweis zum Link"></label>
+    <button type="button" class="button button-ghost master-data-resource-delete" data-delete-master-data-resource-link="${escapeHtml(blockId)}" data-link-index="${index}">Entfernen</button>
+  </div>`;
+}
+
+function updateMasterDataResourceLink(event) {
+  const item = masterDataBlocks.find((candidate) => candidate.id === event.target.dataset.masterDataResourceLink);
+  if (!item) return;
+  item.resource_links = Array.isArray(item.resource_links) ? item.resource_links : [];
+  const index = Number(event.target.dataset.linkIndex);
+  if (!item.resource_links[index]) item.resource_links[index] = { title: "", url: "", description: "" };
+  item.resource_links[index][event.target.dataset.linkKey] = event.target.value;
+}
+
+function addMasterDataResourceLink(event) {
+  const item = masterDataBlocks.find((candidate) => candidate.id === event.currentTarget.dataset.addMasterDataResourceLink);
+  if (!item) return;
+  item.resource_links = Array.isArray(item.resource_links) ? item.resource_links : [];
+  item.resource_links.push({ title: "", url: "", description: "" });
+  renderMasterDataCatalog();
+}
+
+function deleteMasterDataResourceLink(event) {
+  const item = masterDataBlocks.find((candidate) => candidate.id === event.currentTarget.dataset.deleteMasterDataResourceLink);
+  if (!item) return;
+  const index = Number(event.currentTarget.dataset.linkIndex);
+  item.resource_links = (Array.isArray(item.resource_links) ? item.resource_links : []).filter((_, position) => position !== index);
+  renderMasterDataCatalog();
+}
+
+function normalizeMasterDataResourceLinks(values) {
+  const result = [];
+  (Array.isArray(values) ? values : []).forEach((value) => {
+    if (!value || typeof value !== "object") return;
+    const url = String(value.url || "").trim();
+    if (!/^https?:\/\//i.test(url)) return;
+    const title = String(value.title || "").trim() || url;
+    const description = String(value.description || "").trim();
+    if (!result.some((link) => link.title === title && link.url === url)) result.push({ title, url, description });
+  });
+  return result;
+}
+
+function safeMasterDataUrl(value) {
+  const url = String(value || "").trim();
+  return /^https?:\/\//i.test(url) ? url : "";
 }
 
 function updateMasterDataDraft(event) {
@@ -1256,10 +1316,15 @@ async function saveMasterDataBlock(event) {
   const item = masterDataBlocks.find((candidate) => candidate.id === event.currentTarget.dataset.saveMasterData);
   if (!item) return;
   const button = event.currentTarget;
+  const draftLinks = Array.isArray(item.resource_links) ? item.resource_links : [];
+  const incompleteLink = draftLinks.find((link) => (String(link.title || "").trim() || String(link.description || "").trim()) && !String(link.url || "").trim());
+  const invalidLink = draftLinks.find((link) => String(link.url || "").trim() && !/^https?:\/\//i.test(String(link.url || "").trim()));
+  if (incompleteLink) return window.alert("Bitte für jeden weiterführenden Link eine URL angeben oder den leeren Eintrag entfernen.");
+  if (invalidLink) return window.alert("Weiterführende Links müssen mit http:// oder https:// beginnen.");
   button.disabled = true; button.textContent = "Speichern...";
   const response = await fetch(`api/master-data-blocks/${encodeURIComponent(item.id)}`, {
     method: "PUT", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title: item.title, sort_order: Number(item.sort_order || 1), active: Boolean(item.active), background_color: item.background_color || "#eef6ff", markdown_content: item.markdown_content || "", answer_type: item.answer_type || "none", answer_options: normalizeMasterDataAnswerOptions(item.answer_options || []) })
+    body: JSON.stringify({ title: item.title, sort_order: Number(item.sort_order || 1), active: Boolean(item.active), background_color: item.background_color || "#eef6ff", markdown_content: item.markdown_content || "", answer_type: item.answer_type || "none", answer_options: normalizeMasterDataAnswerOptions(item.answer_options || []), resource_links: normalizeMasterDataResourceLinks(item.resource_links || []) })
   });
   if (!response.ok) { button.disabled = false; button.textContent = "Fehler"; return; }
   await loadMasterDataBlocks();
@@ -1285,7 +1350,7 @@ function syncProjectMasterDataFromTemplate(options = {}) {
   let added = 0;
   template.forEach((item) => {
     if (existingIds.has(item.id)) return;
-    project.master_data_blocks.push({ id: item.id, sort_order: Number(item.sort_order), title: item.title, markdown_content: item.markdown_content || "", background_color: item.background_color || "#eef6ff", answer_type: item.answer_type || "none", answer_options: normalizeMasterDataAnswerOptions(item.answer_options || []), answer_text: "", answer_selected: [], completed: false, notes: "" });
+    project.master_data_blocks.push({ id: item.id, sort_order: Number(item.sort_order), title: item.title, markdown_content: item.markdown_content || "", background_color: item.background_color || "#eef6ff", answer_type: item.answer_type || "none", answer_options: normalizeMasterDataAnswerOptions(item.answer_options || []), resource_links: normalizeMasterDataResourceLinks(item.resource_links || []), answer_text: "", answer_selected: [], completed: false, notes: "" });
     added += 1;
   });
   project.master_data_blocks.sort((a, b) => Number(a.sort_order) - Number(b.sort_order));
@@ -1357,9 +1422,20 @@ function projectMasterDataBlock(item) {
   return `<article class="master-data-project-block" style="border-left-color:${escapeHtml(item.background_color || "#eef6ff")}">
     <div class="master-data-project-heading"><strong>${Number(item.sort_order)}. ${escapeHtml(item.title)}</strong><label class="master-data-completed"><input type="checkbox" data-project-master-completed="${escapeHtml(item.id)}" ${item.completed ? "checked" : ""}> Erledigt</label></div>
     <div class="master-data-project-content markdown-preview">${renderMarkdown(item.markdown_content || "")}</div>
+    ${projectMasterDataResourceLinks(item)}
     ${projectMasterDataAnswer(item)}
     <label class="field master-data-project-notes"><span>Notizen / Ergebnisse</span><textarea data-project-master-notes="${escapeHtml(item.id)}">${escapeHtml(item.notes || "")}</textarea></label>
   </article>`;
+}
+
+function projectMasterDataResourceLinks(item) {
+  const links = normalizeMasterDataResourceLinks(item.resource_links || []);
+  if (!links.length) return "";
+  return `<section class="master-data-project-resources"><strong>Weiterführende Informationen</strong><div class="master-data-project-resource-list">${links.map((link) => {
+    const url = safeMasterDataUrl(link.url);
+    if (!url) return "";
+    return `<div class="master-data-project-resource"><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">↗ ${escapeHtml(link.title || url)}</a>${link.description ? `<span>${escapeHtml(link.description)}</span>` : ""}</div>`;
+  }).join("")}</div></section>`;
 }
 
 function projectMasterDataAnswer(item) {

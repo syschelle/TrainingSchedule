@@ -193,6 +193,23 @@ class MasterDataBlockCreate(BaseModel):
     title: str
 
 
+class MasterDataResourceLink(BaseModel):
+    title: str = ""
+    url: str
+    description: str = ""
+
+    @model_validator(mode="after")
+    def validate_http_url(self) -> "MasterDataResourceLink":
+        self.title = self.title.strip()
+        self.url = self.url.strip()
+        self.description = self.description.strip()
+        if not self.url.lower().startswith(("http://", "https://")):
+            raise ValueError("Weiterfuehrende Links muessen mit http:// oder https:// beginnen.")
+        if not self.title:
+            self.title = self.url
+        return self
+
+
 class MasterDataBlockUpdate(BaseModel):
     title: str
     sort_order: int = Field(ge=1)
@@ -201,6 +218,7 @@ class MasterDataBlockUpdate(BaseModel):
     markdown_content: str = ""
     answer_type: Literal["none", "text", "select", "checkboxes", "yes_no"] = "none"
     answer_options: list[str] = Field(default_factory=list)
+    resource_links: list[MasterDataResourceLink] = Field(default_factory=list)
 
 
 class ProjectMasterDataBlock(BaseModel):
@@ -211,6 +229,7 @@ class ProjectMasterDataBlock(BaseModel):
     background_color: str = "#eef6ff"
     answer_type: Literal["none", "text", "select", "checkboxes", "yes_no"] = "none"
     answer_options: list[str] = Field(default_factory=list)
+    resource_links: list[MasterDataResourceLink] = Field(default_factory=list)
     answer_text: str = ""
     answer_selected: list[str] = Field(default_factory=list)
     completed: bool = False

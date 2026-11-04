@@ -1,8 +1,18 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.5.0-beta.7** (Pre-Release)
+Aktuelle Version: **v0.5.0-beta.8** (Pre-Release)
 
 
+
+## Aenderungen v0.5.0-beta.8 (Pre-Release)
+
+- Stammdatenbloecke koennen jetzt optional **beliebig viele weiterfuehrende Links** enthalten.
+- Pro Link werden Titel, `http://`/`https://`-URL und eine optionale Beschreibung gepflegt.
+- Links koennen in der Stammdaten-Vorlage einzeln hinzugefuegt und entfernt werden; ohne Links wird im Kundentermin kein leerer Linkbereich angezeigt.
+- Die Linkliste wird zusammen mit dem Stammdatenblock in den Projektsnapshot kopiert, sodass spaetere Vorlagenaenderungen bestehende Erhebungen nicht veraendern.
+- Weiterfuehrende Links werden im Kundentermin in einem neuen Tab mit `noopener noreferrer` geoeffnet.
+- Nicht-HTTP(S)-Schemes wie `javascript:` oder `data:` werden nicht akzeptiert.
+- Bestehende PostgreSQL-Installationen erhalten beim Start automatisch die neue Spalte `resource_links`; keine manuelle SQL-Migration ist erforderlich.
 
 ## Aenderungen v0.5.0-beta.7 (Pre-Release)
 

@@ -27,11 +27,16 @@ def test_master_data_blocks_are_extendable_reorderable_and_deletable():
             "title": created["title"], "sort_order": 2, "active": True,
             "background_color": "#abcdef", "markdown_content": "- Neuer Punkt",
             "answer_type": "select", "answer_options": ["Online", "Präsenz", "Hybrid", "Online"],
+            "resource_links": [
+                {"title": "Dokumentation", "url": "https://example.org/docs", "description": "Herstellerdokumentation"},
+                {"title": "Unsicher", "url": "javascript:alert(1)", "description": "wird verworfen"},
+            ],
         })
         assert moved is not None
         assert moved["sort_order"] == 2
         assert moved["answer_type"] == "select"
         assert moved["answer_options"] == ["Online", "Präsenz", "Hybrid"]
+        assert moved["resource_links"] == [{"title": "Dokumentation", "url": "https://example.org/docs", "description": "Herstellerdokumentation"}]
         items = list_master_data_blocks(session, "deepunity-pacs")
         assert [item["sort_order"] for item in items] == list(range(1, 19))
         assert items[1]["id"] == created["id"]
@@ -115,6 +120,10 @@ def test_project_master_data_block_keeps_structured_answer_snapshot():
             "answer_type": "checkboxes",
             "answer_options": ["DeepUnity Server", "LDAP", "ORBIS"],
             "answer_selected": ["LDAP", "ORBIS"],
+            "resource_links": [
+                {"title": "Authentifizierung", "url": "https://example.org/auth", "description": "Weitere Informationen"},
+                {"title": "Rollen", "url": "https://example.org/roles", "description": ""},
+            ],
             "answer_text": "",
             "completed": True,
             "notes": "Kunde prüft Gruppenstruktur",
@@ -124,6 +133,10 @@ def test_project_master_data_block_keeps_structured_answer_snapshot():
     assert dumped["answer_type"] == "checkboxes"
     assert dumped["answer_options"] == ["DeepUnity Server", "LDAP", "ORBIS"]
     assert dumped["answer_selected"] == ["LDAP", "ORBIS"]
+    assert dumped["resource_links"] == [
+        {"title": "Authentifizierung", "url": "https://example.org/auth", "description": "Weitere Informationen"},
+        {"title": "Rollen", "url": "https://example.org/roles", "description": ""},
+    ]
     assert dumped["completed"] is True
     assert dumped["notes"] == "Kunde prüft Gruppenstruktur"
 
@@ -139,6 +152,7 @@ def test_old_project_master_data_blocks_default_to_no_structured_answer():
     assert block.answer_options == []
     assert block.answer_text == ""
     assert block.answer_selected == []
+    assert block.resource_links == []
 
 
 def test_master_data_answer_columns_are_added_to_existing_database(monkeypatch):
@@ -152,3 +166,36 @@ def test_master_data_answer_columns_are_added_to_existing_database(monkeypatch):
     columns = {column["name"] for column in inspect(engine).get_columns("master_data_blocks")}
     assert "answer_type" in columns
     assert "answer_options" in columns
+    assert "resource_links" in columns
+
+
+def test_master_data_resource_links_reject_non_http_schemes():
+    from pydantic import ValidationError
+    from app.server.models import MasterDataBlockUpdate
+
+    try:
+        MasterDataBlockUpdate.model_validate({
+            "title": "Test",
+            "sort_order": 1,
+            "resource_links": [{"title": "Bad", "url": "javascript:alert(1)"}],
+        })
+    except ValidationError:
+        pass
+    else:
+        raise AssertionError("javascript: resource link must be rejected")
+
+
+def test_master_data_resource_links_accept_multiple_optional_links():
+    from app.server.models import MasterDataBlockUpdate
+
+    block = MasterDataBlockUpdate.model_validate({
+        "title": "Test",
+        "sort_order": 1,
+        "resource_links": [
+            {"title": "Docs", "url": "https://example.org/docs", "description": "Dokumentation"},
+            {"title": "Support", "url": "http://example.org/support"},
+        ],
+    })
+    assert len(block.resource_links) == 2
+    assert block.resource_links[0].description == "Dokumentation"
+    assert block.resource_links[1].description == ""

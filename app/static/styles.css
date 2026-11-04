@@ -3162,3 +3162,18 @@ body.modal-open {
 .master-data-answer-checkboxes label { display: flex; gap: 8px; align-items: center; font-weight: 700; }
 .master-data-answer-checkboxes input { width: auto; }
 @media (max-width: 760px) { .master-data-answer-config { grid-template-columns: 1fr; } }
+
+/* v0.5.0-beta.8: optional structured resource links for master-data blocks. */
+.master-data-resource-config { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.master-data-resource-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.master-data-resource-heading small { display: block; margin-top: 3px; color: var(--muted); }
+.master-data-resource-list { display: grid; gap: 10px; }
+.master-data-resource-row { display: grid; grid-template-columns: minmax(180px, .8fr) minmax(260px, 1.2fr) minmax(220px, 1fr) auto; gap: 10px; align-items: end; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: #fbfdff; }
+.master-data-resource-delete { align-self: end; white-space: nowrap; }
+.master-data-project-resources { margin: 10px 0 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fbfdff; }
+.master-data-project-resource-list { display: grid; gap: 8px; margin-top: 7px; }
+.master-data-project-resource { display: grid; gap: 2px; }
+.master-data-project-resource a { font-weight: 800; overflow-wrap: anywhere; }
+.master-data-project-resource span { color: var(--muted); font-size: .86rem; }
+@media (max-width: 980px) { .master-data-resource-row { grid-template-columns: 1fr 1fr; } .master-data-resource-description { grid-column: 1 / -1; } .master-data-resource-delete { justify-self: start; } }
+@media (max-width: 640px) { .master-data-resource-heading { align-items: stretch; flex-direction: column; } .master-data-resource-row { grid-template-columns: 1fr; } .master-data-resource-description { grid-column: auto; } }

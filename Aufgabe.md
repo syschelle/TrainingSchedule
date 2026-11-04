@@ -1720,3 +1720,17 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - `TESTING.md` und `SECURITY.md` werden auf v0.5.0-beta.7 aktualisiert.
 - Version als Pre-Release auf `v0.5.0-beta.7` erhoeht.
 
+
+
+## Erweiterung v0.5.0-beta.8 - Weiterfuehrende Links pro Stammdatenblock (Pre-Release)
+
+- Jeder Stammdatenblock kann optional null, einen oder beliebig viele weiterfuehrende Links besitzen.
+- Ein Link besteht aus Titel, URL und optionaler Beschreibung.
+- Die Vorlagenkonfiguration muss Links einzeln hinzufuegen und entfernen koennen.
+- Ohne hinterlegte Links wird in der Projekt-Stammdatenerhebung kein leerer Bereich `Weiterfuehrende Informationen` angezeigt.
+- Die Linkliste wird als Teil des Projekt-Snapshots kopiert und bleibt dadurch von spaeteren Vorlagenaenderungen unberuehrt.
+- Erlaubt sind ausschliesslich `http://` und `https://`; unsichere Schemes wie `javascript:` oder `data:` duerfen nicht gespeichert oder gerendert werden.
+- Projektlinks oeffnen in einem neuen Tab mit `noopener noreferrer`.
+- Bestehende PostgreSQL-Installationen werden beim Start automatisch um `resource_links` erweitert; keine manuelle Migration.
+- `TESTING.md` und `SECURITY.md` werden auf v0.5.0-beta.8 aktualisiert.
+- Version als Pre-Release auf `v0.5.0-beta.8` erhoeht.
