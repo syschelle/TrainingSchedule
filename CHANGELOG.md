@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.5.0-beta.12 - 2026-11-04
+
+### Pre-Release: modularer Projektworkflow und Planungsdaten unter Personen
+
+- Die bisherige lange Checkbox `Kundentermin zur Stammdatenerhebung vor der Schulungsplanung durchführen` wurde durch eine kompakte Workflow-Auswahl ersetzt.
+- Im Projekt stehen jetzt die Workflow-Bausteine `Stammdatenerhebung`, `Migration auf neuen Stack` und `Schulungsplanung` zur Verfuegung.
+- `Schulungsplanung` ist bei bestehenden und neuen Projekten standardmaessig aktiv; `Stammdatenerhebung` kann unabhaengig hinzugewaehlt werden.
+- `Migration auf neuen Stack` ist bereits sichtbar vorbereitet, bleibt aber deaktiviert, bis der fachliche Ablauf in einer spaeteren Version umgesetzt wird.
+- Der Workflow-Fortschritt wird aus der gewaehlten Kombination dynamisch erzeugt.
+- Nur Stammdatenerhebung: Produkt -> Projekt -> Stammdatenerhebung -> Pruefen.
+- Nur Schulungsplanung: Produkt -> Projekt -> Personen -> Schulungen -> Zeiten -> Pruefen.
+- Stammdatenerhebung + Schulungsplanung: Produkt -> Projekt -> Stammdatenerhebung -> Personen -> Schulungen -> Zeiten -> Pruefen.
+- Standort, Startdatum Schulungsplanung, Vor Ort/Remote und `Weitere Angaben` wurden aus dem Projekt-Schritt entfernt und in den Schritt `Personen` verschoben.
+- Die Schritt-Nummern passen sich dynamisch an die aktive Workflow-Kombination an.
+- Alte Projektdateien ohne die neuen Felder bleiben kompatibel und verwenden weiterhin standardmaessig die Schulungsplanung.
+- Zwei Modelltests und zwei Frontendtests sichern Workflow-Auswahl, Legacy-Kompatibilitaet und die Verschiebung der Planungsfelder ab.
+- Lokale Suite: 171 Tests bestanden.
+- `TESTING.md` und `SECURITY.md` auf v0.5.0-beta.12 aktualisiert.
+
+
 ## v0.5.0-beta.11 - 2026-11-04
 
 ### Pre-Release: kompakte Stammdaten-Inhaltskacheln

@@ -320,14 +320,15 @@ def test_header_shows_only_product_name_and_has_no_standard_data_reset() -> None
     assert '$("#resetDemo")' not in javascript
 
 
-def test_v030_guided_workflow_has_six_header_steps_and_sticky_progress() -> None:
+def test_v030_guided_workflow_has_header_steps_and_sticky_progress() -> None:
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     css = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
     assert 'id="workflowProgress"' in html
-    assert 'const workflowSteps = [' in javascript
-    for step in ['"product", label: "Produkt"', '"project", label: "Projekt"', '"people", label: "Personen"', '"training", label: "Schulungen"', '"time", label: "Zeiten"', '"review", label: "Prüfen"']:
+    assert 'const workflowStepDefinitions = {' in javascript
+    for step in ['product: { id: "product", label: "Produkt"', 'project: { id: "project", label: "Projekt"', 'people: { id: "people", label: "Personen"', 'training: { id: "training", label: "Schulungen"', 'time: { id: "time", label: "Zeiten"', 'review: { id: "review", label: "Prüfen"']:
         assert step in javascript
+    assert 'function activeWorkflowSteps()' in javascript
     assert ".topbar {" in css
     assert "position: sticky;" in css
     assert ".workflow-progress-step.current" in css
@@ -740,10 +741,10 @@ def test_beta3_master_data_collection_is_customer_appointment_before_training_pl
     mode_fragment = javascript.split('function modeSelector()', 1)[1].split('function productEditor()', 1)[0]
     assert 'value="master_data_collection"' not in mode_fragment
     assert 'value="training_plan"' in mode_fragment
-    assert 'Kundentermin zur Stammdatenerhebung vor der Schulungsplanung durchführen' in javascript
+    assert 'data-workflow-module="master_data_collection"' in javascript
     assert 'Zur Stammdatenerhebung' in javascript
-    assert '{ id: "collection", label: "Stammdatenerhebung", number: 3 }' in javascript
-    assert 'if (currentWorkflowStep === "project" && project.project_mode === "training_plan" && project.master_data_collection_enabled)' in javascript
+    assert 'collection: { id: "collection", label: "Stammdatenerhebung" }' in javascript
+    assert 'if (project.master_data_collection_enabled) ids.push("collection")' in javascript
     assert 'Weiter zur Schulungsplanung' in html
     assert 'master_data_collection_date' in javascript
     assert 'master_data_collection_dedalus_participants' in javascript
@@ -848,3 +849,35 @@ def test_beta11_master_data_collection_uses_content_height_and_no_duration_badge
     assert "min-height: 0" in css
     assert "max-height: none" in css
     assert "overflow: visible" in css
+
+
+def test_beta12_project_workflows_are_selectable_and_training_context_moved_to_people():
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    css = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
+    project_panel = html.split('data-workflow-panel="project"', 1)[1].split('data-workflow-panel="people"', 1)[0]
+    people_panel = html.split('data-workflow-panel="people"', 1)[1].split('data-workflow-panel="training"', 1)[0]
+    assert 'id="training-planning-fields"' not in project_panel
+    assert 'id="project-advanced-fields"' not in project_panel
+    assert 'id="training-planning-fields"' in people_panel
+    assert 'id="project-advanced-fields"' in people_panel
+    assert 'data-workflow-module="master_data_collection"' in javascript
+    assert 'data-workflow-module="migration_new_stack"' in javascript
+    assert 'data-workflow-module="training_planning"' in javascript
+    assert 'Migration auf neuen Stack' in javascript
+    assert 'disabled' in javascript.split('data-workflow-module="migration_new_stack"', 1)[1].split('</label>', 1)[0]
+    assert 'if (project.master_data_collection_enabled) ids.push("collection")' in javascript
+    assert 'if (project.training_planning_enabled) ids.push("people", "training", "time")' in javascript
+    assert '.workflow-module-options' in css
+
+
+def test_beta12_training_context_fields_are_rendered_in_people_workflow():
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    people = javascript.split('function renderPeopleWorkflow()', 1)[1].split('function renderPeopleSummary()', 1)[0]
+    base = javascript.split('function renderBaseFields()', 1)[1].split('function trainerEditor()', 1)[0]
+    assert 'field("location", "Standort"' in people
+    assert 'field("start_date", customerDisabled ? "Startdatum" : "Startdatum Schulungsplanung"' in people
+    assert 'deliveryModeSelector()' in people
+    assert '#project-advanced-fields' in people
+    assert 'field("location", "Standort"' not in base
+    assert 'deliveryModeSelector()' not in base

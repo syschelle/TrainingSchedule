@@ -1,8 +1,17 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.5.0-beta.11** (Pre-Release)
+Aktuelle Version: **v0.5.0-beta.12** (Pre-Release)
 
 
+
+## Aenderungen v0.5.0-beta.12 (Pre-Release)
+
+- Der Projekt-Schritt besitzt jetzt eine modulare Workflow-Auswahl mit **Stammdatenerhebung**, **Migration auf neuen Stack** und **Schulungsplanung**.
+- **Migration auf neuen Stack** ist als deaktivierter Platzhalter vorbereitet und wird in einer spaeteren Version fachlich umgesetzt.
+- Der sichtbare Ablauf passt sich automatisch an: Stammdatenerhebung und Schulungsplanung koennen einzeln oder nacheinander verwendet werden.
+- **Standort**, **Startdatum Schulungsplanung**, **Vor Ort / Remote** und **Weitere Angaben** wurden aus dem Projekt-Schritt in **Personen** verschoben.
+- Die Schrittnummern im Assistenten werden passend zur aktiven Workflow-Kombination neu nummeriert.
+- Bestehende Projektdateien bleiben kompatibel; fehlt die neue Workflow-Angabe, bleibt Schulungsplanung standardmaessig aktiv.
 
 ## Aenderungen v0.5.0-beta.11 (Pre-Release)
 

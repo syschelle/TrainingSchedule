@@ -123,6 +123,8 @@ class TrainingProject(BaseModel):
     unscheduled_topics: list[TrainingTopic] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     master_data_collection_enabled: bool = False
+    migration_new_stack_enabled: bool = False
+    training_planning_enabled: bool = True
     master_data_collection_date: date | None = None
     master_data_collection_start_time: str = "09:00"
     master_data_collection_duration_minutes: int = Field(default=240, ge=15)
@@ -140,6 +142,10 @@ class TrainingProject(BaseModel):
             self.project_mode = "training_plan"
             self.master_data_collection_enabled = True
         self.customer_data_required = self.project_mode != "service_calculation"
+        if self.project_mode == "service_calculation":
+            self.master_data_collection_enabled = False
+            self.migration_new_stack_enabled = False
+            self.training_planning_enabled = True
         cleaned: list[str] = []
         for value in self.trainers:
             name = str(value).strip()

@@ -199,3 +199,34 @@ def test_master_data_resource_links_accept_multiple_optional_links():
     assert len(block.resource_links) == 2
     assert block.resource_links[0].description == "Dokumentation"
     assert block.resource_links[1].description == ""
+
+
+def test_beta12_workflow_module_flags_are_backward_compatible_and_serializable():
+    legacy = TrainingProject.model_validate({"title": "Legacy"})
+    assert legacy.master_data_collection_enabled is False
+    assert legacy.migration_new_stack_enabled is False
+    assert legacy.training_planning_enabled is True
+
+    project = TrainingProject.model_validate({
+        "title": "Workflow-Projekt",
+        "master_data_collection_enabled": True,
+        "migration_new_stack_enabled": False,
+        "training_planning_enabled": False,
+    })
+    dumped = project.model_dump(mode="json")
+    assert dumped["master_data_collection_enabled"] is True
+    assert dumped["migration_new_stack_enabled"] is False
+    assert dumped["training_planning_enabled"] is False
+
+
+def test_beta12_service_calculation_keeps_training_flow_and_disables_customer_workflows():
+    project = TrainingProject.model_validate({
+        "project_mode": "service_calculation",
+        "master_data_collection_enabled": True,
+        "migration_new_stack_enabled": True,
+        "training_planning_enabled": False,
+    })
+    assert project.customer_data_required is False
+    assert project.master_data_collection_enabled is False
+    assert project.migration_new_stack_enabled is False
+    assert project.training_planning_enabled is True

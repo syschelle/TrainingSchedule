@@ -3186,3 +3186,61 @@ body.modal-open {
 .master-data-project-resource span { color: var(--muted); font-size: .86rem; }
 @media (max-width: 980px) { .master-data-resource-row { grid-template-columns: 1fr 1fr; } .master-data-resource-description { grid-column: 1 / -1; } .master-data-resource-delete { justify-self: start; } }
 @media (max-width: 640px) { .master-data-resource-heading { align-items: stretch; flex-direction: column; } .master-data-resource-row { grid-template-columns: 1fr; } .master-data-resource-description { grid-column: auto; } }
+
+/* v0.5.0-beta.12: selectable project workflow modules and planning context in People. */
+.workflow-module-selector {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.workflow-module-selector legend {
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 800;
+}
+.workflow-module-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.workflow-module-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 78px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  cursor: pointer;
+}
+.workflow-module-option.selected {
+  border-color: rgba(17, 122, 85, .45);
+  background: var(--success-soft);
+  box-shadow: inset 0 0 0 1px rgba(17, 122, 85, .08);
+}
+.workflow-module-option.is-disabled {
+  opacity: .62;
+  cursor: not-allowed;
+  background: #f6f7f9;
+}
+.workflow-module-option input {
+  width: auto;
+  min-height: auto;
+  margin-top: 2px;
+}
+.workflow-module-option span { display: grid; gap: 4px; }
+.workflow-module-option strong { color: var(--text); font-size: .9rem; }
+.workflow-module-option small { color: var(--muted); line-height: 1.35; }
+.workflow-subsection-first {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+@media (max-width: 900px) {
+  .workflow-module-options { grid-template-columns: 1fr; }
+}

@@ -1752,3 +1752,11 @@ Die Version wurde auf `v0.2.36` erhoeht.
 
 - Den redundanten Termin-Badge `Standarddauer 4 Std.` entfernen.
 - Stammdaten-Inhaltskacheln auf echte Inhaltshoehe reduzieren; keine geerbte feste Markdown-Mindesthoehe.
+
+## Update v0.5.0-beta.12
+
+- Projekt-Workflow als Mehrfachauswahl mit `Stammdatenerhebung`, `Migration auf neuen Stack` und `Schulungsplanung` aufbauen.
+- `Migration auf neuen Stack` vorerst nur sichtbar vorbereiten; fachliche Umsetzung folgt spaeter.
+- Standort, Startdatum Schulungsplanung, Durchfuehrung Vor Ort/Remote und Weitere Angaben in den Schritt `Personen` verschieben.
+- Workflow-Schritte und Nummerierung anhand der ausgewaehlten Module dynamisch erzeugen.
+- Alte Projekte ohne neue Workflow-Felder kompatibel laden und standardmaessig mit Schulungsplanung weiterfuehren.

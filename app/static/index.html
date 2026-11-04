@@ -6,9 +6,9 @@
   <meta name="referrer" content="no-referrer">
   <meta name="robots" content="noindex, nofollow">
   <title>Schulungsplantool</title>
-  <link rel="stylesheet" href="styles.css?v=0.5.0-beta.11">
-  <script defer src="calendar.js?v=0.5.0-beta.11"></script>
-  <script defer src="app.js?v=0.5.0-beta.11"></script>
+  <link rel="stylesheet" href="styles.css?v=0.5.0-beta.12">
+  <script defer src="calendar.js?v=0.5.0-beta.12"></script>
+  <script defer src="app.js?v=0.5.0-beta.12"></script>
 </head>
 <body>
   <header class="topbar">
@@ -27,7 +27,7 @@
       </div>
       <div class="topbar-actions">
         <span id="planSyncStatus" class="plan-sync-status" hidden></span>
-        <span class="version">v0.5.0-beta.11</span>
+        <span class="version">v0.5.0-beta.12</span>
       </div>
     </div>
     <nav id="workflowProgress" class="workflow-progress" aria-label="Fortschritt der Planung"></nav>
@@ -78,10 +78,6 @@
                 <div><p class="eyebrow workflow-kicker">Stammdaten</p><h2 id="workflow-project-title">Projekt</h2></div>
               </div>
               <div id="base-fields" class="field-grid workflow-field-grid"></div>
-              <details class="workflow-disclosure">
-                <summary>Weitere Angaben</summary>
-                <div id="project-advanced-fields" class="field-grid workflow-field-grid"></div>
-              </details>
               <div class="workflow-actions">
                 <button type="button" class="button button-ghost" data-workflow-back="product">Zurück</button>
                 <button type="button" class="button button-primary" data-workflow-next="people">Weiter</button>
@@ -93,14 +89,22 @@
                 <span class="workflow-number">3</span>
                 <div><p class="eyebrow workflow-kicker">Personen</p><h2 id="workflow-people-title">Trainer & Teilnehmer</h2></div>
               </div>
-              <div id="trainer-workflow-panel"></div>
+              <div id="training-planning-context" class="workflow-subsection workflow-subsection-first">
+                <div class="workflow-subheading"><h3>Schulungsplanung</h3></div>
+                <div id="training-planning-fields" class="field-grid workflow-field-grid"></div>
+                <details class="workflow-disclosure">
+                  <summary>Weitere Angaben</summary>
+                  <div id="project-advanced-fields" class="field-grid workflow-field-grid"></div>
+                </details>
+              </div>
+              <div id="trainer-workflow-panel" class="workflow-subsection"></div>
               <div class="workflow-subsection">
                 <div class="workflow-subheading"><h3>Teilnehmergruppen</h3><button type="button" id="addGroup" class="button button-ghost button-small">+ Gruppe</button></div>
                 <div id="participant-group-panel" class="participant-groups"></div>
               </div>
               <div id="people-summary" class="workflow-inline-summary"></div>
               <div class="workflow-actions">
-                <button type="button" class="button button-ghost" data-workflow-back="project">Zurück</button>
+                <button type="button" id="peopleBackButton" class="button button-ghost">Zurück</button>
                 <button type="button" class="button button-primary" data-workflow-next="training">Weiter</button>
               </div>
             </section>
@@ -141,7 +145,7 @@
               </div>
               <div id="workflow-review" class="workflow-review"></div>
               <div class="workflow-actions">
-                <button type="button" class="button button-ghost" data-workflow-back="time">Zurück</button>
+                <button type="button" id="reviewBackButton" class="button button-ghost">Zurück</button>
                 <button type="button" id="autoPlan" class="button button-primary button-plan">Plan erstellen</button>
               </div>
             </section>
@@ -338,7 +342,7 @@
   </div>
 
   <footer>
-    <span>Schulungsplantool v0.5.0-beta.11</span>
+    <span>Schulungsplantool v0.5.0-beta.12</span>
   </footer>
 </body>
 </html>

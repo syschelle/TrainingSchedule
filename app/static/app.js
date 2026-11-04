@@ -37,14 +37,16 @@ let blockEditorBlockId = null;
 let transientManualWeeks = new Set();
 let hiddenTransientTrainerWeeks = new Set();
 let project = makeDefaultProject();
-const workflowSteps = [
-  { id: "product", label: "Produkt", number: 1 },
-  { id: "project", label: "Projekt", number: 2 },
-  { id: "people", label: "Personen", number: 3 },
-  { id: "training", label: "Schulungen", number: 4 },
-  { id: "time", label: "Zeiten", number: 5 },
-  { id: "review", label: "Prüfen", number: 6 }
-];
+const workflowStepDefinitions = {
+  product: { id: "product", label: "Produkt" },
+  project: { id: "project", label: "Projekt" },
+  collection: { id: "collection", label: "Stammdatenerhebung" },
+  people: { id: "people", label: "Personen" },
+  training: { id: "training", label: "Schulungen" },
+  time: { id: "time", label: "Zeiten" },
+  review: { id: "review", label: "Prüfen" }
+};
+const workflowPanelStepIds = ["product", "project", "people", "training", "time", "review"];
 let currentWorkflowStep = "product";
 let planInputsDirty = false;
 let workflowErrors = {};
@@ -93,6 +95,8 @@ function makeDefaultProject() {
     unscheduled_topics: [],
     warnings: [],
     master_data_collection_enabled: false,
+    migration_new_stack_enabled: false,
+    training_planning_enabled: true,
     master_data_collection_date: null,
     master_data_collection_start_time: "09:00",
     master_data_collection_duration_minutes: 240,
@@ -279,28 +283,24 @@ function renderHeader() {
 function renderBaseFields() {
   const customerDisabled = project.project_mode === "service_calculation";
   const base = $("#base-fields");
-  const advanced = $("#project-advanced-fields");
-  if (!base || !advanced) return;
+  if (!base) return;
   base.innerHTML = [
     modeSelector(),
     customerDisabled ? "" : field("customer_name", "Kunde", project.customer_name),
     customerDisabled ? "" : field("project_number", "Projektnummer", project.project_number || ""),
-    customerDisabled ? "" : masterDataCollectionSelector(),
-    customerDisabled ? "" : field("location", "Standort", project.location),
-    field("start_date", customerDisabled ? "Startdatum" : "Startdatum Schulungsplanung", project.start_date || "", "date"),
-    customerDisabled ? "" : deliveryModeSelector()
+    customerDisabled ? "" : workflowModuleSelector()
   ].join("");
-  advanced.innerHTML = [
-    field("title", customerDisabled ? "Bezeichnung" : "Schulungsbezeichnung", project.title, "text", true)
-  ].join("");
-  document.querySelectorAll("#base-fields input[data-field-name], #project-advanced-fields input[data-field-name]").forEach((input) => input.addEventListener("input", updateProjectField));
-  document.querySelectorAll("[data-delivery-mode]").forEach((button) => button.addEventListener("click", updateDeliveryMode));
-  const masterDataToggle = $("#masterDataCollectionEnabled");
-  if (masterDataToggle) masterDataToggle.addEventListener("change", updateMasterDataCollectionEnabled);
+  document.querySelectorAll("#base-fields input[data-field-name]").forEach((input) => input.addEventListener("input", updateProjectField));
+  document.querySelectorAll("[data-workflow-module]").forEach((input) => input.addEventListener("change", updateWorkflowModuleSelection));
   const mode = $("#projectMode");
   if (mode) mode.addEventListener("change", updateProjectMode);
   const projectNextButton = document.querySelector('[data-workflow-panel="project"] [data-workflow-next]');
-  if (projectNextButton) projectNextButton.textContent = project.master_data_collection_enabled && !customerDisabled ? "Zur Stammdatenerhebung" : "Weiter";
+  if (projectNextButton) {
+    if (customerDisabled) projectNextButton.textContent = "Weiter";
+    else if (project.master_data_collection_enabled) projectNextButton.textContent = "Zur Stammdatenerhebung";
+    else if (project.training_planning_enabled) projectNextButton.textContent = "Weiter zu Personen";
+    else projectNextButton.textContent = "Weiter zur Prüfung";
+  }
   applyWorkflowFieldErrors();
 }
 
@@ -321,6 +321,24 @@ function trainerEditor() {
 }
 
 function renderPeopleWorkflow() {
+  const customerDisabled = project.project_mode === "service_calculation";
+  const planningFields = $("#training-planning-fields");
+  const advanced = $("#project-advanced-fields");
+  const planningContext = $("#training-planning-context");
+  if (planningContext) planningContext.hidden = !customerDisabled && !project.training_planning_enabled;
+  if (planningFields) {
+    planningFields.innerHTML = [
+      customerDisabled ? "" : field("location", "Standort", project.location),
+      field("start_date", customerDisabled ? "Startdatum" : "Startdatum Schulungsplanung", project.start_date || "", "date"),
+      customerDisabled ? "" : deliveryModeSelector()
+    ].join("");
+  }
+  if (advanced) {
+    advanced.innerHTML = [field("title", customerDisabled ? "Bezeichnung" : "Schulungsbezeichnung", project.title, "text", true)].join("");
+  }
+  document.querySelectorAll("#training-planning-fields input[data-field-name], #project-advanced-fields input[data-field-name]").forEach((input) => input.addEventListener("input", updateProjectField));
+  document.querySelectorAll("[data-delivery-mode]").forEach((button) => button.addEventListener("click", updateDeliveryMode));
+
   const trainerPanel = $("#trainer-workflow-panel");
   if (trainerPanel) {
     trainerPanel.innerHTML = trainerEditor();
@@ -332,6 +350,11 @@ function renderPeopleWorkflow() {
     const addTrainerButton = $("#addTrainer");
     if (addTrainerButton) addTrainerButton.addEventListener("click", () => addTrainer(true));
   }
+  const backButton = $("#peopleBackButton");
+  if (backButton) backButton.onclick = () => {
+    if (project.master_data_collection_enabled && project.project_mode === "training_plan") navigatePage("collection");
+    else setWorkflowStep("project");
+  };
   renderParticipantGroups();
   renderPeopleSummary();
   applyWorkflowFieldErrors();
@@ -675,15 +698,42 @@ function checkboxSetting(name, label, value) {
 }
 
 
-function masterDataCollectionSelector() {
-  return `<label class="field checkbox-field field-wide master-data-project-option"><span>Stammdatenerhebung</span><span class="split-training-option"><input id="masterDataCollectionEnabled" type="checkbox" ${project.master_data_collection_enabled ? "checked" : ""}><span>Kundentermin zur Stammdatenerhebung vor der Schulungsplanung durchführen</span></span><small>Die Schulungsplanung bleibt ein eigener nachfolgender Schritt; innerhalb der Erhebung ist sie zusätzlich als Themenblock dokumentiert.</small></label>`;
+function workflowModuleSelector() {
+  return `<fieldset class="field field-wide workflow-module-selector" data-field="workflow_modules">
+    <legend>Workflows</legend>
+    <div class="workflow-module-options">
+      <label class="workflow-module-option ${project.master_data_collection_enabled ? "selected" : ""}"><input type="checkbox" data-workflow-module="master_data_collection" ${project.master_data_collection_enabled ? "checked" : ""}><span><strong>Stammdatenerhebung</strong><small>Kundentermin zur Erörterung und Dokumentation der Stammdaten.</small></span></label>
+      <label class="workflow-module-option is-disabled"><input type="checkbox" data-workflow-module="migration_new_stack" disabled><span><strong>Migration auf neuen Stack</strong><small>Vorbereitet – der fachliche Workflow folgt in einer späteren Version.</small></span></label>
+      <label class="workflow-module-option ${project.training_planning_enabled ? "selected" : ""}"><input type="checkbox" data-workflow-module="training_planning" ${project.training_planning_enabled ? "checked" : ""}><span><strong>Schulungsplanung</strong><small>Trainer, Teilnehmer, Schulungen, Zeiten und Kalenderplanung.</small></span></label>
+    </div>
+  </fieldset>`;
 }
 
-function updateMasterDataCollectionEnabled(event) {
-  project.master_data_collection_enabled = Boolean(event.target.checked);
-  if (project.master_data_collection_enabled) syncProjectMasterDataFromTemplate({ silent: true });
+function updateWorkflowModuleSelection(event) {
+  const module = event.target.dataset.workflowModule;
+  if (module === "master_data_collection") {
+    project.master_data_collection_enabled = Boolean(event.target.checked);
+    if (project.master_data_collection_enabled) syncProjectMasterDataFromTemplate({ silent: true });
+  } else if (module === "training_planning") {
+    project.training_planning_enabled = Boolean(event.target.checked);
+  } else if (module === "migration_new_stack") {
+    project.migration_new_stack_enabled = Boolean(event.target.checked);
+  }
   markPlanningInputsChanged();
   render();
+}
+
+function activeWorkflowSteps() {
+  let ids;
+  if (project.project_mode === "service_calculation") {
+    ids = ["product", "project", "people", "training", "time", "review"];
+  } else {
+    ids = ["product", "project"];
+    if (project.master_data_collection_enabled) ids.push("collection");
+    if (project.training_planning_enabled) ids.push("people", "training", "time");
+    ids.push("review");
+  }
+  return ids.map((id, index) => ({ ...workflowStepDefinitions[id], number: index + 1 }));
 }
 
 function markPlanningInputsChanged() {
@@ -696,18 +746,11 @@ function markPlanningInputsChanged() {
 function renderWorkflowProgress() {
   const progress = $("#workflowProgress");
   if (!progress) return;
-  const collectionEnabled = project.project_mode === "training_plan" && project.master_data_collection_enabled;
-  const steps = collectionEnabled
-    ? [
-        { id: "product", label: "Produkt", number: 1 },
-        { id: "project", label: "Projekt", number: 2 },
-        { id: "collection", label: "Stammdatenerhebung", number: 3 },
-        { id: "people", label: "Personen", number: 4 },
-        { id: "training", label: "Schulungen", number: 5 },
-        { id: "time", label: "Zeiten", number: 6 },
-        { id: "review", label: "Prüfen", number: 7 }
-      ]
-    : workflowSteps;
+  const steps = activeWorkflowSteps();
+  steps.forEach((step) => {
+    const panelNumber = document.querySelector(`[data-workflow-panel="${step.id}"] .workflow-number`);
+    if (panelNumber) panelNumber.textContent = String(step.number);
+  });
   progress.hidden = !["input", "collection", "plan"].includes(currentPage);
   const currentId = currentPage === "collection" ? "collection" : currentWorkflowStep;
   const currentIndex = steps.findIndex((step) => step.id === currentId);
@@ -747,7 +790,12 @@ function renderWorkflowPanels() {
 }
 
 function setWorkflowStep(step) {
-  if (!workflowSteps.some((item) => item.id === step)) return;
+  if (step === "collection") {
+    navigatePage("collection");
+    return;
+  }
+  const activeIds = new Set(activeWorkflowSteps().map((item) => item.id));
+  if (!workflowPanelStepIds.includes(step) || !activeIds.has(step)) return;
   currentWorkflowStep = step;
   currentPage = "input";
   delete workflowErrors[step];
@@ -757,39 +805,52 @@ function setWorkflowStep(step) {
   renderWorkflowPanels();
   if (step === "review") {
     renderWorkflowReview();
-    scheduleAvailabilityEstimate(0);
+    if (project.training_planning_enabled || project.project_mode === "service_calculation") scheduleAvailabilityEstimate(0);
   }
   requestAnimationFrame(() => document.querySelector(`[data-workflow-panel="${step}"]`)?.scrollIntoView({ block: "start", behavior: "smooth" }));
 }
 
-function advanceWorkflow(nextStep) {
+function advanceWorkflow(_nextStep) {
   if (!validateWorkflowStep(currentWorkflowStep, true)) return;
-  if (currentWorkflowStep === "project" && project.project_mode === "training_plan" && project.master_data_collection_enabled) {
+  const steps = activeWorkflowSteps();
+  const currentIndex = steps.findIndex((item) => item.id === currentWorkflowStep);
+  const next = steps[currentIndex + 1]?.id;
+  if (!next) return;
+  if (next === "collection") {
     syncProjectMasterDataFromTemplate({ silent: true });
     navigatePage("collection");
     return;
   }
-  setWorkflowStep(nextStep);
+  setWorkflowStep(next);
 }
 
 function workflowStepIsComplete(step) {
   if (step === "product") return Boolean(project.product_id && (project.product_lines || []).some((item) => item.id === project.product_id));
   if (step === "project") {
-    if (!project.start_date) return false;
     if (project.project_mode === "service_calculation") return true;
-    return Boolean(String(project.customer_name || "").trim() && String(project.location || "").trim());
+    const hasWorkflow = Boolean(project.master_data_collection_enabled || project.training_planning_enabled);
+    return Boolean(String(project.customer_name || "").trim() && hasWorkflow);
   }
+  if (step === "collection") return !project.master_data_collection_enabled || Boolean(project.master_data_collection_completed);
   if (step === "people") {
+    if (project.project_mode === "training_plan" && !project.training_planning_enabled) return true;
     const participants = (currentProduct().participant_groups || []).reduce((sum, group) => sum + Math.max(0, Number(group.participant_count || 0)), 0);
-    return activeTrainers().length > 0 && participants > 0;
+    const planningContextReady = project.project_mode === "service_calculation"
+      ? Boolean(project.start_date)
+      : Boolean(String(project.location || "").trim() && project.start_date);
+    return planningContextReady && activeTrainers().length > 0 && participants > 0;
   }
-  if (step === "training") return selectedTrainingContentIds().size > 0;
+  if (step === "training") {
+    if (project.project_mode === "training_plan" && !project.training_planning_enabled) return true;
+    return selectedTrainingContentIds().size > 0;
+  }
   if (step === "time") {
+    if (project.project_mode === "training_plan" && !project.training_planning_enabled) return true;
     const start = toMinutes(project.settings.day_start || "00:00");
     const end = toMinutes(project.settings.day_end || "00:00");
     return Number.isFinite(start) && Number.isFinite(end) && start < end;
   }
-  if (step === "review") return ["product", "project", "people", "training", "time"].every(workflowStepIsComplete);
+  if (step === "review") return activeWorkflowSteps().filter((item) => item.id !== "review").every((item) => workflowStepIsComplete(item.id));
   return false;
 }
 
@@ -800,12 +861,27 @@ function validateWorkflowStep(step, focus = false) {
     message = "Bitte ein Produkt auswählen.";
     focusSelector = "[data-workflow-product]";
   } else if (step === "project" && !workflowStepIsComplete("project")) {
-    if (!project.start_date) { message = "Bitte ein Startdatum auswählen."; focusSelector = '[data-field="start_date"] input'; }
-    else if (project.project_mode !== "service_calculation" && !String(project.customer_name || "").trim()) { message = "Bitte den Kunden eintragen."; focusSelector = '[data-field="customer_name"] input'; }
-    else if (project.project_mode === "training_plan" && !String(project.location || "").trim()) { message = "Bitte den Standort eintragen."; focusSelector = '[data-field="location"] input'; }
+    if (project.project_mode !== "service_calculation" && !String(project.customer_name || "").trim()) {
+      message = "Bitte den Kunden eintragen.";
+      focusSelector = '[data-field="customer_name"] input';
+    } else {
+      message = "Bitte mindestens einen Workflow auswählen.";
+      focusSelector = '[data-workflow-module="master_data_collection"]';
+    }
   } else if (step === "people" && !workflowStepIsComplete("people")) {
-    if (!activeTrainers().length) { message = "Bitte mindestens einen Trainer eintragen."; focusSelector = ".trainer-name-input"; }
-    else { message = "Bitte Teilnehmerzahlen eintragen."; focusSelector = "#participant-group-panel input[type=number]"; }
+    if (project.project_mode !== "service_calculation" && !String(project.location || "").trim()) {
+      message = "Bitte den Standort eintragen.";
+      focusSelector = '[data-field="location"] input';
+    } else if (!project.start_date) {
+      message = "Bitte ein Startdatum für die Schulungsplanung auswählen.";
+      focusSelector = '[data-field="start_date"] input';
+    } else if (!activeTrainers().length) {
+      message = "Bitte mindestens einen Trainer eintragen.";
+      focusSelector = ".trainer-name-input";
+    } else {
+      message = "Bitte Teilnehmerzahlen eintragen.";
+      focusSelector = "#participant-group-panel input[type=number]";
+    }
   } else if (step === "training" && !workflowStepIsComplete("training")) {
     message = "Bitte mindestens einen Schulungsinhalt auswählen.";
     focusSelector = "#training-selection input";
@@ -959,6 +1035,7 @@ function scheduleAvailabilityEstimate(delay = 120) {
 
 async function refreshAvailabilityEstimate() {
   availabilityEstimateTimer = null;
+  if (project.project_mode === "training_plan" && !project.training_planning_enabled) return;
   if (currentWorkflowStep !== "review" || currentPage !== "input" || !workflowStepIsComplete("training") || !workflowStepIsComplete("time")) return;
   const token = ++availabilityEstimateToken;
   ensureTrainerAvailabilityWeeks(availabilityWeekCount());
@@ -991,29 +1068,48 @@ function renderWorkflowReview() {
   const groups = product.participant_groups || [];
   const participants = groups.reduce((sum, group) => sum + Math.max(0, Number(group.participant_count || 0)), 0);
   const trainingCount = (project.topics || []).length;
+  const trainingEnabled = project.project_mode === "service_calculation" || project.training_planning_enabled;
   const ready = workflowStepIsComplete("review");
-  const missing = workflowSteps.slice(0, 5).filter((step) => !workflowStepIsComplete(step.id));
+  const activeSteps = activeWorkflowSteps();
+  const missing = activeSteps.filter((step) => step.id !== "review" && !workflowStepIsComplete(step.id));
   const dateLabel = project.start_date ? TrainingCalendar.formatGermanDate(TrainingCalendar.parseIsoDate(project.start_date)) : "—";
+  const selectedWorkflows = [
+    project.master_data_collection_enabled ? "Stammdatenerhebung" : "",
+    project.migration_new_stack_enabled ? "Migration auf neuen Stack" : "",
+    project.training_planning_enabled ? "Schulungsplanung" : ""
+  ].filter(Boolean).join(", ") || "—";
+  const cards = [
+    reviewCard("Projekt", [["Produkt", product.name], ["Workflows", selectedWorkflows]], "project")
+  ];
+  if (project.master_data_collection_enabled) {
+    cards.push(reviewCard("Stammdatenerhebung", [["Termin", project.master_data_collection_date ? TrainingCalendar.formatGermanDate(TrainingCalendar.parseIsoDate(project.master_data_collection_date)) : "—"], ["Status", project.master_data_collection_completed ? "Abgeschlossen" : "Offen"], ["Themen", `${(project.master_data_blocks || []).length} Blöcke`]], "collection"));
+  }
+  if (trainingEnabled) {
+    cards.push(reviewCard("Personen", [["Standort", project.location || "—"], ["Start", dateLabel], ["Durchführung", project.delivery_mode === "remote" ? "Remote" : "Vor Ort"], ["Trainer", trainers.length ? trainers.join(", ") : "—"], ["Teilnehmer", String(participants)], ["Gruppen", String(groups.length)]], "people"));
+    cards.push(reviewCard("Schulungen", [["Ausgewählt", `${trainingCount} ${trainingCount === 1 ? "Schulungsinhalt" : "Schulungsinhalte"}`]], "training"));
+    cards.push(reviewCard("Zeiten", [["Schulungstag", `${project.settings.day_start}–${project.settings.day_end}`], ["Anreise", project.delivery_mode === "remote" ? "Nicht erforderlich" : project.settings.monday_arrival_enabled ? `${project.settings.monday_arrival_start}–${project.settings.monday_arrival_end}` : "Aus"], ["Abreise", project.delivery_mode === "remote" ? "Nicht erforderlich" : project.settings.thursday_departure_enabled ? `${project.settings.thursday_departure_start}–${project.settings.thursday_departure_end}` : "Aus"]], "time"));
+  }
   container.innerHTML = `
     <div class="review-hero ${ready ? "ready" : "incomplete"}">
-      <div><span>${ready ? "Bereit für die Planung" : "Noch nicht vollständig"}</span><strong>${escapeHtml(project.customer_name || product.name || "Schulungsprojekt")}</strong><small>${escapeHtml([project.location, product.name].filter(Boolean).join(" · "))}</small></div>
+      <div><span>${ready ? (trainingEnabled ? "Bereit für die Planung" : "Bereit zum Abschluss") : "Noch nicht vollständig"}</span><strong>${escapeHtml(project.customer_name || product.name || "Projekt")}</strong><small>${escapeHtml([project.location, product.name].filter(Boolean).join(" · "))}</small></div>
       <span class="review-status-icon" aria-hidden="true">${ready ? "✓" : "!"}</span>
     </div>
-    <div class="review-grid">
-      ${reviewCard("Projekt", [["Produkt", product.name], ["Start", dateLabel], ["Standort", project.location || "—"], ["Durchführung", project.delivery_mode === "remote" ? "Remote" : "Vor Ort"], ["Stammdatenerhebung", project.master_data_collection_enabled ? `${(project.master_data_blocks || []).length} Blöcke` : "Nicht aktiviert"]], "project")}
-      ${reviewCard("Personen", [["Trainer", trainers.length ? trainers.join(", ") : "—"], ["Teilnehmer", String(participants)], ["Gruppen", String(groups.length)]], "people")}
-      ${reviewCard("Schulungen", [["Ausgewählt", `${trainingCount} ${trainingCount === 1 ? "Schulungsinhalt" : "Schulungsinhalte"}`]], "training")}
-      ${reviewCard("Zeiten", [["Schulungstag", `${project.settings.day_start}–${project.settings.day_end}`], ["Anreise", project.delivery_mode === "remote" ? "Nicht erforderlich" : project.settings.monday_arrival_enabled ? `${project.settings.monday_arrival_start}–${project.settings.monday_arrival_end}` : "Aus"], ["Abreise", project.delivery_mode === "remote" ? "Nicht erforderlich" : project.settings.thursday_departure_enabled ? `${project.settings.thursday_departure_start}–${project.settings.thursday_departure_end}` : "Aus"]], "time")}
-    </div>
-    ${trainerAvailabilityReviewHtml()}
+    <div class="review-grid">${cards.join("")}</div>
+    ${trainingEnabled ? trainerAvailabilityReviewHtml() : ""}
     ${missing.length ? `<div class="review-missing">${missing.map((step) => `<button type="button" data-review-step="${step.id}">${step.label} ergänzen</button>`).join("")}</div>` : ""}
-    ${planInputsDirty && project.blocks.length ? `<div class="review-replan-note"><strong>Vorhandener Kalender wird beim Neuerstellen ersetzt.</strong><span>Deine bisherigen Kalenderblöcke bleiben bis zum Klick auf „Plan erstellen“ unverändert.</span></div>` : ""}`;
+    ${trainingEnabled && planInputsDirty && project.blocks.length ? `<div class="review-replan-note"><strong>Vorhandener Kalender wird beim Neuerstellen ersetzt.</strong><span>Deine bisherigen Kalenderblöcke bleiben bis zum Klick auf „Plan erstellen“ unverändert.</span></div>` : ""}`;
   container.querySelectorAll("[data-review-step]").forEach((button) => button.addEventListener("click", () => setWorkflowStep(button.dataset.reviewStep)));
-  bindTrainerAvailabilityControls(container);
+  if (trainingEnabled) bindTrainerAvailabilityControls(container);
   const planButton = $("#autoPlan");
   if (planButton) {
+    planButton.hidden = !trainingEnabled;
     planButton.disabled = !ready;
     planButton.textContent = project.blocks.length ? "Plan neu erstellen" : "Plan erstellen";
+  }
+  const backButton = $("#reviewBackButton");
+  if (backButton) {
+    const previous = activeSteps[Math.max(0, activeSteps.length - 2)]?.id || "project";
+    backButton.onclick = () => previous === "collection" ? navigatePage("collection") : setWorkflowStep(previous);
   }
 }
 
@@ -1044,6 +1140,10 @@ function updateProjectMode(event) {
     project.project_number = "";
     project.location = "";
     project.master_data_collection_enabled = false;
+    project.migration_new_stack_enabled = false;
+    project.training_planning_enabled = true;
+  } else if (!project.master_data_collection_enabled && !project.training_planning_enabled) {
+    project.training_planning_enabled = true;
   }
   markPlanningInputsChanged();
   render();
@@ -1419,7 +1519,10 @@ function renderProjectMasterDataCollection() {
   if (syncButton) syncButton.disabled = !project.master_data_collection_enabled;
   if (continueButton) continueButton.disabled = !project.master_data_collection_enabled;
   if (backButton) backButton.onclick = () => setWorkflowStep("project");
-  if (continueButton) continueButton.onclick = () => setWorkflowStep("people");
+  if (continueButton) {
+    continueButton.textContent = project.training_planning_enabled ? "Weiter zur Schulungsplanung" : "Weiter zur Prüfung";
+    continueButton.onclick = () => setWorkflowStep(project.training_planning_enabled ? "people" : "review");
+  }
 
   if (!project.master_data_collection_enabled) {
     appointment.innerHTML = "";
@@ -2122,8 +2225,9 @@ function deleteTopic(id) {
 }
 
 async function createPlan() {
-  if (!["product", "project", "people", "training", "time"].every((step) => validateWorkflowStep(step, false))) {
-    const firstMissing = workflowSteps.slice(0, 5).find((step) => !workflowStepIsComplete(step.id));
+  const requiredSteps = activeWorkflowSteps().filter((step) => ["product", "project", "people", "training", "time"].includes(step.id));
+  if (!requiredSteps.every((step) => validateWorkflowStep(step.id, false))) {
+    const firstMissing = requiredSteps.find((step) => !workflowStepIsComplete(step.id));
     if (firstMissing) setWorkflowStep(firstMissing.id);
     return;
   }
@@ -2163,7 +2267,7 @@ function renderPages() {
 function renderNavigation() {
   document.querySelectorAll("[data-page]").forEach((button) => {
     const isCollection = button.dataset.page === "collection";
-    button.hidden = isCollection && project.project_mode === "service_calculation";
+    button.hidden = isCollection && (project.project_mode === "service_calculation" || !project.master_data_collection_enabled);
     button.classList.toggle("active", button.dataset.page === currentPage);
   });
 }
@@ -3172,6 +3276,8 @@ function normalizeProjectState() {
   project.delivery_mode = project.delivery_mode === "remote" ? "remote" : "onsite";
   project.project_number = String(project.project_number || "");
   project.master_data_collection_enabled = project.project_mode === "training_plan" && Boolean(project.master_data_collection_enabled);
+  project.migration_new_stack_enabled = project.project_mode === "training_plan" && Boolean(project.migration_new_stack_enabled);
+  project.training_planning_enabled = project.project_mode === "service_calculation" ? true : project.training_planning_enabled !== false;
   project.master_data_collection_date = project.master_data_collection_date || null;
   project.master_data_collection_start_time = snapTimeValue(project.master_data_collection_start_time || "09:00");
   project.master_data_collection_duration_minutes = Math.max(15, Number(project.master_data_collection_duration_minutes || 240));
