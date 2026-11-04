@@ -1747,3 +1747,8 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Korrigierten beta.9-Stand als neuen Pre-Release sauber neu paketieren.
 - Alle ausgelieferten Versionsreferenzen konsistent auf beta.10 setzen.
 - Bestehende beta.9-Funktionen unveraendert uebernehmen.
+
+## Update v0.5.0-beta.11
+
+- Den redundanten Termin-Badge `Standarddauer 4 Std.` entfernen.
+- Stammdaten-Inhaltskacheln auf echte Inhaltshoehe reduzieren; keine geerbte feste Markdown-Mindesthoehe.

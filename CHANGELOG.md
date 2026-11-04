@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.5.0-beta.11 - 2026-11-04
+
+### Pre-Release: kompakte Stammdaten-Inhaltskacheln
+
+- Den redundanten Badge `Standarddauer 4 Std.` aus dem Terminbereich entfernt; die editierbare Dauer in Minuten bleibt bestehen.
+- Ursache der ueberhoehten Stammdaten-Textkacheln behoben: die globale `.markdown-preview`-Mindesthoehe von 360 px wird innerhalb der Stammdatenerhebung nicht mehr angewendet.
+- Stammdaten-Inhaltskacheln wachsen jetzt nur noch entsprechend ihrem tatsaechlichen Inhalt.
+- Die vorhandene lokale Entwurfssicherung, der Warnhinweis und die Linkdarstellung bleiben unveraendert erhalten.
+- Neuer Regressionstest stellt sicher, dass die Stammdatenerhebung keine feste Markdown-Mindesthoehe mehr verwendet und der Standarddauer-Badge nicht zurueckkehrt.
+- Lokale Suite: 167 Tests bestanden.
+- `TESTING.md` und `SECURITY.md` auf v0.5.0-beta.11 aktualisiert.
+
+
 ## v0.5.0-beta.10 - 2026-11-04
 
 ### Pre-Release: repackaged beta with consistent runtime versioning

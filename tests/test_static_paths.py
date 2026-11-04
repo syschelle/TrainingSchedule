@@ -753,9 +753,11 @@ def test_beta3_master_data_collection_is_customer_appointment_before_training_pl
 
 def test_master_data_collection_page_explains_training_planning_is_a_topic_and_then_continues():
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     assert 'Die Schulungsplanung ist dabei ein Themenblock der Erhebung' in html
     assert 'Kundentermin Stammdatenerhebung' in html
-    assert 'Standarddauer 4 Std.' in html
+    assert 'Dauer (Minuten)' in javascript
+    assert 'master_data_collection_duration_minutes' in javascript
 
 
 def test_prerelease_docker_publish_does_not_move_latest_tag():
@@ -836,3 +838,13 @@ def test_beta9_master_data_resource_links_render_with_custom_link_style():
     assert "master-data-project-resource-icon" in javascript
     assert ".master-data-project-resource-link" in css
     assert ".master-data-project-resource-icon" in css
+
+
+def test_beta11_master_data_collection_uses_content_height_and_no_duration_badge():
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    css = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
+    assert "Standarddauer 4 Std." not in html
+    assert ".master-data-project-content.markdown-preview" in css
+    assert "min-height: 0" in css
+    assert "max-height: none" in css
+    assert "overflow: visible" in css

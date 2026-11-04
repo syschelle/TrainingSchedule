@@ -1,8 +1,14 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.5.0-beta.10** (Pre-Release)
+Aktuelle Version: **v0.5.0-beta.11** (Pre-Release)
 
 
+
+## Aenderungen v0.5.0-beta.11 (Pre-Release)
+
+- Der redundante Hinweis **Standarddauer 4 Std.** wurde aus dem Terminbereich entfernt; die Dauer bleibt weiterhin ueber das editierbare Minutenfeld konfigurierbar.
+- Die Stammdaten-Textkacheln passen sich jetzt an die tatsaechliche Textmenge an und reservieren keine feste Markdown-Mindesthoehe mehr.
+- Kurze Themenbloecke sind dadurch deutlich kompakter, waehrend lange Inhalte weiterhin vollstaendig dargestellt werden.
 
 ## Aenderungen v0.5.0-beta.10 (Pre-Release)
 
