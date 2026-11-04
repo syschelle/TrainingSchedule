@@ -1734,3 +1734,10 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Bestehende PostgreSQL-Installationen werden beim Start automatisch um `resource_links` erweitert; keine manuelle Migration.
 - `TESTING.md` und `SECURITY.md` werden auf v0.5.0-beta.8 aktualisiert.
 - Version als Pre-Release auf `v0.5.0-beta.8` erhoeht.
+
+## Update v0.5.0-beta.9
+
+- Links in der Stammdatenerhebung optisch verbessern und an die Seitentypografie anpassen.
+- Textblock-Kacheln in der Stammdatenerhebung kompakter machen.
+- Browserlokale Zwischenspeicherung fuer die Stammdatenerhebung bzw. den Projektstand ergaenzen.
+- Roten Hinweis `Seite nicht aktualisieren` / `Datenverlust` im Terminbereich anzeigen.

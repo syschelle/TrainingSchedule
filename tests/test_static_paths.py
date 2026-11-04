@@ -814,3 +814,25 @@ def test_beta8_master_data_blocks_support_optional_multiple_resource_links():
     assert "/^https?:\\/\\//i" in javascript
     assert ".master-data-resource-row" in css
     assert ".master-data-project-resources" in css
+
+
+def test_beta9_collection_shows_refresh_warning_and_local_draft_restore_support():
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    css = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
+    assert "Seite nicht aktualisieren" in html
+    assert "Datenverlust" in html
+    assert 'PROJECT_DRAFT_STORAGE_KEY = "schulungsplantool-project-draft-v1"' in javascript
+    assert "window.localStorage.setItem(PROJECT_DRAFT_STORAGE_KEY" in javascript
+    assert "window.localStorage.getItem(PROJECT_DRAFT_STORAGE_KEY" in javascript
+    assert 'window.addEventListener("beforeunload", saveProjectDraft)' in javascript
+    assert ".master-data-refresh-warning" in css
+
+
+def test_beta9_master_data_resource_links_render_with_custom_link_style():
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    css = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
+    assert "master-data-project-resource-link" in javascript
+    assert "master-data-project-resource-icon" in javascript
+    assert ".master-data-project-resource-link" in css
+    assert ".master-data-project-resource-icon" in css

@@ -1,8 +1,16 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.5.0-beta.8** (Pre-Release)
+Aktuelle Version: **v0.5.0-beta.9** (Pre-Release)
 
 
+
+## Aenderungen v0.5.0-beta.9 (Pre-Release)
+
+- Die **Stammdatenerhebung** speichert den aktuellen Projektstand jetzt browserlokal als Entwurf und stellt ihn nach einem erneuten Oeffnen automatisch wieder her.
+- Die lokale Sicherung wird bei Eingabeaenderungen sowie unmittelbar vor dem Verlassen/Aktualisieren der Seite aktualisiert.
+- Im Terminbereich erscheint jetzt mittig der rote Hinweis **Seite nicht aktualisieren** mit dem Zusatz **Datenverlust**.
+- Weiterfuehrende Links in Stammdatenbloecken werden im Kundentermin als kompakte, besser lesbare Link-Karten mit derselben Schriftfamilie wie die restliche Seite dargestellt.
+- Die Textblock-Kacheln der Stammdatenerhebung wurden kompakter gestaltet; insbesondere Antwort- und Notizfelder benoetigen weniger Hoehe.
 
 ## Aenderungen v0.5.0-beta.8 (Pre-Release)
 

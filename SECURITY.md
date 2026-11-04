@@ -6,7 +6,8 @@ Schulungsplantool is in active development. Security fixes are provided for the 
 
 | Version | Supported |
 |---|---|
-| v0.5.0-beta.8 | ✅ Current pre-release |
+| v0.5.0-beta.9 | ✅ Current pre-release |
+| v0.5.0-beta.8 | ⚠️ Superseded pre-release |
 | v0.5.0-beta.7 | ⚠️ Superseded pre-release |
 | v0.5.0-beta.6 | ⚠️ Superseded pre-release |
 | v0.5.0-beta.5 | ⚠️ Superseded pre-release |

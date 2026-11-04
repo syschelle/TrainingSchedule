@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.5.0-beta.9 - 2026-11-04
+
+### Pre-Release: polished master-data collection UX and local draft protection
+
+- Weiterfuehrende Links in der Stammdatenerhebung wirken jetzt optisch deutlich hochwertiger und nutzen die gleiche Schriftfamilie wie die restliche Anwendung.
+- Linkeintraege werden im Kundentermin als kompakte Link-Karten mit Icon, Titel und optionaler Beschreibung dargestellt.
+- Die Textblock-Kacheln der Stammdatenerhebung wurden kompakter gemacht; Inhalte, Antwortfelder und Notizbereiche benoetigen jetzt sichtbar weniger Hoehe.
+- Im Terminbereich der Stammdatenerhebung wird mittig ein roter Warnhinweis `Seite nicht aktualisieren` mit dem Untertitel `Datenverlust` eingeblendet.
+- Der aktuelle Projektstand inklusive Stammdatenerhebung wird jetzt browserlokal als Entwurf zwischengespeichert und beim erneuten Oeffnen automatisch wiederhergestellt.
+- Die automatische Entwurfssicherung wird bei Eingabeaenderungen und unmittelbar vor dem Verlassen bzw. Aktualisieren der Seite ausgefuehrt.
+- Zwei neue Frontend-Regressionstests pruefen Warnhinweis, lokale Entwurfssicherung und das neue Link-Rendering.
+- Lokale Suite: 165 Tests bestanden.
+- `TESTING.md` und `SECURITY.md` auf v0.5.0-beta.9 aktualisiert.
+- Pre-Release-Version `v0.5.0-beta.9`.
+
+
 ## v0.5.0-beta.8 - 2026-11-04
 
 ### Pre-Release: optionale weiterfuehrende Links pro Stammdatenblock

@@ -52,6 +52,8 @@ let availabilityEstimatedWeeks = 1;
 let availabilityEstimateTimer = null;
 let availabilityEstimateToken = 0;
 let availabilityEstimateUnscheduled = 0;
+const PROJECT_DRAFT_STORAGE_KEY = "schulungsplantool-project-draft-v1";
+let projectDraftSaveTimer = null;
 
 function makeDefaultProject() {
   return {
@@ -110,6 +112,48 @@ function participantGroup(id, name, participant_count, product_id = "deepunity-p
 }
 
 const $ = (selector) => document.querySelector(selector);
+
+function scheduleProjectDraftSave() {
+  if (projectDraftSaveTimer) window.clearTimeout(projectDraftSaveTimer);
+  projectDraftSaveTimer = window.setTimeout(() => saveProjectDraft(), 180);
+}
+
+function saveProjectDraft() {
+  try {
+    if (!window.localStorage) return;
+    const payload = {
+      saved_at: new Date().toISOString(),
+      currentPage,
+      currentWorkflowStep,
+      activeTab,
+      project
+    };
+    window.localStorage.setItem(PROJECT_DRAFT_STORAGE_KEY, JSON.stringify(payload));
+  } catch (error) {
+    console.warn("Projektentwurf konnte nicht lokal gespeichert werden.", error);
+  }
+}
+
+function restoreProjectDraft() {
+  try {
+    if (!window.localStorage) return false;
+    const raw = window.localStorage.getItem(PROJECT_DRAFT_STORAGE_KEY);
+    if (!raw) return false;
+    const payload = JSON.parse(raw);
+    if (!payload || typeof payload !== "object" || !payload.project || typeof payload.project !== "object") return false;
+    project = payload.project;
+    normalizeProjectState();
+    currentPage = ["input", "collection", "plan"].includes(payload.currentPage) ? payload.currentPage : "input";
+    activeTab = ["overview", "topics", "week"].includes(payload.activeTab) ? payload.activeTab : "overview";
+    const allowedWorkflowSteps = new Set(["product", "project", "collection", "people", "training", "time", "review"]);
+    currentWorkflowStep = allowedWorkflowSteps.has(payload.currentWorkflowStep) ? payload.currentWorkflowStep : (project.master_data_collection_enabled ? "collection" : "product");
+    planInputsDirty = true;
+    return true;
+  } catch (error) {
+    console.warn("Projektentwurf konnte nicht wiederhergestellt werden.", error);
+    return false;
+  }
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   $("#openMenu").addEventListener("click", openSideMenu);
@@ -170,6 +214,9 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("[data-workflow-back]").forEach((button) => {
     button.addEventListener("click", () => setWorkflowStep(button.dataset.workflowBack));
   });
+  const restoredDraft = restoreProjectDraft();
+  if (restoredDraft) setStatus("Lokaler Entwurf wiederhergestellt.");
+  window.addEventListener("beforeunload", saveProjectDraft);
   render();
   loadProducts();
   loadTrainingContents();
@@ -641,6 +688,7 @@ function updateMasterDataCollectionEnabled(event) {
 
 function markPlanningInputsChanged() {
   if (project.blocks.length) planInputsDirty = true;
+  scheduleProjectDraftSave();
   renderHeader();
   renderPlanDirtyState();
 }
@@ -1434,7 +1482,7 @@ function projectMasterDataResourceLinks(item) {
   return `<section class="master-data-project-resources"><strong>Weiterführende Informationen</strong><div class="master-data-project-resource-list">${links.map((link) => {
     const url = safeMasterDataUrl(link.url);
     if (!url) return "";
-    return `<div class="master-data-project-resource"><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">↗ ${escapeHtml(link.title || url)}</a>${link.description ? `<span>${escapeHtml(link.description)}</span>` : ""}</div>`;
+    return `<div class="master-data-project-resource"><a class="master-data-project-resource-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer"><span class="master-data-project-resource-icon" aria-hidden="true">↗</span><span>${escapeHtml(link.title || url)}</span></a>${link.description ? `<span>${escapeHtml(link.description)}</span>` : ""}</div>`;
   }).join("")}</div></section>`;
 }
 
@@ -3234,6 +3282,7 @@ async function importProjectState(event) {
   currentWorkflowStep = "review";
   workflowErrors = {};
   render();
+  saveProjectDraft();
   setStatus("Planungsstand geladen.");
 }
 
@@ -3292,6 +3341,7 @@ async function importCustomerPlan(event) {
   currentWorkflowStep = "review";
   workflowErrors = {};
   render();
+  saveProjectDraft();
   await loadProducts();
   await loadTrainingContents();
   setStatus("Kundenplanung importiert.");
