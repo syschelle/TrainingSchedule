@@ -1709,3 +1709,14 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Bestehende PostgreSQL-Installationen werden beim Start automatisch um `answer_type` und `answer_options` in `master_data_blocks` erweitert; keine manuelle Migration.
 - `TESTING.md` und `SECURITY.md` werden auf v0.5.0-beta.6 aktualisiert.
 - Version als Pre-Release auf `v0.5.0-beta.6` erhoeht.
+
+## Erweiterung v0.5.0-beta.7 - pypdf Security Update (Pre-Release)
+
+- Die direkte Runtime-Abhaengigkeit `pypdf` wird von `6.16.2` auf `6.21.4` aktualisiert.
+- Der neue Pin muss die aktuellen von GitHub/Dependabot gemeldeten pypdf-Sicherheitsprobleme gegen aeltere Versionen abdecken.
+- Der bestehende Uploadschutz `MAX_UPLOAD_MB=25` bleibt erhalten.
+- PDF-Import und PDF-Export duerfen durch das Dependency-Update funktional nicht veraendert werden.
+- Der Security-Regressionstest muss explizit `pypdf==6.21.4` verlangen.
+- `TESTING.md` und `SECURITY.md` werden auf v0.5.0-beta.7 aktualisiert.
+- Version als Pre-Release auf `v0.5.0-beta.7` erhoeht.
+

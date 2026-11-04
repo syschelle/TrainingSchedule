@@ -6,7 +6,8 @@ Schulungsplantool is in active development. Security fixes are provided for the 
 
 | Version | Supported |
 |---|---|
-| v0.5.0-beta.6 | ✅ Current pre-release |
+| v0.5.0-beta.7 | ✅ Current pre-release |
+| v0.5.0-beta.6 | ⚠️ Superseded pre-release |
 | v0.5.0-beta.5 | ⚠️ Superseded pre-release |
 | v0.5.0-beta.4 | ⚠️ Superseded pre-release |
 | v0.5.0-beta.3 | ⚠️ Superseded pre-release |
@@ -66,6 +67,14 @@ javascript-typescript
 
 GitHub Default Setup must remain disabled so Advanced Setup can upload results without conflicts.
 
+## Dependency Security
+
+Runtime dependencies are pinned explicitly and are part of the release security review.
+
+For v0.5.0-beta.7, `pypdf` is pinned to `6.21.4`, replacing `6.16.2` after multiple GitHub/Dependabot advisories reported denial-of-service style issues in older pypdf releases. The application also keeps a per-upload size limit of 25 MB by default (`MAX_UPLOAD_MB`).
+
+Dependency alerts should be reviewed before creating a release tag; security-relevant dependency updates require the normal CI, CodeQL and regression-test gate.
+
 ## Data Persistence Note
 
 The PostgreSQL database stores product/training catalogs and the product-bound master-data templates, including configured structured-answer types and selectable options. Project snapshots and the actual collected answers are carried in exported project files unless otherwise persisted by the application. Structured answers and notes may contain customer/project information, so protect database backups and exported project files according to their sensitivity.
@@ -83,4 +92,4 @@ For security-relevant releases:
 
 ## Current Policy Version
 
-This policy reflects **Schulungsplantool v0.5.0-beta.6**.
+This policy reflects **Schulungsplantool v0.5.0-beta.7**.

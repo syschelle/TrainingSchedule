@@ -14,6 +14,6 @@ def test_security_dependency_pins_and_dev_requirements_are_not_duplicated():
     runtime = (ROOT / "requirements.txt").read_text(encoding="utf-8")
     development = (ROOT / "requirements-dev.txt").read_text(encoding="utf-8")
     assert "python-multipart==0.0.32" in runtime
-    assert "pypdf==6.16.2" in runtime
+    assert "pypdf==6.21.4" in runtime
     assert "pytest==9.1.1" in development
     assert "-r requirements.txt" not in development

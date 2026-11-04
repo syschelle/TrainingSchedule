@@ -1,7 +1,16 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.5.0-beta.6** (Pre-Release)
+Aktuelle Version: **v0.5.0-beta.7** (Pre-Release)
 
+
+
+## Aenderungen v0.5.0-beta.7 (Pre-Release)
+
+- Sicherheitsupdate fuer die direkte PDF-Abhaengigkeit `pypdf`: von `6.16.2` auf `6.21.4`.
+- Das Update adressiert die von GitHub/Dependabot gemeldeten Resource-Exhaustion- und Infinite-Loop-Advisories gegen aeltere `pypdf`-Versionen.
+- Der vorhandene Uploadschutz von standardmaessig maximal 25 MB pro Datei bleibt aktiv.
+- PDF-Import und PDF-Export bleiben funktional unveraendert; die Anwendung verwendet weiterhin `PdfReader` fuer den PDF-Import.
+- Der Security-Regressionstest verlangt ab diesem Stand explizit `pypdf==6.21.4`.
 
 ## Aenderungen v0.5.0-beta.6 (Pre-Release)
 

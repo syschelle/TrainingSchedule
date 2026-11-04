@@ -1,6 +1,6 @@
 # Schulungsplantool – Internal Tests and Release Checks
 
-Status: **v0.5.0-beta.6 (Pre-Release)**
+Status: **v0.5.0-beta.7 (Pre-Release)**
 
 This document describes the checks performed before a Schulungsplantool release or pre-release. It is updated together with the current application version.
 
@@ -12,7 +12,7 @@ Run the complete suite with:
 python -m pytest -q
 ```
 
-For **v0.5.0-beta.6**, the current local result is:
+For **v0.5.0-beta.7**, the current local result is:
 
 ```text
 160 passed, 2 warnings
@@ -152,13 +152,29 @@ DELETE /api/master-data-blocks/{id}                       -> 204
 
 This is a supplemental smoke check in addition to the repository regression tests.
 
-## 9. CodeQL
+## 9. Dependency Security Check
+
+The runtime dependency list is regression-tested for security-sensitive direct pins.
+
+For v0.5.0-beta.7, `requirements.txt` must contain:
+
+```text
+pypdf==6.21.4
+```
+
+This replaces the vulnerable `6.16.2` pin. GitHub security advisories published in October 2026 identify `6.21.3` or `6.21.4` as patched versions for the reported pypdf resource-consumption and infinite-loop issues; the project therefore pins the newer `6.21.4` release.
+
+The application already limits individual uploads to `MAX_UPLOAD_MB` (25 MB by default). This limit remains part of the defense-in-depth around PDF parsing.
+
+The internal execution environment used for this document could not download the new wheel directly, so the full local suite exercises the unchanged pypdf API path with the available environment package. GitHub CI, which installs `requirements.txt`, is authoritative for the actual `pypdf==6.21.4` runtime verification before tagging the pre-release.
+
+## 10. CodeQL
 
 The actual CodeQL analysis runs on GitHub. Before tagging a release or pre-release, both configured CodeQL analysis jobs must be green.
 
 The repository uses Advanced Setup. GitHub Default Setup must remain disabled to avoid conflicting SARIF uploads.
 
-## 10. Docker / Compose Checks
+## 11. Docker / Compose Checks
 
 GitHub CI additionally validates:
 
@@ -170,7 +186,7 @@ docker build --build-arg APP_VERSION="$(cat VERSION)" -t schulungsplantool:ci .
 
 If Docker is unavailable in the local/internal execution environment, these checks are not claimed as locally passed; GitHub CI is authoritative.
 
-## 11. Release Checklist
+## 12. Release Checklist
 
 Before creating a tag:
 
@@ -185,9 +201,9 @@ Before creating a tag:
 
 For a pre-release, create a pre-release tag and mark the GitHub release as a pre-release.
 
-The Docker release workflow is also regression-tested so a pre-release version (for example `0.5.0-beta.6`) does **not** publish or move the `latest` image tag.
+The Docker release workflow is also regression-tested so a pre-release version (for example `0.5.0-beta.7`) does **not** publish or move the `latest` image tag.
 
-## 12. Current Known Notes
+## 13. Current Known Notes
 
 FastAPI currently emits two deprecation warnings for `@app.on_event("startup")`. A later refactor should migrate startup handling to a lifespan context.
 

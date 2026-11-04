@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.5.0-beta.7 - 2026-11-04
+
+### Pre-Release: pypdf Security Update
+
+- `pypdf` von `6.16.2` auf `6.21.4` aktualisiert.
+- Damit wird der Abhaengigkeitsstand auf die von GitHub fuer die aktuellen pypdf-Advisories als gepatcht ausgewiesene Version angehoben.
+- Die bekannten Meldungen zu moeglichen Endlosschleifen, hoher Laufzeit und hohem Speicherverbrauch bei manipulierten PDF-Strukturen werden nicht mehr gegen den alten 6.16.2-Pin aufgeloest.
+- Der bestehende Datei-Uploadschutz von standardmaessig 25 MB bleibt unveraendert aktiv.
+- Security-Regressionstest auf den neuen `pypdf`-Pin aktualisiert.
+- `TESTING.md` und `SECURITY.md` auf v0.5.0-beta.7 aktualisiert.
+- Pre-Release-Version `v0.5.0-beta.7`.
+
+
 ## v0.5.0-beta.6 - 2026-11-04
 
 ### Pre-Release: optionale strukturierte Antworten pro Stammdatenblock
