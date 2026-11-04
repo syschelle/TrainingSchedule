@@ -761,3 +761,18 @@ def test_master_data_collection_page_explains_training_planning_is_a_topic_and_t
 def test_prerelease_docker_publish_does_not_move_latest_tag():
     workflow = (STATIC_DIR.parents[1] / ".github" / "workflows" / "release-image.yml").read_text(encoding="utf-8")
     assert "type=raw,value=latest,enable=${{ github.ref_type == 'tag' && !contains(steps.version.outputs.version, '-') }}" in workflow
+
+
+def test_beta4_master_data_collection_and_template_use_full_workspace_width():
+    styles = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
+    assert "#collection-page," in styles
+    assert "#masterdata-page {" in styles
+    assert "grid-template-columns: minmax(0, 1fr);" in styles
+    assert "#collection-page > .card," in styles
+    assert "#masterdata-page > .card {" in styles
+    assert "grid-column: 1 / -1;" in styles
+    assert "#masterdata-page .content-manager {" in styles
+    assert "grid-template-columns: clamp(280px, 22vw, 380px) minmax(0, 1fr);" in styles
+    assert "#masterdata-page .content-card textarea {" in styles
+    assert "min-height: 320px;" in styles
+    assert "#masterdata-page .content-manager {\n    grid-template-columns: 1fr;" in styles

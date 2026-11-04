@@ -1,6 +1,17 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.5.0-beta.3** (Pre-Release)
+Aktuelle Version: **v0.5.0-beta.4** (Pre-Release)
+
+
+## Aenderungen v0.5.0-beta.4 (Pre-Release)
+
+- Reiner UI-/Layout-Fix fuer **Stammdatenerhebung** und **Stammdaten-Vorlage**.
+- Die Projektansicht **Stammdatenerhebung** nutzt auf Desktop jetzt die volle verfuegbare Browserbreite statt nur die linke Spalte des alten Workspace-Rasters.
+- Die **Stammdaten-Vorlage** nutzt ebenfalls die volle Browserbreite.
+- In der Vorlagenkonfiguration bleibt die Blockliste links kompakt, waehrend der Editor rechts flexibel den restlichen Platz einnimmt.
+- Das Markdown-Inhaltsfeld ist auf Desktop deutlich hoeher, damit laengere Checklisten komfortabler gepflegt werden koennen.
+- Auf kleinen Displays faellt die Vorlagenkonfiguration weiterhin sauber auf eine einspaltige Darstellung zurueck.
+- Datenmodell, Stammdaten-Inhalte und Projektlogik wurden nicht veraendert.
 
 
 ## Aenderungen v0.5.0-beta.3 (Pre-Release)

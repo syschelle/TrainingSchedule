@@ -262,6 +262,29 @@ h3 {
   justify-content: center;
 }
 
+/* v0.5.0-beta.4: Master Data Collection and its template editor are
+   workspace-style views and intentionally use the full browser width. */
+#collection-page,
+#masterdata-page {
+  grid-template-columns: minmax(0, 1fr);
+  justify-content: stretch;
+}
+
+#collection-page > .card,
+#masterdata-page > .card {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+#masterdata-page .content-manager {
+  grid-template-columns: clamp(280px, 22vw, 380px) minmax(0, 1fr);
+  gap: 16px;
+}
+
+#masterdata-page .content-card textarea {
+  min-height: 320px;
+}
+
 .plan-card {
   grid-column: 1 / -1;
 }
@@ -1177,8 +1200,13 @@ footer {
 @media (max-width: 760px) {
   .field-grid,
   .metric-grid,
-  .content-manager {
+  .content-manager,
+  #masterdata-page .content-manager {
     grid-template-columns: 1fr;
+  }
+
+  #masterdata-page .content-card textarea {
+    min-height: 220px;
   }
 
   .calendar-week {

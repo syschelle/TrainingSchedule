@@ -1669,3 +1669,15 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - `TESTING.md` und `SECURITY.md` muessen auf v0.5.0-beta.3 aktualisiert werden.
 - Version als Pre-Release auf `v0.5.0-beta.3` erhoeht.
 
+
+
+## Erweiterung v0.5.0-beta.4 - Full-width Layout fuer Stammdatenerhebung (Pre-Release)
+
+- Die Projektansicht `Stammdatenerhebung` muss die gesamte verfuegbare Browserbreite nutzen.
+- Die Verwaltung `Stammdaten-Vorlage` muss ebenfalls die gesamte verfuegbare Browserbreite nutzen.
+- In der Vorlagenverwaltung bleibt die Blocknavigation links; der Bearbeitungsbereich rechts muss flexibel wachsen.
+- Auf kleinen Viewports muss die Ansicht auf eine Spalte umbrechen.
+- Das Markdown-Inhaltsfeld soll auf Desktop eine deutlich groessere Bearbeitungshoehe erhalten.
+- Fachlogik, Datenmodell und bestehende Stammdatenbloecke werden durch diesen Layout-Fix nicht veraendert.
+- `TESTING.md` und `SECURITY.md` muessen auf v0.5.0-beta.4 aktualisiert werden.
+- Version als Pre-Release auf `v0.5.0-beta.4` erhoeht.

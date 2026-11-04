@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.5.0-beta.4 - 2026-11-04
+
+### Pre-Release: Stammdatenerhebung und Konfiguration auf volle Browserbreite
+
+- Reiner Frontend-/Layout-Fix ohne Aenderung am Datenmodell.
+- Die Projektansicht `Stammdatenerhebung` nutzt nun die volle verfuegbare Workspace-Breite.
+- Die Verwaltung `Stammdaten-Vorlage` nutzt ebenfalls die volle verfuegbare Workspace-Breite.
+- Die Vorlagenkonfiguration verwendet auf Desktop eine responsive Zweispaltenansicht mit kompakter Blockliste und flexibel wachsendem Editor.
+- Das Markdown-Inhaltsfeld der Stammdaten-Vorlage wurde fuer laengere Checklisten vergroessert.
+- Auf kleinen Displays bleibt die Ansicht einspaltig.
+- Regressionstest fuer die breiten Layout-Selektoren ergaenzt.
+- Lokale Suite: 155 Tests bestanden.
+- Pre-Release-Version `v0.5.0-beta.4`.
+
+
 ## v0.5.0-beta.3 - 2026-11-04
 
 ### Pre-Release: Stammdatenerhebung als Kundentermin vor der Schulungsplanung

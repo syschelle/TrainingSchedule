@@ -1,6 +1,6 @@
 # Schulungsplantool – Internal Tests and Release Checks
 
-Status: **v0.5.0-beta.3 (Pre-Release)**
+Status: **v0.5.0-beta.4 (Pre-Release)**
 
 This document describes the checks performed before a Schulungsplantool release or pre-release. It is updated together with the current application version.
 
@@ -12,10 +12,10 @@ Run the complete suite with:
 python -m pytest -q
 ```
 
-For **v0.5.0-beta.3**, the current local result is:
+For **v0.5.0-beta.4**, the current local result is:
 
 ```text
-154 passed, 2 warnings
+155 passed, 2 warnings
 ```
 
 The two warnings are the known FastAPI deprecation warnings for `@app.on_event("startup")`; they are not test failures.
@@ -24,7 +24,7 @@ The two warnings are the known FastAPI deprecation warnings for `@app.on_event("
 
 | Test file | Count | Focus |
 |---|---:|---|
-| `tests/test_static_paths.py` | 68 | Frontend structure, UI rules, calendar, customer HTML, version regressions, master-data UI wiring |
+| `tests/test_static_paths.py` | 69 | Frontend structure, UI rules, calendar, customer HTML, version regressions, master-data UI wiring |
 | `tests/test_planner.py` | 33 | Automatic planning, breaks, availability, arrival/departure, remote/on-site |
 | `tests/test_project_export.py` | 25 | Project files, PDF, customer HTML, return import and tamper protection |
 | `tests/test_content_catalog.py` | 10 | Training contents, products, history and persistence |
@@ -33,7 +33,7 @@ The two warnings are the known FastAPI deprecation warnings for `@app.on_event("
 | `tests/test_release_docs.py` | 2 | Root TESTING/SECURITY documentation and version consistency |
 | `tests/test_codeql_workflow.py` | 2 | CodeQL configuration and language matrix |
 | `tests/test_security_regressions.py` | 2 | Security-related regressions |
-| **Total** | **154** | |
+| **Total** | **155** | |
 
 ## 2. Master Data Collection Regression Coverage
 
@@ -55,7 +55,19 @@ The pre-release includes dedicated regression coverage for the customer master-d
 - the frontend remains wired to the `/api/master-data-blocks` template endpoints.
 
 
-## 3. Existing Functional Regression Coverage
+## 3. Beta.4 Layout Regression Coverage
+
+The beta.4 pre-release adds a focused frontend regression check for the Master Data Collection workspace:
+
+- the project Master Data Collection page spans the full available workspace width;
+- the Master Data Template configuration also spans the full workspace width;
+- the template editor uses a responsive left navigation / flexible right editor grid on desktop;
+- the Markdown editor receives a larger desktop editing area;
+- the template manager collapses back to a single column on narrow screens.
+
+No application data model or master-data business rules are changed by beta.4.
+
+## 4. Existing Functional Regression Coverage
 
 The suite continues to cover, among other rules:
 
@@ -71,7 +83,7 @@ The suite continues to cover, among other rules:
 - trainer availability and unavailable days are enforced;
 - project files round-trip without losing planning state.
 
-## 4. JavaScript Syntax Checks
+## 5. JavaScript Syntax Checks
 
 Run:
 
@@ -83,7 +95,7 @@ node --check app/customer_assets/app.js
 
 All three files must pass before release.
 
-## 5. Python Syntax Checks
+## 6. Python Syntax Checks
 
 Key server modules are additionally compiled before packaging:
 
@@ -91,7 +103,7 @@ Key server modules are additionally compiled before packaging:
 python -m py_compile app/server/models.py app/server/content_db.py app/server/main.py
 ```
 
-## 6. GitHub Workflow / YAML Validation
+## 7. GitHub Workflow / YAML Validation
 
 The repository contains:
 
@@ -111,7 +123,7 @@ javascript-typescript
 GitHub Actions must not be reintroduced as a separate CodeQL language.
 
 
-## 7. API CRUD Smoke Check
+## 8. API CRUD Smoke Check
 
 The new master-data API was additionally exercised against a temporary file-backed SQLite database through FastAPI `TestClient`:
 
@@ -124,13 +136,13 @@ DELETE /api/master-data-blocks/{id}                       -> 204
 
 This is a supplemental smoke check in addition to the repository regression tests.
 
-## 8. CodeQL
+## 9. CodeQL
 
 The actual CodeQL analysis runs on GitHub. Before tagging a release or pre-release, both configured CodeQL analysis jobs must be green.
 
 The repository uses Advanced Setup. GitHub Default Setup must remain disabled to avoid conflicting SARIF uploads.
 
-## 9. Docker / Compose Checks
+## 10. Docker / Compose Checks
 
 GitHub CI additionally validates:
 
@@ -142,7 +154,7 @@ docker build --build-arg APP_VERSION="$(cat VERSION)" -t schulungsplantool:ci .
 
 If Docker is unavailable in the local/internal execution environment, these checks are not claimed as locally passed; GitHub CI is authoritative.
 
-## 10. Release Checklist
+## 11. Release Checklist
 
 Before creating a tag:
 
@@ -157,9 +169,9 @@ Before creating a tag:
 
 For a pre-release, create a pre-release tag and mark the GitHub release as a pre-release.
 
-The Docker release workflow is also regression-tested so a pre-release version (for example `0.5.0-beta.3`) does **not** publish or move the `latest` image tag.
+The Docker release workflow is also regression-tested so a pre-release version (for example `0.5.0-beta.4`) does **not** publish or move the `latest` image tag.
 
-## 11. Current Known Notes
+## 12. Current Known Notes
 
 FastAPI currently emits two deprecation warnings for `@app.on_event("startup")`. A later refactor should migrate startup handling to a lifespan context.
 
