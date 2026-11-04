@@ -1546,6 +1546,7 @@ function navigatePage(page) {
     return;
   }
   currentPage = page;
+  if (page === "collection") renderProjectMasterDataCollection();
   renderHeader();
   renderPages();
   renderWorkflowProgress();

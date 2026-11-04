@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.5.0-beta.5 - 2026-11-04
+
+### Pre-Release: Projektstammdaten in der Stammdatenerhebung aktualisieren
+
+- Fehler behoben, durch den Kunde und Projektnummer in der Stammdatenerhebung trotz Eingabe im Projekt als leer angezeigt werden konnten.
+- Ursache war eine bereits beim initialen Rendern erzeugte, spaeter nicht aktualisierte Terminansicht.
+- Beim Navigieren zur Stammdatenerhebung wird die Projekt-Erhebungsansicht jetzt erneut aus dem aktuellen Projektmodell gerendert.
+- Kunde und Projektnummer werden dadurch beim ersten Oeffnen sowie nach spaeteren Aenderungen korrekt gespiegelt.
+- Regressionstest fuer die Aktualisierung der Terminansicht ergaenzt.
+- Keine Datenbankmigration erforderlich.
+- Pre-Release-Version `v0.5.0-beta.5`.
+
+
 ## v0.5.0-beta.4 - 2026-11-04
 
 ### Pre-Release: Stammdatenerhebung und Konfiguration auf volle Browserbreite

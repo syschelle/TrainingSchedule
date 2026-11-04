@@ -1681,3 +1681,16 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Fachlogik, Datenmodell und bestehende Stammdatenbloecke werden durch diesen Layout-Fix nicht veraendert.
 - `TESTING.md` und `SECURITY.md` muessen auf v0.5.0-beta.4 aktualisiert werden.
 - Version als Pre-Release auf `v0.5.0-beta.4` erhoeht.
+
+
+## Erweiterung v0.5.0-beta.5 - Projektstammdaten in Stammdatenerhebung spiegeln (Pre-Release)
+
+- Beim Oeffnen der Projektansicht `Stammdatenerhebung` muss die Ansicht aus dem aktuellen Projektmodell neu gerendert werden.
+- `Kunde` muss aus `project.customer_name` angezeigt werden.
+- `Projektnummer` muss aus `project.project_number` angezeigt werden.
+- Nach Aenderungen der Projektstammdaten und erneutem Oeffnen der Stammdatenerhebung muessen die aktualisierten Werte sichtbar sein.
+- Es darf dafuer keine zusaetzliche Datenhaltung fuer Kunde oder Projektnummer innerhalb der Stammdatenerhebung eingefuehrt werden; die Projektstammdaten bleiben die einzige Quelle.
+- Keine Datenbankmigration erforderlich.
+- `TESTING.md` und `SECURITY.md` muessen auf v0.5.0-beta.5 aktualisiert werden.
+- Version als Pre-Release auf `v0.5.0-beta.5` erhoeht.
+

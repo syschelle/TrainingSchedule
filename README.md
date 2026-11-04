@@ -1,6 +1,15 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.5.0-beta.4** (Pre-Release)
+Aktuelle Version: **v0.5.0-beta.5** (Pre-Release)
+
+
+## Aenderungen v0.5.0-beta.5 (Pre-Release)
+
+- Fehler bei der Uebergabe der Projektstammdaten in die **Stammdatenerhebung** behoben.
+- Beim Oeffnen der Stammdatenerhebung wird die Terminansicht jetzt immer mit dem aktuellen Projektzustand neu aufgebaut.
+- **Kunde** und **Projektnummer** werden dadurch verlaesslich aus `Stammdaten -> Projekt` in den Kundentermin uebernommen.
+- Aenderungen an Kunde oder Projektnummer werden nach Rueckkehr in die Stammdatenerhebung ebenfalls korrekt angezeigt.
+- Keine Aenderung am Datenmodell und keine Datenbankmigration erforderlich.
 
 
 ## Aenderungen v0.5.0-beta.4 (Pre-Release)

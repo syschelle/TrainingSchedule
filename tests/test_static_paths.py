@@ -776,3 +776,12 @@ def test_beta4_master_data_collection_and_template_use_full_workspace_width():
     assert "#masterdata-page .content-card textarea {" in styles
     assert "min-height: 320px;" in styles
     assert "#masterdata-page .content-manager {\n    grid-template-columns: 1fr;" in styles
+
+def test_beta5_collection_refreshes_project_customer_context_when_page_opens():
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    navigate = javascript.split("function navigatePage(page) {", 1)[1].split("function contentCard(item)", 1)[0]
+    assert 'if (page === "collection") renderProjectMasterDataCollection();' in navigate
+    appointment = javascript.split("function masterDataAppointmentFields() {", 1)[1].split("function updateMasterDataCollectionMeta", 1)[0]
+    assert 'project.customer_name || "—"' in appointment
+    assert 'project.project_number || "—"' in appointment
+
