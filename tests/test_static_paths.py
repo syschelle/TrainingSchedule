@@ -732,18 +732,30 @@ def test_master_data_collection_pages_and_api_are_wired():
     assert 'data-project-master-notes' in javascript
 
 
-def test_beta2_master_data_collection_precedes_training_planning_in_project_flow():
+def test_beta3_master_data_collection_is_customer_appointment_before_training_planning():
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
     project_nav = html.split('<p class="menu-section-label">Projekt</p>', 1)[1].split('</nav>', 1)[0]
     assert project_nav.index('data-page="collection"') < project_nav.index('data-page="plan"')
     mode_fragment = javascript.split('function modeSelector()', 1)[1].split('function productEditor()', 1)[0]
-    assert mode_fragment.index('value="master_data_collection"') < mode_fragment.index('value="training_plan"')
+    assert 'value="master_data_collection"' not in mode_fragment
+    assert 'value="training_plan"' in mode_fragment
+    assert 'Kundentermin zur Stammdatenerhebung vor der Schulungsplanung durchführen' in javascript
     assert 'Zur Stammdatenerhebung' in javascript
     assert '{ id: "collection", label: "Stammdatenerhebung", number: 3 }' in javascript
-    assert 'if (currentWorkflowStep === "project" && project.project_mode === "master_data_collection")' in javascript
-    assert 'page = "collection"' in javascript
-    assert 'project.project_mode === "master_data_collection") return Boolean(String(project.customer_name || "").trim())' in javascript
+    assert 'if (currentWorkflowStep === "project" && project.project_mode === "training_plan" && project.master_data_collection_enabled)' in javascript
+    assert 'Weiter zur Schulungsplanung' in html
+    assert 'master_data_collection_date' in javascript
+    assert 'master_data_collection_dedalus_participants' in javascript
+    assert 'master_data_collection_customer_participants' in javascript
+    assert 'master_data_collection_completed' in javascript
+
+
+def test_master_data_collection_page_explains_training_planning_is_a_topic_and_then_continues():
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    assert 'Die Schulungsplanung ist dabei ein Themenblock der Erhebung' in html
+    assert 'Kundentermin Stammdatenerhebung' in html
+    assert 'Standarddauer 4 Std.' in html
 
 
 def test_prerelease_docker_publish_does_not_move_latest_tag():

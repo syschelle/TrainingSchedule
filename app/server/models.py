@@ -106,6 +106,7 @@ class TrainingProject(BaseModel):
     delivery_mode: Literal["onsite", "remote"] = "onsite"
     customer_data_required: bool = True
     customer_name: str = ""
+    project_number: str = ""
     location: str = ""
     product_id: str = "deepunity-pacs"
     trainer: str = ""
@@ -122,13 +123,23 @@ class TrainingProject(BaseModel):
     unscheduled_topics: list[TrainingTopic] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     master_data_collection_enabled: bool = False
+    master_data_collection_date: date | None = None
+    master_data_collection_start_time: str = "09:00"
+    master_data_collection_duration_minutes: int = Field(default=240, ge=15)
+    master_data_collection_dedalus_participants: str = ""
+    master_data_collection_customer_participants: str = ""
+    master_data_collection_completed: bool = False
     master_data_blocks: list[ProjectMasterDataBlock] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def normalize_trainers(self) -> "TrainingProject":
-        self.customer_data_required = self.project_mode != "service_calculation"
+        # beta.1/beta.2 exported a dedicated master_data_collection project mode.
+        # Keep those files importable, but model the collection as an optional
+        # customer appointment that precedes the regular training planning.
         if self.project_mode == "master_data_collection":
+            self.project_mode = "training_plan"
             self.master_data_collection_enabled = True
+        self.customer_data_required = self.project_mode != "service_calculation"
         cleaned: list[str] = []
         for value in self.trainers:
             name = str(value).strip()

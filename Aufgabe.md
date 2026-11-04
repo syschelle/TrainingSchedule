@@ -1651,20 +1651,21 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - `TESTING.md` und `SECURITY.md` werden im Repository-Root gepflegt.
 - Version als Pre-Release auf `v0.5.0-beta.1` erhoeht.
 
-## Erweiterung v0.5.0-beta.2 - Stammdatenerhebung vor der Schulungsplanung (Pre-Release)
+## Erweiterung v0.5.0-beta.3 - Stammdatenerhebung als Kundentermin vor der Schulungsplanung (Pre-Release)
 
-- `Stammdatenerhebung` muss ein eigener Verwendungszweck des Projekts sein und in der Auswahl vor `Schulungsplanung mit Kundendaten` stehen.
-- Der Verwendungszweck muss direkt in den sichtbaren Projektstammdaten erreichbar sein und darf fuer diesen Hauptfall nicht nur unter `Weitere Angaben` versteckt sein.
-- Im Stammdatenerhebungs-Modus besteht der gefuehrte Projektablauf aus `Produkt -> Projekt -> Stammdatenerhebung`.
-- Trainer-/Teilnehmer-, Schulungs- und Zeitschritte duerfen fuer die reine Stammdatenerhebung nicht als Pflichtschritte erscheinen.
-- Der Weiter-Button des Projektschritts fuehrt direkt zur Stammdatenerhebung.
-- Fuer die Stammdatenerhebung sind Produkt, Kunde und Erhebungsdatum Pflicht; der Standort ist optional und wird erst fuer die Schulungsplanung zwingend.
-- In der Projektnavigation muss `Stammdatenerhebung` vor `Schulungsplan` stehen.
-- Im reinen Stammdatenerhebungs-Modus wird der Schulungsplan ausgeblendet und der Header bietet stattdessen direkten Zugriff auf die Stammdatenerhebung.
-- Die Stammdatenerhebung wird bei Auswahl dieses Verwendungszwecks automatisch aktiviert und aus der aktiven Produktvorlage initialisiert.
-- Ein bereits ausgefuellter Projekt-Snapshot bleibt erhalten, wenn spaeter auf `Schulungsplanung mit Kundendaten` umgestellt wird. So kann die Stammdatenerhebung als vorgelagerte Projektphase genutzt werden.
-- Fuer Schulungsplan-Projekte darf die Stammdatenerhebung weiterhin optional parallel mitgefuehrt werden.
-- Pre-Release-Docker-Tags duerfen den Image-Tag `latest` nicht aktualisieren; `latest` ist stabilen Versionen vorbehalten.
-- `TESTING.md` und `SECURITY.md` muessen auf v0.5.0-beta.2 aktualisiert werden.
-- Version als Pre-Release auf `v0.5.0-beta.2` erhoeht.
+- Die Stammdatenerhebung ist **kein eigener Projektmodus**, sondern ein Kundentermin innerhalb eines normalen Schulungsprojekts.
+- In `Stammdaten -> Projekt` muss sichtbar aktiviert werden koennen, ob vor der eigentlichen Schulungsplanung eine Stammdatenerhebung stattfindet.
+- Bei aktivierter Erhebung lautet der gefuehrte Ablauf `Produkt -> Projekt -> Stammdatenerhebung -> Personen -> Schulungen -> Zeiten -> Pruefen`.
+- Die Stammdatenerhebung ersetzt die Schulungsplanung nicht. Nach dem Termin wird im selben Projekt mit der normalen Schulungsplanung weitergearbeitet.
+- Die Erhebungsansicht muss Terminangaben enthalten: Datum, Uhrzeit, Dauer, Teilnehmer Dedalus, Teilnehmer Kunde und einen Abschlussstatus.
+- Die Dokumentvorgabe `Dauer: 4,0 Std.` wird als editierbare Standarddauer von 240 Minuten vorbelegt.
+- Projektnummer und Kunde werden in der Stammdatenerhebung mitgefuehrt.
+- Die 17 nummerierten und erweiterbaren Stammdatenbloecke bilden die Gespraechs- und Dokumentationsstruktur des Termins.
+- `Schulungsplanung` bleibt Themenblock Nr. 15 der Stammdatenerhebung. Die dort gemeinsam geklaerten Punkte koennen anschliessend in der eigentlichen Schulungsplanung umgesetzt werden.
+- Der Button am Ende der Erhebung lautet `Weiter zur Schulungsplanung` und fuehrt in den regulaeren Planungsteil.
+- Alte beta.1/beta.2-Projekte mit `project_mode=master_data_collection` muessen importierbar bleiben und automatisch als normales Schulungsprojekt mit aktivierter Stammdatenerhebung interpretiert werden.
+- Die Produktvorlage bleibt frei erweiterbar; vorhandene Projekt-Snapshots werden durch spaetere Vorlagenaenderungen nicht ueberschrieben.
+- Pre-Release-Docker-Tags duerfen den Image-Tag `latest` nicht aktualisieren.
+- `TESTING.md` und `SECURITY.md` muessen auf v0.5.0-beta.3 aktualisiert werden.
+- Version als Pre-Release auf `v0.5.0-beta.3` erhoeht.
 

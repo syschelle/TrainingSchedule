@@ -3097,6 +3097,19 @@ body.modal-open {
 
 
 /* Stammdatenerhebung */
+.master-data-appointment-card { margin-bottom: 18px; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius); background: #f8fafc; }
+.master-data-appointment-heading { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; margin-bottom: 14px; }
+.master-data-appointment-heading h3 { margin: 2px 0 0; }
+.master-data-duration-badge { display: inline-flex; padding: 5px 9px; border-radius: 999px; background: #e8f2ff; color: #174f86; font-size: .78rem; font-weight: 850; white-space: nowrap; }
+.master-data-context { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.master-data-context > div { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+.master-data-context span { display: block; color: var(--muted); font-size: .76rem; margin-bottom: 2px; }
+.master-data-context strong { font-size: .92rem; }
+.master-data-session-intro { display: flex; gap: 10px; align-items: baseline; margin: 4px 0 12px; color: var(--muted); }
+.master-data-session-intro strong { color: var(--text); }
+.master-data-workflow-actions { margin-top: 18px; }
+.master-data-project-option small { display: block; margin-top: 6px; }
+.master-data-session-complete { padding-top: 4px; }
 .master-data-order-field { max-width: 110px; }
 .master-data-active-field { align-self: end; min-height: 42px; }
 .master-data-card-title { grid-template-columns: 110px minmax(0, 1fr) 86px 150px; }
@@ -3109,4 +3122,4 @@ body.modal-open {
 .master-data-project-notes textarea { min-height: 82px; }
 .master-data-disabled { padding: 18px; border: 1px dashed var(--line); border-radius: var(--radius); background: #f8fafc; }
 .master-data-toolbar { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
-@media (max-width: 760px) { .master-data-card-title { grid-template-columns: 1fr; } .master-data-project-heading { align-items: flex-start; flex-direction: column; } }
+@media (max-width: 760px) { .master-data-card-title { grid-template-columns: 1fr; } .master-data-project-heading { align-items: flex-start; flex-direction: column; } .master-data-appointment-heading { flex-direction: column; } .master-data-context { grid-template-columns: 1fr; } .master-data-session-intro { flex-direction: column; gap: 2px; } }

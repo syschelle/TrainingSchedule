@@ -1,6 +1,6 @@
 # Schulungsplantool – Internal Tests and Release Checks
 
-Status: **v0.5.0-beta.2 (Pre-Release)**
+Status: **v0.5.0-beta.3 (Pre-Release)**
 
 This document describes the checks performed before a Schulungsplantool release or pre-release. It is updated together with the current application version.
 
@@ -12,10 +12,10 @@ Run the complete suite with:
 python -m pytest -q
 ```
 
-For **v0.5.0-beta.2**, the current local result is:
+For **v0.5.0-beta.3**, the current local result is:
 
 ```text
-152 passed, 2 warnings
+154 passed, 2 warnings
 ```
 
 The two warnings are the known FastAPI deprecation warnings for `@app.on_event("startup")`; they are not test failures.
@@ -24,38 +24,36 @@ The two warnings are the known FastAPI deprecation warnings for `@app.on_event("
 
 | Test file | Count | Focus |
 |---|---:|---|
-| `tests/test_static_paths.py` | 67 | Frontend structure, UI rules, calendar, customer HTML, version regressions, master-data UI wiring |
+| `tests/test_static_paths.py` | 68 | Frontend structure, UI rules, calendar, customer HTML, version regressions, master-data UI wiring |
 | `tests/test_planner.py` | 33 | Automatic planning, breaks, availability, arrival/departure, remote/on-site |
 | `tests/test_project_export.py` | 25 | Project files, PDF, customer HTML, return import and tamper protection |
 | `tests/test_content_catalog.py` | 10 | Training contents, products, history and persistence |
 | `tests/test_docx_training_content.py` | 6 | DOCX import/export and unsupported-content protection |
-| `tests/test_master_data_collection.py` | 5 | Master-data template seed, extension, ordering, deletion and project compatibility |
+| `tests/test_master_data_collection.py` | 6 | Master-data template seed, extension, ordering, deletion and project compatibility |
 | `tests/test_release_docs.py` | 2 | Root TESTING/SECURITY documentation and version consistency |
 | `tests/test_codeql_workflow.py` | 2 | CodeQL configuration and language matrix |
 | `tests/test_security_regressions.py` | 2 | Security-related regressions |
-| **Total** | **152** | |
+| **Total** | **154** | |
 
 ## 2. Master Data Collection Regression Coverage
 
-The pre-release adds dedicated regression tests for the new master data collection feature:
+The pre-release includes dedicated regression coverage for the customer master-data collection appointment:
 
 - the DeepUnity PACS default template contains exactly 17 numbered blocks;
 - the initial order is `1..17`;
-- blocks are product-bound;
-- a new block can be added and is appended to the current order;
-- a block can be moved to another numeric position;
-- reordering normalizes the complete product template to a gap-free sequence;
-- deleting a block renumbers the remaining sequence;
-- manually edited title, active state and Markdown content survive another database seed;
+- blocks are product-bound, extendable, reorderable and deletable;
+- reordering normalizes the complete template to a gap-free sequence;
+- manually edited template content survives another database seed;
 - old project files without master-data fields remain valid;
-- project snapshots serialize completed state and project-specific notes;
-- the frontend exposes both the template management page and project collection page;
-- the frontend is wired to the `/api/master-data-blocks` endpoints.
-- `master_data_collection` is accepted as a first-class project mode and automatically enables the collection snapshot;
-- the project navigation places Master Data Collection before Training Plan;
-- the visible project-purpose selector lists Master Data Collection before Training Planning;
-- the guided Master Data Collection flow is `Product -> Project -> Master Data Collection`;
-- the project step routes directly into the collection instead of requiring trainer/training/time inputs.
+- project snapshots serialize completion state and project-specific notes;
+- the collection is an optional customer appointment inside a normal `training_plan` project, not a replacement project mode;
+- legacy beta.1/beta.2 files using `project_mode=master_data_collection` are normalized to `training_plan` with the collection enabled;
+- project number, collection date, start time, duration, Dedalus participants, customer participants and appointment-completed state serialize correctly;
+- the guided flow inserts Master Data Collection between Project and People when enabled;
+- the collection page explicitly continues with **Training Planning** afterward;
+- the page documents that Training Planning itself remains one topic of the collection;
+- the frontend remains wired to the `/api/master-data-blocks` template endpoints.
+
 
 ## 3. Existing Functional Regression Coverage
 
@@ -159,7 +157,7 @@ Before creating a tag:
 
 For a pre-release, create a pre-release tag and mark the GitHub release as a pre-release.
 
-The Docker release workflow is also regression-tested so a pre-release version (for example `0.5.0-beta.2`) does **not** publish or move the `latest` image tag.
+The Docker release workflow is also regression-tested so a pre-release version (for example `0.5.0-beta.3`) does **not** publish or move the `latest` image tag.
 
 ## 11. Current Known Notes
 

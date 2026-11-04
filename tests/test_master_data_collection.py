@@ -72,12 +72,32 @@ def test_project_master_data_collection_is_backward_compatible_and_serializable(
     assert dumped["master_data_blocks"][0]["notes"] == "Ergebnis"
 
 
-def test_master_data_collection_is_a_first_class_project_mode():
+def test_legacy_master_data_project_mode_becomes_training_project_with_collection_enabled():
     project = TrainingProject.model_validate({
         "title": "Erhebung",
         "project_mode": "master_data_collection",
         "master_data_collection_enabled": False,
     })
-    assert project.project_mode == "master_data_collection"
+    assert project.project_mode == "training_plan"
     assert project.master_data_collection_enabled is True
     assert project.customer_data_required is True
+
+
+def test_master_data_collection_appointment_metadata_is_serializable():
+    project = TrainingProject.model_validate({
+        "project_mode": "training_plan",
+        "master_data_collection_enabled": True,
+        "project_number": "P-4711",
+        "master_data_collection_date": "2026-11-10",
+        "master_data_collection_start_time": "09:30",
+        "master_data_collection_duration_minutes": 240,
+        "master_data_collection_dedalus_participants": "A. Dedalus",
+        "master_data_collection_customer_participants": "K. Kunde",
+        "master_data_collection_completed": True,
+    })
+    dumped = project.model_dump(mode="json")
+    assert dumped["project_number"] == "P-4711"
+    assert dumped["master_data_collection_date"] == "2026-11-10"
+    assert dumped["master_data_collection_start_time"] == "09:30"
+    assert dumped["master_data_collection_duration_minutes"] == 240
+    assert dumped["master_data_collection_completed"] is True

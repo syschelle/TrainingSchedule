@@ -60,6 +60,7 @@ function makeDefaultProject() {
     delivery_mode: "onsite",
     customer_data_required: true,
     customer_name: "",
+    project_number: "",
     location: "",
     product_id: "deepunity-pacs",
     trainer: "",
@@ -90,6 +91,12 @@ function makeDefaultProject() {
     unscheduled_topics: [],
     warnings: [],
     master_data_collection_enabled: false,
+    master_data_collection_date: null,
+    master_data_collection_start_time: "09:00",
+    master_data_collection_duration_minutes: 240,
+    master_data_collection_dedalus_participants: "",
+    master_data_collection_customer_participants: "",
+    master_data_collection_completed: false,
     master_data_blocks: []
   };
 }
@@ -110,8 +117,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#backToInput").addEventListener("click", () => navigatePage("input"));
   $("#headerInputView").addEventListener("click", () => navigatePage("input"));
   $("#headerPlanView").addEventListener("click", () => {
-    if (project.project_mode === "master_data_collection") navigatePage("collection");
-    else if (project.blocks.length) navigatePage("plan");
+    if (project.blocks.length) navigatePage("plan");
     else setWorkflowStep("review");
   });
   $("#reviewChangedInputs").addEventListener("click", () => setWorkflowStep("review"));
@@ -196,7 +202,6 @@ function render() {
 
 function renderHeader() {
   const product = currentProduct();
-  const masterDataMode = project.project_mode === "master_data_collection";
   const headerProduct = $("#headerProduct");
   const headerContext = $("#headerContext");
   if (headerProduct) headerProduct.textContent = product.name;
@@ -204,23 +209,21 @@ function renderHeader() {
   if (headerContext) headerContext.textContent = contextParts.length ? contextParts.join(" · ") : "Neues Projekt";
   const inputButton = $("#headerInputView");
   const planButton = $("#headerPlanView");
-  if (inputButton) inputButton.classList.toggle("active", currentPage === "input");
+  if (inputButton) inputButton.classList.toggle("active", currentPage === "input" || currentPage === "collection");
   if (planButton) {
-    planButton.textContent = masterDataMode ? "Stammdatenerhebung" : "Schulungsplan";
-    planButton.classList.toggle("active", masterDataMode ? currentPage === "collection" : currentPage === "plan");
-    planButton.disabled = masterDataMode ? !project.master_data_collection_enabled : !project.blocks.length;
-    planButton.title = masterDataMode
-      ? "Projektbezogene Stammdatenerhebung öffnen"
-      : project.blocks.length ? "Vorhandenen Schulungsplan anzeigen" : "Noch kein Schulungsplan erstellt";
+    planButton.textContent = "Schulungsplan";
+    planButton.classList.toggle("active", currentPage === "plan");
+    planButton.disabled = !project.blocks.length;
+    planButton.title = project.blocks.length ? "Vorhandenen Schulungsplan anzeigen" : "Noch kein Schulungsplan erstellt";
   }
   const existingPlanButton = $("#showExistingPlan");
   if (existingPlanButton) {
-    existingPlanButton.hidden = masterDataMode;
+    existingPlanButton.hidden = false;
     existingPlanButton.disabled = !project.blocks.length;
   }
   const status = $("#planSyncStatus");
   if (status) {
-    status.hidden = masterDataMode || !project.blocks.length;
+    status.hidden = !project.blocks.length;
     status.textContent = planInputsDirty ? "● Eingaben geändert" : "✓ Plan aktuell";
     status.classList.toggle("is-dirty", planInputsDirty);
   }
@@ -228,20 +231,20 @@ function renderHeader() {
 
 function renderBaseFields() {
   const customerDisabled = project.project_mode === "service_calculation";
-  const masterDataMode = project.project_mode === "master_data_collection";
   const base = $("#base-fields");
   const advanced = $("#project-advanced-fields");
   if (!base || !advanced) return;
   base.innerHTML = [
     modeSelector(),
     customerDisabled ? "" : field("customer_name", "Kunde", project.customer_name),
+    customerDisabled ? "" : field("project_number", "Projektnummer", project.project_number || ""),
+    customerDisabled ? "" : masterDataCollectionSelector(),
     customerDisabled ? "" : field("location", "Standort", project.location),
-    field("start_date", masterDataMode ? "Erhebung am" : "Startdatum", project.start_date || "", "date"),
-    masterDataMode ? "" : deliveryModeSelector()
+    field("start_date", customerDisabled ? "Startdatum" : "Startdatum Schulungsplanung", project.start_date || "", "date"),
+    customerDisabled ? "" : deliveryModeSelector()
   ].join("");
   advanced.innerHTML = [
-    field("title", masterDataMode ? "Projektbezeichnung" : "Schulungsbezeichnung", project.title, "text", true),
-    project.project_mode === "training_plan" ? masterDataCollectionSelector() : ""
+    field("title", customerDisabled ? "Bezeichnung" : "Schulungsbezeichnung", project.title, "text", true)
   ].join("");
   document.querySelectorAll("#base-fields input[data-field-name], #project-advanced-fields input[data-field-name]").forEach((input) => input.addEventListener("input", updateProjectField));
   document.querySelectorAll("[data-delivery-mode]").forEach((button) => button.addEventListener("click", updateDeliveryMode));
@@ -250,7 +253,7 @@ function renderBaseFields() {
   const mode = $("#projectMode");
   if (mode) mode.addEventListener("change", updateProjectMode);
   const projectNextButton = document.querySelector('[data-workflow-panel="project"] [data-workflow-next]');
-  if (projectNextButton) projectNextButton.textContent = masterDataMode ? "Zur Stammdatenerhebung" : "Weiter";
+  if (projectNextButton) projectNextButton.textContent = project.master_data_collection_enabled && !customerDisabled ? "Zur Stammdatenerhebung" : "Weiter";
   applyWorkflowFieldErrors();
 }
 
@@ -519,11 +522,9 @@ function modeSelector() {
   return `<label class="field field-wide" data-field="project_mode">
     <span>Verwendungszweck</span>
     <select id="projectMode">
-      <option value="master_data_collection" ${project.project_mode === "master_data_collection" ? "selected" : ""}>Stammdatenerhebung</option>
       <option value="training_plan" ${project.project_mode === "training_plan" ? "selected" : ""}>Schulungsplanung mit Kundendaten</option>
       <option value="service_calculation" ${project.project_mode === "service_calculation" ? "selected" : ""}>Dienstleistungskalkulation ohne Kundendaten</option>
     </select>
-    <small>${project.project_mode === "master_data_collection" ? "Stammdatenerhebung als vorgelagerte Projektphase vor der Schulungsplanung." : ""}</small>
   </label>`;
 }
 
@@ -628,7 +629,7 @@ function checkboxSetting(name, label, value) {
 
 
 function masterDataCollectionSelector() {
-  return `<label class="field checkbox-field field-wide"><span>Stammdatenerhebung</span><span class="split-training-option"><input id="masterDataCollectionEnabled" type="checkbox" ${project.master_data_collection_enabled ? "checked" : ""}><span>Stammdatenerhebung für dieses Projekt verwenden</span></span></label>`;
+  return `<label class="field checkbox-field field-wide master-data-project-option"><span>Stammdatenerhebung</span><span class="split-training-option"><input id="masterDataCollectionEnabled" type="checkbox" ${project.master_data_collection_enabled ? "checked" : ""}><span>Kundentermin zur Stammdatenerhebung vor der Schulungsplanung durchführen</span></span><small>Die Schulungsplanung bleibt ein eigener nachfolgender Schritt; innerhalb der Erhebung ist sie zusätzlich als Themenblock dokumentiert.</small></label>`;
 }
 
 function updateMasterDataCollectionEnabled(event) {
@@ -647,20 +648,24 @@ function markPlanningInputsChanged() {
 function renderWorkflowProgress() {
   const progress = $("#workflowProgress");
   if (!progress) return;
-  const masterDataMode = project.project_mode === "master_data_collection";
-  const steps = masterDataMode
+  const collectionEnabled = project.project_mode === "training_plan" && project.master_data_collection_enabled;
+  const steps = collectionEnabled
     ? [
         { id: "product", label: "Produkt", number: 1 },
         { id: "project", label: "Projekt", number: 2 },
-        { id: "collection", label: "Stammdatenerhebung", number: 3 }
+        { id: "collection", label: "Stammdatenerhebung", number: 3 },
+        { id: "people", label: "Personen", number: 4 },
+        { id: "training", label: "Schulungen", number: 5 },
+        { id: "time", label: "Zeiten", number: 6 },
+        { id: "review", label: "Prüfen", number: 7 }
       ]
     : workflowSteps;
-  progress.hidden = masterDataMode ? !["input", "collection"].includes(currentPage) : !["input", "plan"].includes(currentPage);
-  const currentId = masterDataMode && currentPage === "collection" ? "collection" : currentWorkflowStep;
+  progress.hidden = !["input", "collection", "plan"].includes(currentPage);
+  const currentId = currentPage === "collection" ? "collection" : currentWorkflowStep;
   const currentIndex = steps.findIndex((step) => step.id === currentId);
   progress.innerHTML = steps.map((step, index) => {
     const complete = step.id === "collection"
-      ? Boolean(project.master_data_collection_enabled && (project.master_data_blocks || []).length)
+      ? Boolean(project.master_data_collection_completed)
       : workflowStepIsComplete(step.id);
     const current = step.id === currentId;
     const stateClass = current ? "current" : complete ? "complete" : index < currentIndex ? "visited" : "pending";
@@ -711,8 +716,7 @@ function setWorkflowStep(step) {
 
 function advanceWorkflow(nextStep) {
   if (!validateWorkflowStep(currentWorkflowStep, true)) return;
-  if (currentWorkflowStep === "project" && project.project_mode === "master_data_collection") {
-    project.master_data_collection_enabled = true;
+  if (currentWorkflowStep === "project" && project.project_mode === "training_plan" && project.master_data_collection_enabled) {
     syncProjectMasterDataFromTemplate({ silent: true });
     navigatePage("collection");
     return;
@@ -725,7 +729,6 @@ function workflowStepIsComplete(step) {
   if (step === "project") {
     if (!project.start_date) return false;
     if (project.project_mode === "service_calculation") return true;
-    if (project.project_mode === "master_data_collection") return Boolean(String(project.customer_name || "").trim());
     return Boolean(String(project.customer_name || "").trim() && String(project.location || "").trim());
   }
   if (step === "people") {
@@ -988,16 +991,11 @@ function updateProjectField(event) {
 function updateProjectMode(event) {
   project.project_mode = event.target.value;
   project.customer_data_required = project.project_mode !== "service_calculation";
-  if (project.project_mode === "master_data_collection") {
-    project.master_data_collection_enabled = true;
-    if (project.title === "DeepUnity Schulungsplan") project.title = "DeepUnity Stammdatenerhebung";
-    syncProjectMasterDataFromTemplate({ silent: true });
-  } else if (project.project_mode === "training_plan" && project.title === "DeepUnity Stammdatenerhebung") {
-    project.title = "DeepUnity Schulungsplan";
-  }
   if (!project.customer_data_required) {
     project.customer_name = "";
+    project.project_number = "";
     project.location = "";
+    project.master_data_collection_enabled = false;
   }
   markPlanningInputsChanged();
   render();
@@ -1277,17 +1275,58 @@ function syncProjectMasterDataFromTemplate(options = {}) {
 
 function renderProjectMasterDataCollection() {
   const container = $("#project-master-data-collection");
+  const appointment = $("#master-data-appointment-fields");
   const syncButton = $("#syncMasterDataCollection");
-  if (!container) return;
+  const backButton = $("#collectionBackProject");
+  const continueButton = $("#collectionContinue");
+  if (!container || !appointment) return;
   if (syncButton) syncButton.disabled = !project.master_data_collection_enabled;
+  if (continueButton) continueButton.disabled = !project.master_data_collection_enabled;
+  if (backButton) backButton.onclick = () => setWorkflowStep("project");
+  if (continueButton) continueButton.onclick = () => setWorkflowStep("people");
+
   if (!project.master_data_collection_enabled) {
-    container.innerHTML = `<div class="master-data-disabled"><strong>Stammdatenerhebung ist für dieses Projekt nicht aktiviert.</strong><p class="muted">Wähle unter Eingabe → Projekt den Verwendungszweck „Stammdatenerhebung“ oder aktiviere sie in einem Schulungsprojekt.</p></div>`;
+    appointment.innerHTML = "";
+    container.innerHTML = `<div class="master-data-disabled"><strong>Stammdatenerhebung ist für dieses Projekt nicht aktiviert.</strong><p class="muted">Aktiviere unter Eingabe → Projekt die Option „Kundentermin zur Stammdatenerhebung vor der Schulungsplanung durchführen“.</p></div>`;
     return;
   }
+
+  appointment.innerHTML = masterDataAppointmentFields();
+  appointment.querySelectorAll("[data-master-data-meta]").forEach((input) => {
+    input.addEventListener(input.type === "checkbox" ? "change" : "input", updateMasterDataCollectionMeta);
+  });
+
   const items = (project.master_data_blocks || []).slice().sort((a, b) => Number(a.sort_order) - Number(b.sort_order));
-  container.innerHTML = items.length ? `<div class="master-data-project-list">${items.map(projectMasterDataBlock).join("")}</div>` : `<div class="master-data-disabled"><strong>Noch keine Blöcke übernommen.</strong><p class="muted">Mit „Aus Vorlage ergänzen“ werden die aktiven Blöcke des aktuellen Produkts übernommen.</p></div>`;
+  container.innerHTML = items.length
+    ? `<div class="master-data-session-intro"><strong>${items.length} Themenblöcke</strong><span>Die Punkte werden im Kundentermin gemeinsam besprochen und dokumentiert.</span></div><div class="master-data-project-list">${items.map(projectMasterDataBlock).join("")}</div>`
+    : `<div class="master-data-disabled"><strong>Noch keine Blöcke übernommen.</strong><p class="muted">Mit „Aus Vorlage ergänzen“ werden die aktiven Blöcke des aktuellen Produkts übernommen.</p></div>`;
   container.querySelectorAll("[data-project-master-completed]").forEach((input) => input.addEventListener("change", updateProjectMasterDataBlock));
   container.querySelectorAll("[data-project-master-notes]").forEach((input) => input.addEventListener("input", updateProjectMasterDataBlock));
+}
+
+function masterDataAppointmentFields() {
+  const customer = escapeHtml(project.customer_name || "—");
+  const number = escapeHtml(project.project_number || "—");
+  return `
+    <div class="master-data-context field-wide"><div><span>Kunde</span><strong>${customer}</strong></div><div><span>Projektnummer</span><strong>${number}</strong></div></div>
+    <label class="field"><span>Erhebung am</span><input type="date" data-master-data-meta="master_data_collection_date" value="${escapeHtml(project.master_data_collection_date || "")}"></label>
+    <label class="field"><span>Uhrzeit</span><input type="time" step="900" data-master-data-meta="master_data_collection_start_time" value="${escapeHtml(project.master_data_collection_start_time || "09:00")}"></label>
+    <label class="field"><span>Dauer (Minuten)</span><input type="number" min="15" step="15" data-master-data-meta="master_data_collection_duration_minutes" value="${Number(project.master_data_collection_duration_minutes || 240)}"></label>
+    <label class="field field-wide"><span>Teilnehmer Dedalus</span><input type="text" data-master-data-meta="master_data_collection_dedalus_participants" value="${escapeHtml(project.master_data_collection_dedalus_participants || "")}" placeholder="Namen der teilnehmenden Dedalus-Mitarbeiter"></label>
+    <label class="field field-wide"><span>Teilnehmer Kunde</span><input type="text" data-master-data-meta="master_data_collection_customer_participants" value="${escapeHtml(project.master_data_collection_customer_participants || "")}" placeholder="Namen der teilnehmenden Kundenvertreter"></label>
+    <label class="field checkbox-field field-wide master-data-session-complete"><span>Terminstatus</span><span class="split-training-option"><input type="checkbox" data-master-data-meta="master_data_collection_completed" ${project.master_data_collection_completed ? "checked" : ""}><span>Stammdatenerhebung abgeschlossen</span></span></label>`;
+}
+
+function updateMasterDataCollectionMeta(event) {
+  const key = event.target.dataset.masterDataMeta;
+  if (!key) return;
+  if (event.target.type === "checkbox") project[key] = event.target.checked;
+  else if (event.target.type === "number") project[key] = Math.max(15, Number(event.target.value || 240));
+  else if (event.target.type === "time") project[key] = snapTimeValue(event.target.value || "09:00");
+  else project[key] = event.target.value || null;
+  markPlanningInputsChanged();
+  renderWorkflowProgress();
+  renderWorkflowReview();
 }
 
 function projectMasterDataBlock(item) {
@@ -1501,9 +1540,6 @@ function closeSideMenu() {
 }
 
 function navigatePage(page) {
-  if (page === "plan" && project.project_mode === "master_data_collection") {
-    page = "collection";
-  }
   if (page === "plan" && !project.blocks.length) {
     closeSideMenu();
     setWorkflowStep("review");
@@ -1949,8 +1985,8 @@ function renderPages() {
 
 function renderNavigation() {
   document.querySelectorAll("[data-page]").forEach((button) => {
-    const isPlan = button.dataset.page === "plan";
-    button.hidden = isPlan && project.project_mode === "master_data_collection";
+    const isCollection = button.dataset.page === "collection";
+    button.hidden = isCollection && project.project_mode === "service_calculation";
     button.classList.toggle("active", button.dataset.page === currentPage);
   });
 }
@@ -2950,9 +2986,21 @@ function renderPreview() {
 }
 
 function normalizeProjectState() {
-  project.project_mode = ["master_data_collection", "training_plan", "service_calculation"].includes(project.project_mode) ? project.project_mode : "training_plan";
+  if (project.project_mode === "master_data_collection") {
+    project.project_mode = "training_plan";
+    project.master_data_collection_enabled = true;
+  }
+  project.project_mode = ["training_plan", "service_calculation"].includes(project.project_mode) ? project.project_mode : "training_plan";
+  project.customer_data_required = project.project_mode !== "service_calculation";
   project.delivery_mode = project.delivery_mode === "remote" ? "remote" : "onsite";
-  project.master_data_collection_enabled = project.project_mode === "master_data_collection" || Boolean(project.master_data_collection_enabled);
+  project.project_number = String(project.project_number || "");
+  project.master_data_collection_enabled = project.project_mode === "training_plan" && Boolean(project.master_data_collection_enabled);
+  project.master_data_collection_date = project.master_data_collection_date || null;
+  project.master_data_collection_start_time = snapTimeValue(project.master_data_collection_start_time || "09:00");
+  project.master_data_collection_duration_minutes = Math.max(15, Number(project.master_data_collection_duration_minutes || 240));
+  project.master_data_collection_dedalus_participants = String(project.master_data_collection_dedalus_participants || "");
+  project.master_data_collection_customer_participants = String(project.master_data_collection_customer_participants || "");
+  project.master_data_collection_completed = Boolean(project.master_data_collection_completed);
   project.master_data_blocks = Array.isArray(project.master_data_blocks) ? project.master_data_blocks : [];
   project.blocks = Array.isArray(project.blocks) ? project.blocks : [];
   if (project.delivery_mode === "remote") {

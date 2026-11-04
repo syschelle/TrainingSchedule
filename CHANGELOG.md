@@ -1,21 +1,22 @@
 # Changelog
 
-## v0.5.0-beta.2 - 2026-11-04
+## v0.5.0-beta.3 - 2026-11-04
 
-### Pre-Release: Stammdatenerhebung als vorgelagerter Projektmodus sichtbar gemacht
+### Pre-Release: Stammdatenerhebung als Kundentermin vor der Schulungsplanung
 
-- `Stammdatenerhebung` als eigenen Verwendungszweck vor `Schulungsplanung mit Kundendaten` eingefuegt.
-- Verwendungszweck aus `Weitere Angaben` in die sichtbaren Projektstammdaten gezogen.
-- Fuer diesen Modus den gefuehrten Ablauf auf `Produkt -> Projekt -> Stammdatenerhebung` reduziert.
-- Projektnavigation auf `Eingabe -> Stammdatenerhebung -> Schulungsplan` umgestellt; der Schulungsplan wird im reinen Stammdatenerhebungs-Modus ausgeblendet.
-- Kopfbereich und Weiter-Navigation fuehren im Stammdatenerhebungs-Modus direkt zur Erhebung.
-- Fuer diesen Modus werden nur Produkt, Kunde und Erhebungsdatum vorausgesetzt; Standort und Schulungsparameter sind keine Pflichtangaben.
-- Stammdatenerhebung wird beim Auswaehlen dieses Modus automatisch aktiviert und aus der Produktvorlage initialisiert.
-- Beim spaeteren Wechsel auf Schulungsplanung bleibt der Projekt-Snapshot erhalten.
-- Backend-Modell akzeptiert `master_data_collection` als eigenen Projektmodus und normalisiert dabei die Erhebung auf aktiv.
-- Docker-Release-Workflow setzt `latest` nicht mehr fuer Pre-Release-Versionen mit `-` im Versionsstring.
-- Regressionstests ergaenzt; lokale Suite: 152 Tests bestanden.
-- Pre-Release-Version `v0.5.0-beta.2`.
+- Beta-2-Konzept korrigiert: `Stammdatenerhebung` ist kein separater Projektmodus mehr, sondern eine optionale vorgelagerte Terminphase innerhalb eines normalen Schulungsprojekts.
+- Sichtbare Projektoption `Kundentermin zur Stammdatenerhebung vor der Schulungsplanung durchführen` hinzugefuegt.
+- Gefuehrter Ablauf bei aktivierter Erhebung: `Produkt -> Projekt -> Stammdatenerhebung -> Personen -> Schulungen -> Zeiten -> Pruefen`.
+- Terminmetadaten fuer die Erhebung ergaenzt: Datum, Uhrzeit, Dauer, Teilnehmer Dedalus, Teilnehmer Kunde und Abschlussstatus.
+- Standarddauer gemaess bereitgestelltem Dokument auf 240 Minuten gesetzt.
+- Projektnummer als Projektangabe ergaenzt und in der Erhebungsansicht dargestellt.
+- Die 17 erweiterbaren Bloecke bleiben die Gespraechsstruktur; `Schulungsplanung` bleibt Block Nr. 15 innerhalb der Erhebung.
+- Nach der Erhebung fuehrt `Weiter zur Schulungsplanung` in den regulaeren Personen-/Schulungs-/Zeit-Workflow.
+- Legacy-Kompatibilitaet fuer beta.1/beta.2: `project_mode=master_data_collection` wird beim Laden zu `training_plan` mit aktivierter Erhebung normalisiert.
+- Docker-Release-Workflow behaelt die Pre-Release-Sicherung: Versionen mit `-` im Versionsstring setzen `latest` nicht.
+- Regressionstests erweitert; lokale Suite: 154 Tests bestanden.
+- Pre-Release-Version `v0.5.0-beta.3`.
+
 
 ## v0.5.0-beta.1 - 2026-11-04
 

@@ -6,9 +6,9 @@
   <meta name="referrer" content="no-referrer">
   <meta name="robots" content="noindex, nofollow">
   <title>Schulungsplantool</title>
-  <link rel="stylesheet" href="styles.css?v=0.5.0-beta.2">
-  <script defer src="calendar.js?v=0.5.0-beta.2"></script>
-  <script defer src="app.js?v=0.5.0-beta.2"></script>
+  <link rel="stylesheet" href="styles.css?v=0.5.0-beta.3">
+  <script defer src="calendar.js?v=0.5.0-beta.3"></script>
+  <script defer src="app.js?v=0.5.0-beta.3"></script>
 </head>
 <body>
   <header class="topbar">
@@ -27,7 +27,7 @@
       </div>
       <div class="topbar-actions">
         <span id="planSyncStatus" class="plan-sync-status" hidden></span>
-        <span class="version">v0.5.0-beta.2</span>
+        <span class="version">v0.5.0-beta.3</span>
       </div>
     </div>
     <nav id="workflowProgress" class="workflow-progress" aria-label="Fortschritt der Planung"></nav>
@@ -176,10 +176,21 @@
       <section id="collection-page" class="workspace app-page">
         <div class="card">
           <div class="card-heading">
-            <div><h2>Stammdatenerhebung</h2><p class="muted">Projektbezogene Erhebung auf Basis der Produktvorlage.</p></div>
+            <div><h2>Stammdatenerhebung</h2><p class="muted">Kundentermin zur gemeinsamen Erörterung und Dokumentation der projektrelevanten Stammdaten. Die Schulungsplanung ist dabei ein Themenblock der Erhebung und wird anschließend im Schulungsplan weitergeführt.</p></div>
             <div class="card-heading-actions"><button type="button" id="syncMasterDataCollection" class="button button-secondary">Aus Vorlage ergänzen</button></div>
           </div>
+          <section class="master-data-appointment-card" aria-labelledby="master-data-appointment-title">
+            <div class="master-data-appointment-heading">
+              <div><p class="eyebrow">Termin</p><h3 id="master-data-appointment-title">Kundentermin Stammdatenerhebung</h3></div>
+              <span class="master-data-duration-badge">Standarddauer 4 Std.</span>
+            </div>
+            <div id="master-data-appointment-fields" class="field-grid workflow-field-grid"></div>
+          </section>
           <div id="project-master-data-collection"></div>
+          <div class="workflow-actions master-data-workflow-actions">
+            <button type="button" id="collectionBackProject" class="button button-ghost">Zurück zum Projekt</button>
+            <button type="button" id="collectionContinue" class="button button-primary">Weiter zur Schulungsplanung</button>
+          </div>
         </div>
       </section>
 
@@ -327,7 +338,7 @@
   </div>
 
   <footer>
-    <span>Schulungsplantool v0.5.0-beta.2</span>
+    <span>Schulungsplantool v0.5.0-beta.3</span>
   </footer>
 </body>
 </html>
