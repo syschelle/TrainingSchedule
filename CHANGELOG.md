@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.5.0-beta.13 - 2026-11-05
+
+### Pre-Release: individuellen Erledigt-Schalter pro Stammdatenpunkt entfernt
+
+- Die Checkbox und der Text `Erledigt` rechts oben in jedem Stammdatenpunkt wurden aus der Projekterhebung entfernt.
+- Strukturierte Antworten, weiterfuehrende Links und `Notizen / Ergebnisse` bleiben unveraendert erhalten.
+- Der Gesamtstatus `Stammdatenerhebung abgeschlossen` auf Terminebene bleibt bestehen.
+- Das interne `completed`-Feld bleibt fuer die Abwaertskompatibilitaet alter Projektdateien erhalten, ist aber nicht mehr Bestandteil der Bedienoberflaeche.
+- Neuer Regressionstest stellt sicher, dass der individuelle Erledigt-Schalter nicht erneut in die UI gelangt.
+- `TESTING.md` und `SECURITY.md` auf v0.5.0-beta.13 aktualisiert.
+
+
 ## v0.5.0-beta.12 - 2026-11-04
 
 ### Pre-Release: modularer Projektworkflow und Planungsdaten unter Personen

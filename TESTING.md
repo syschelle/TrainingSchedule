@@ -1,6 +1,6 @@
 # Schulungsplantool – Internal Tests and Release Checks
 
-Status: **v0.5.0-beta.12 (Pre-Release)**
+Status: **v0.5.0-beta.13 (Pre-Release)**
 
 This document describes the checks performed before a Schulungsplantool release or pre-release. It is updated together with the current application version.
 
@@ -12,10 +12,10 @@ Run the complete suite with:
 python -m pytest -q
 ```
 
-For **v0.5.0-beta.12**, the current local result is:
+For **v0.5.0-beta.13**, the current local result is:
 
 ```text
-171 passed, 2 warnings
+172 passed, 2 warnings
 ```
 
 The two warnings are the known FastAPI deprecation warnings for `@app.on_event("startup")`; they are not test failures.
@@ -24,7 +24,7 @@ The two warnings are the known FastAPI deprecation warnings for `@app.on_event("
 
 | Test file | Count | Focus |
 |---|---:|---|
-| `tests/test_static_paths.py` | 77 | Frontend structure, UI rules, calendar, customer HTML, version regressions, master-data UI wiring |
+| `tests/test_static_paths.py` | 78 | Frontend structure, UI rules, calendar, customer HTML, version regressions, master-data UI wiring |
 | `tests/test_planner.py` | 33 | Automatic planning, breaks, availability, arrival/departure, remote/on-site |
 | `tests/test_project_export.py` | 25 | Project files, PDF, customer HTML, return import and tamper protection |
 | `tests/test_content_catalog.py` | 10 | Training contents, products, history and persistence |
@@ -33,7 +33,7 @@ The two warnings are the known FastAPI deprecation warnings for `@app.on_event("
 | `tests/test_release_docs.py` | 3 | Root TESTING/SECURITY documentation and version consistency |
 | `tests/test_codeql_workflow.py` | 2 | CodeQL configuration and language matrix |
 | `tests/test_security_regressions.py` | 2 | Security-related regressions |
-| **Total** | **171** | |
+| **Total** | **172** | |
 
 ## 2. Master Data Collection Regression Coverage
 
@@ -48,7 +48,7 @@ The pre-release includes dedicated regression coverage for the customer master-d
 - reordering normalizes the complete template to a gap-free sequence;
 - manually edited template content survives another database seed;
 - old project files without master-data fields remain valid;
-- project snapshots serialize completion state and project-specific notes;
+- legacy per-block completion state remains serializable for backward compatibility, while the beta.13 UI no longer exposes an individual Completed checkbox;
 - the collection is an optional customer appointment inside a normal `training_plan` project, not a replacement project mode;
 - legacy beta.1/beta.2 files using `project_mode=master_data_collection` are normalized to `training_plan` with the collection enabled;
 - project number, collection date, start time, duration, Dedalus participants, customer participants and appointment-completed state serialize correctly;
@@ -65,7 +65,7 @@ The suite additionally verifies that:
 - template blocks can store `text`, `select`, `checkboxes` and `yes_no` answer types;
 - Select/checkbox options are normalized and duplicate options are removed;
 - answer type and options are copied into a project snapshot;
-- project snapshots serialize free-text and selected checkbox values without losing completion state or notes;
+- project snapshots serialize free-text and selected checkbox values without losing legacy compatibility or notes;
 - old project files without the new fields default to no structured answer;
 - existing `master_data_blocks` databases are automatically extended with `answer_type` and `answer_options`;
 - the frontend exposes the answer-type selector, option editor and matching project input controls.
@@ -84,6 +84,15 @@ The Master Data Collection tests additionally verify that:
 - non-HTTP(S) link schemes such as `javascript:` are rejected;
 - the frontend exposes add/remove controls and only renders the information section when links exist;
 - rendered links open in a new tab with `noopener noreferrer`.
+
+### Beta.13 per-block completion UI removal
+
+The suite verifies that:
+
+- no individual `Erledigt` checkbox is rendered on Master Data Collection topic cards;
+- the obsolete `.master-data-completed` presentation rule is removed;
+- the appointment-level `Stammdatenerhebung abgeschlossen` status remains available;
+- legacy project files can still carry the historical `completed` field without breaking imports.
 
 ## 3. Beta.4 Layout Regression Coverage
 

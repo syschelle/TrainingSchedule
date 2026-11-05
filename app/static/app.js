@@ -1359,7 +1359,7 @@ function masterDataCard(item) {
         <option value="select" ${answerType === "select" ? "selected" : ""}>Select (eine Auswahl)</option>
         <option value="checkboxes" ${answerType === "checkboxes" ? "selected" : ""}>Checkboxen (mehrere Auswahlen)</option>
         <option value="yes_no" ${answerType === "yes_no" ? "selected" : ""}>Ja / Nein</option>
-      </select><small>„Erledigt“ und Notizen bleiben zusätzlich verfügbar.</small></label>
+      </select><small>Notizen / Ergebnisse bleiben zusätzlich verfügbar.</small></label>
       ${optionTypes ? `<label class="field"><span>Auswahlmöglichkeiten</span><textarea data-master-data="${item.id}" data-key="answer_options_text" rows="6" placeholder="Eine Option pro Zeile">${escapeHtml((item.answer_options || []).join("\n"))}</textarea><small>Eine Option pro Zeile. Leerzeilen und doppelte Einträge werden beim Speichern entfernt.</small></label>` : ""}
     </div>
     <section class="master-data-resource-config">
@@ -1539,7 +1539,6 @@ function renderProjectMasterDataCollection() {
   container.innerHTML = items.length
     ? `<div class="master-data-session-intro"><strong>${items.length} Themenblöcke</strong><span>Die Punkte werden im Kundentermin gemeinsam besprochen und dokumentiert.</span></div><div class="master-data-project-list">${items.map(projectMasterDataBlock).join("")}</div>`
     : `<div class="master-data-disabled"><strong>Noch keine Blöcke übernommen.</strong><p class="muted">Mit „Aus Vorlage ergänzen“ werden die aktiven Blöcke des aktuellen Produkts übernommen.</p></div>`;
-  container.querySelectorAll("[data-project-master-completed]").forEach((input) => input.addEventListener("change", updateProjectMasterDataBlock));
   container.querySelectorAll("[data-project-master-notes], [data-project-master-answer-text]").forEach((input) => input.addEventListener("input", updateProjectMasterDataBlock));
   container.querySelectorAll("[data-project-master-answer-select], [data-project-master-answer-checkbox]").forEach((input) => input.addEventListener("change", updateProjectMasterDataBlock));
 }
@@ -1571,7 +1570,7 @@ function updateMasterDataCollectionMeta(event) {
 
 function projectMasterDataBlock(item) {
   return `<article class="master-data-project-block" style="border-left-color:${escapeHtml(item.background_color || "#eef6ff")}">
-    <div class="master-data-project-heading"><strong>${Number(item.sort_order)}. ${escapeHtml(item.title)}</strong><label class="master-data-completed"><input type="checkbox" data-project-master-completed="${escapeHtml(item.id)}" ${item.completed ? "checked" : ""}> Erledigt</label></div>
+    <div class="master-data-project-heading"><strong>${Number(item.sort_order)}. ${escapeHtml(item.title)}</strong></div>
     <div class="master-data-project-content markdown-preview">${renderMarkdown(item.markdown_content || "")}</div>
     ${projectMasterDataResourceLinks(item)}
     ${projectMasterDataAnswer(item)}
@@ -1609,11 +1608,10 @@ function projectMasterDataAnswer(item) {
 }
 
 function updateProjectMasterDataBlock(event) {
-  const id = event.target.dataset.projectMasterCompleted || event.target.dataset.projectMasterNotes || event.target.dataset.projectMasterAnswerText || event.target.dataset.projectMasterAnswerSelect || event.target.dataset.projectMasterAnswerCheckbox;
+  const id = event.target.dataset.projectMasterNotes || event.target.dataset.projectMasterAnswerText || event.target.dataset.projectMasterAnswerSelect || event.target.dataset.projectMasterAnswerCheckbox;
   const item = (project.master_data_blocks || []).find((candidate) => candidate.id === id);
   if (!item) return;
-  if (event.target.dataset.projectMasterCompleted) item.completed = event.target.checked;
-  else if (event.target.dataset.projectMasterNotes) item.notes = event.target.value;
+  if (event.target.dataset.projectMasterNotes) item.notes = event.target.value;
   else if (event.target.dataset.projectMasterAnswerText) item.answer_text = event.target.value;
   else if (event.target.dataset.projectMasterAnswerSelect) item.answer_selected = event.target.value ? [event.target.value] : [];
   else if (event.target.dataset.projectMasterAnswerCheckbox) {

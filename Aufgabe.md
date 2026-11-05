@@ -1760,3 +1760,9 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Standort, Startdatum Schulungsplanung, Durchfuehrung Vor Ort/Remote und Weitere Angaben in den Schritt `Personen` verschieben.
 - Workflow-Schritte und Nummerierung anhand der ausgewaehlten Module dynamisch erzeugen.
 - Alte Projekte ohne neue Workflow-Felder kompatibel laden und standardmaessig mit Schulungsplanung weiterfuehren.
+
+## Update v0.5.0-beta.13
+
+- Die individuelle Checkbox `Erledigt` inklusive Beschriftung rechts oben aus jedem Stammdatenpunkt entfernen.
+- Den Gesamtstatus `Stammdatenerhebung abgeschlossen` auf Terminebene beibehalten.
+- Bestehende Projektdateien mit historischem `completed`-Feld weiterhin akzeptieren.

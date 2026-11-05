@@ -729,7 +729,7 @@ def test_master_data_collection_pages_and_api_are_wired():
     assert 'fetch("api/master-data-blocks")' in javascript
     assert 'api/master-data-blocks/${encodeURIComponent(item.id)}' in javascript
     assert 'master_data_collection_enabled' in javascript
-    assert 'data-project-master-completed' in javascript
+    assert 'data-project-master-completed' not in javascript
     assert 'data-project-master-notes' in javascript
 
 
@@ -881,3 +881,13 @@ def test_beta12_training_context_fields_are_rendered_in_people_workflow():
     assert '#project-advanced-fields' in people
     assert 'field("location", "Standort"' not in base
     assert 'deliveryModeSelector()' not in base
+
+
+def test_beta13_master_data_points_no_longer_show_individual_completed_checkbox():
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    css = (STATIC_DIR / "styles.css").read_text(encoding="utf-8")
+    project_block = javascript.split("function projectMasterDataBlock(item) {", 1)[1].split("function projectMasterDataResourceLinks", 1)[0]
+    assert "data-project-master-completed" not in project_block
+    assert "> Erledigt<" not in project_block
+    assert ".master-data-completed" not in css
+    assert "Stammdatenerhebung abgeschlossen" in javascript

@@ -1,8 +1,15 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.5.0-beta.12** (Pre-Release)
+Aktuelle Version: **v0.5.0-beta.13** (Pre-Release)
 
 
+
+## Aenderungen v0.5.0-beta.13 (Pre-Release)
+
+- Die individuelle Checkbox **Erledigt** wurde aus jedem Stammdatenpunkt der Projekterhebung entfernt.
+- Antwortfelder, Links und **Notizen / Ergebnisse** bleiben unveraendert verfuegbar.
+- Der Termin-Gesamtstatus **Stammdatenerhebung abgeschlossen** bleibt bestehen.
+- Das bisherige `completed`-Feld bleibt aus Kompatibilitaetsgruenden im Projektformat erhalten, wird aber in der UI nicht mehr angeboten.
 
 ## Aenderungen v0.5.0-beta.12 (Pre-Release)
 
@@ -59,7 +66,7 @@ Aktuelle Version: **v0.5.0-beta.12** (Pre-Release)
 - Fuer `Select` und `Checkboxen` koennen die Auswahlmoeglichkeiten frei in der Stammdaten-Vorlage definiert werden (eine Option pro Zeile).
 - Die konfigurierte Antwortart und ihre Optionen werden beim Uebernehmen in ein Projekt als Snapshot gespeichert. Spaetere Vorlagenaenderungen veraendern bestehende Projekt-Erhebungen nicht.
 - In der Kundenerhebung werden automatisch das passende Freitextfeld, Select oder die Checkboxen dargestellt.
-- `Erledigt` und `Notizen / Ergebnisse` bleiben unabhaengig vom strukturierten Antwortfeld erhalten.
+- `Notizen / Ergebnisse` bleiben unabhaengig vom strukturierten Antwortfeld erhalten. Der fruehere individuelle `Erledigt`-Schalter pro Stammdatenpunkt wird ab beta.13 nicht mehr angezeigt.
 - Bestehende Vorlagen und alte Projektdateien bleiben kompatibel und verwenden standardmaessig `Keine strukturierte Antwort`.
 - PostgreSQL erhaelt beim Start automatisch die neuen Spalten `answer_type` und `answer_options`; keine manuelle SQL-Migration ist erforderlich.
 
@@ -108,7 +115,7 @@ Aktuelle Version: **v0.5.0-beta.12** (Pre-Release)
 - Inhalte/Checkpunkte eines Blocks werden als Markdown gepflegt und koennen damit flexibel erweitert werden.
 - Ab beta.6 kann jeder Block optional ein strukturiertes Antwortfeld (Freitext, Select, Checkboxen oder Ja/Nein) enthalten; Select-/Checkbox-Optionen sind frei definierbar.
 - Unter **Stammdaten → Projekt → Weitere Angaben** kann die Stammdatenerhebung projektspezifisch aktiviert werden.
-- Die Projektansicht **Stammdatenerhebung** uebernimmt aktive Vorlagenbloecke als Snapshot mit `Erledigt`-Status und projektspezifischen Notizen.
+- Die Projektansicht **Stammdatenerhebung** uebernimmt aktive Vorlagenbloecke als Snapshot mit projektspezifischen Antworten, Links und Notizen.
 - Mit **Aus Vorlage ergaenzen** koennen spaeter neu angelegte Vorlagenbloecke in ein bestehendes Projekt uebernommen werden, ohne bereits ausgefuellte Projektbloecke zu ueberschreiben.
 - Alte Projektdateien bleiben kompatibel; Stammdatenerhebung ist dort standardmaessig deaktiviert.
 - PostgreSQL erhaelt die neue Tabelle `master_data_blocks`; sie wird beim Start automatisch angelegt und mit der DeepUnity-PACS-Initialvorlage befuellt, ohne spaetere manuelle Aenderungen zu ueberschreiben.
