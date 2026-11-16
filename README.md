@@ -1,8 +1,16 @@
 # Schulungsplantool
 
-Aktuelle Version: **v0.5.0-beta.13** (Pre-Release)
+Aktuelle Version: **v0.5.0-beta.14** (Pre-Release)
 
 
+
+## Aenderungen v0.5.0-beta.14 (Pre-Release)
+
+- Der **Kundenplanung-Rueckimport** wurde fuer Updates stabilisiert. JSON-Rueckgaben, die noch mit dem bisherigen datenbankbasierten Exchange-Schluessel erzeugt wurden, koennen weiterhin validiert werden.
+- Neue Installationen bzw. Updates erzeugen einen eigenen `CUSTOMER_EXCHANGE_SECRET` in `.env`, der fuer kuenftige Kundenexporte unabhaengig von der Datenbank-Verbindungszeichenfolge bleibt.
+- Der HMAC-Manipulationsschutz bleibt bestehen; ungueltige Signaturen werden weiterhin abgelehnt.
+- Neu ist die Aktion **Neues Projekt**. Sie loescht nach Rueckfrage den lokalen Browserentwurf und setzt die Anwendung vollstaendig auf ein leeres Projekt zurueck.
+- Die automatische lokale Zwischenspeicherung bleibt aktiv, verhindert aber nicht mehr den bewussten Neustart eines Projekts.
 
 ## Aenderungen v0.5.0-beta.13 (Pre-Release)
 

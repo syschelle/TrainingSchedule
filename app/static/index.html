@@ -6,9 +6,9 @@
   <meta name="referrer" content="no-referrer">
   <meta name="robots" content="noindex, nofollow">
   <title>Schulungsplantool</title>
-  <link rel="stylesheet" href="styles.css?v=0.5.0-beta.13">
-  <script defer src="calendar.js?v=0.5.0-beta.13"></script>
-  <script defer src="app.js?v=0.5.0-beta.13"></script>
+  <link rel="stylesheet" href="styles.css?v=0.5.0-beta.14">
+  <script defer src="calendar.js?v=0.5.0-beta.14"></script>
+  <script defer src="app.js?v=0.5.0-beta.14"></script>
 </head>
 <body>
   <header class="topbar">
@@ -27,7 +27,7 @@
       </div>
       <div class="topbar-actions">
         <span id="planSyncStatus" class="plan-sync-status" hidden></span>
-        <span class="version">v0.5.0-beta.13</span>
+        <span class="version">v0.5.0-beta.14</span>
       </div>
     </div>
     <nav id="workflowProgress" class="workflow-progress" aria-label="Fortschritt der Planung"></nav>
@@ -53,6 +53,7 @@
       <section id="input-page" class="workspace app-page active">
         <div class="workflow-shell">
           <div class="workflow-top-actions">
+            <button type="button" id="newProject" class="button button-ghost">Neues Projekt</button>
             <button type="button" id="importProject" class="button button-ghost">Planung importieren</button>
             <input type="file" id="projectImportInput" accept=".json,application/json" hidden>
             <button type="button" id="importCustomerPlan" class="button button-ghost">Kundenplanung importieren</button>
@@ -342,7 +343,7 @@
   </div>
 
   <footer>
-    <span>Schulungsplantool v0.5.0-beta.13</span>
+    <span>Schulungsplantool v0.5.0-beta.14</span>
   </footer>
 </body>
 </html>

@@ -6,7 +6,8 @@ Schulungsplantool is in active development. Security fixes are provided for the 
 
 | Version | Supported |
 |---|---|
-| v0.5.0-beta.13 | ✅ Current pre-release |
+| v0.5.0-beta.14 | ✅ Current pre-release |
+| v0.5.0-beta.13 | ⚠️ Superseded pre-release |
 | v0.5.0-beta.12 | ⚠️ Superseded pre-release |
 | v0.5.0-beta.11 | ⚠️ Superseded pre-release |
 | v0.5.0-beta.10 | ⚠️ Superseded pre-release |
@@ -78,6 +79,12 @@ javascript-typescript
 
 GitHub Default Setup must remain disabled so Advanced Setup can upload results without conflicts.
 
+## Customer Exchange Signing
+
+Customer-planning return files remain protected by HMAC signatures. Since v0.5.0-beta.14, deployments can use a dedicated `CUSTOMER_EXCHANGE_SECRET` stored in `.env`, keeping new exchange signatures independent from the database connection string. The installer and updater create this value automatically when it is missing.
+
+For backward compatibility, the application can still verify return files signed with the previous database-derived key while a new dedicated secret is configured. This fallback is verification-only; new packages use the dedicated secret when present. Invalid signatures remain rejected.
+
 ## Dependency Security
 
 Runtime dependencies are pinned explicitly and are part of the release security review.
@@ -103,4 +110,4 @@ For security-relevant releases:
 
 ## Current Policy Version
 
-This policy reflects **Schulungsplantool v0.5.0-beta.13**.
+This policy reflects **Schulungsplantool v0.5.0-beta.14**.

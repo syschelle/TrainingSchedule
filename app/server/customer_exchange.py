@@ -21,14 +21,35 @@ DEFAULT_DEV_SECRET = "schulungsplantool-development-customer-exchange-secret"
 MIN_CUSTOMER_TRAINING_GAP_MINUTES = 15
 
 
+def _legacy_database_secret() -> bytes | None:
+    database_url = os.environ.get("DATABASE_URL", "").strip()
+    if not database_url:
+        return None
+    return hashlib.sha256(("customer-exchange:" + database_url).encode("utf-8")).digest()
+
+
 def _secret() -> bytes:
     configured = os.environ.get("CUSTOMER_EXCHANGE_SECRET", "").strip()
     if configured:
         return configured.encode("utf-8")
-    database_url = os.environ.get("DATABASE_URL", "").strip()
-    if database_url:
-        return hashlib.sha256(("customer-exchange:" + database_url).encode("utf-8")).digest()
+    legacy = _legacy_database_secret()
+    if legacy is not None:
+        return legacy
     return DEFAULT_DEV_SECRET.encode("utf-8")
+
+
+def _verification_secrets() -> list[bytes]:
+    secrets: list[bytes] = []
+    configured = os.environ.get("CUSTOMER_EXCHANGE_SECRET", "").strip()
+    if configured:
+        secrets.append(configured.encode("utf-8"))
+    legacy = _legacy_database_secret()
+    if legacy is not None and legacy not in secrets:
+        secrets.append(legacy)
+    dev = DEFAULT_DEV_SECRET.encode("utf-8")
+    if not secrets and dev not in secrets:
+        secrets.append(dev)
+    return secrets
 
 
 def _canonical_json(value: object) -> bytes:
@@ -52,8 +73,12 @@ def _signature_for_core(core: dict) -> str:
 def verify_customer_exchange(payload: CustomerPlanningReturn) -> TrainingProject:
     exchange = payload.exchange
     core = _exchange_core(exchange.exchange_id, exchange.exported_at, exchange.baseline)
-    expected = _signature_for_core(core)
-    if not hmac.compare_digest(expected, exchange.signature):
+    canonical = _canonical_json(core)
+    valid = any(
+        hmac.compare_digest(hmac.new(secret, canonical, hashlib.sha256).hexdigest(), exchange.signature)
+        for secret in _verification_secrets()
+    )
+    if not valid:
         raise ValueError("signature_invalid")
     return exchange.baseline.model_copy(deep=True)
 

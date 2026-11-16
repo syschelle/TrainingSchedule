@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.5.0-beta.14 - 2026-11-16
+
+### Pre-Release: Kundenrueckimport stabilisiert und Neues Projekt
+
+- Der Rueckimport der vom Kunden erzeugten JSON-Datei bleibt ueber Updates hinweg kompatibel.
+- Neue Kundenexporte koennen einen eigenen stabilen `CUSTOMER_EXCHANGE_SECRET` verwenden; bestehende Rueckgaben mit der bisherigen aus `DATABASE_URL` abgeleiteten Signatur bleiben als Legacy-Fallback gueltig.
+- `scripts/install.sh` und `scripts/update.sh` erzeugen bei fehlendem Exchange-Secret automatisch einen zufaelligen Schluessel und speichern ihn in `.env`.
+- Beide Compose-Dateien reichen `CUSTOMER_EXCHANGE_SECRET` an die Anwendung weiter.
+- Manipulierte bzw. ungueltig signierte Kundenrueckgaben bleiben weiterhin gesperrt.
+- Unter Eingabe gibt es jetzt `Neues Projekt`. Die Aktion verwirft nach Rueckfrage den browserlokalen Entwurf, setzt den Projektzustand komplett zurueck und startet wieder bei Produkt.
+- Der nach beta.9 eingefuehrte lokale Entwurf bleibt damit erhalten, kann aber jederzeit bewusst geloescht werden.
+- Lokale Suite: 176 Tests bestanden.
+- `TESTING.md` und `SECURITY.md` auf v0.5.0-beta.14 aktualisiert.
+- Pre-Release-Version `v0.5.0-beta.14`.
+
+
 ## v0.5.0-beta.13 - 2026-11-05
 
 ### Pre-Release: individuellen Erledigt-Schalter pro Stammdatenpunkt entfernt

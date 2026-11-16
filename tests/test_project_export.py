@@ -192,6 +192,34 @@ def test_customer_return_rejects_tampered_signed_baseline(monkeypatch):
         apply_customer_return(payload)
 
 
+
+
+def test_customer_return_accepts_legacy_database_signature_after_stable_secret_is_configured(monkeypatch):
+    legacy_database_url = "postgresql+psycopg://user:legacy-password@postgres:5432/schulungsplantool"
+    monkeypatch.delenv("CUSTOMER_EXCHANGE_SECRET", raising=False)
+    monkeypatch.setenv("DATABASE_URL", legacy_database_url)
+    package = build_customer_package(sample_project())
+    payload = _customer_return_from_package(package, [])
+
+    monkeypatch.setenv("CUSTOMER_EXCHANGE_SECRET", "new-stable-exchange-secret")
+    updated = apply_customer_return(payload)
+    assert updated.customer_name == sample_project().customer_name
+
+
+def test_customer_return_still_rejects_invalid_signature_with_legacy_fallback(monkeypatch):
+    legacy_database_url = "postgresql+psycopg://user:legacy-password@postgres:5432/schulungsplantool"
+    monkeypatch.delenv("CUSTOMER_EXCHANGE_SECRET", raising=False)
+    monkeypatch.setenv("DATABASE_URL", legacy_database_url)
+    package = build_customer_package(sample_project())
+    payload = _customer_return_from_package(package, [])
+    payload.exchange.signature = "0" * 64
+
+    monkeypatch.setenv("CUSTOMER_EXCHANGE_SECRET", "new-stable-exchange-secret")
+    import pytest
+    with pytest.raises(ValueError, match="signature_invalid"):
+        apply_customer_return(payload)
+
+
 def test_customer_zip_filename_uses_project_metadata():
     filename = _customer_export_filename(sample_project(), datetime(2026, 9, 4, 12, 34, tzinfo=timezone.utc))
     assert filename == "Musterklinik_Berlin_deepunity-pacs_kundenplanung_2026-09-04_1234.zip"

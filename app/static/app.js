@@ -159,8 +159,46 @@ function restoreProjectDraft() {
   }
 }
 
+function clearProjectDraft() {
+  if (projectDraftSaveTimer) {
+    window.clearTimeout(projectDraftSaveTimer);
+    projectDraftSaveTimer = null;
+  }
+  try {
+    window.localStorage?.removeItem(PROJECT_DRAFT_STORAGE_KEY);
+  } catch (error) {
+    console.warn("Projektentwurf konnte nicht geloescht werden.", error);
+  }
+}
+
+async function startNewProject() {
+  if (!window.confirm("Aktuellen Entwurf verwerfen und ein neues Projekt starten? Nicht exportierte Daten gehen verloren.")) return;
+  clearProjectDraft();
+  project = makeDefaultProject();
+  currentPage = "input";
+  currentWorkflowStep = "product";
+  activeTab = "overview";
+  planInputsDirty = false;
+  workflowErrors = {};
+  availabilityEstimatedWeeks = 1;
+  availabilityEstimateUnscheduled = 0;
+  transientManualWeeks = new Set();
+  hiddenTransientTrainerWeeks = new Set();
+  cutBlockId = null;
+  draggedBlockId = null;
+  draggedBlockOffsetMinutes = 0;
+  resizingBlock = null;
+  render();
+  await loadProducts();
+  await loadTrainingContents();
+  await loadMasterDataBlocks();
+  saveProjectDraft();
+  setStatus("Neues Projekt gestartet.");
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   $("#openMenu").addEventListener("click", openSideMenu);
+  $("#newProject").addEventListener("click", startNewProject);
   $("#autoPlan").addEventListener("click", createPlan);
   $("#backToInput").addEventListener("click", () => navigatePage("input"));
   $("#headerInputView").addEventListener("click", () => navigatePage("input"));

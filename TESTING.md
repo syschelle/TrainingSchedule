@@ -1,6 +1,6 @@
 # Schulungsplantool – Internal Tests and Release Checks
 
-Status: **v0.5.0-beta.13 (Pre-Release)**
+Status: **v0.5.0-beta.14 (Pre-Release)**
 
 This document describes the checks performed before a Schulungsplantool release or pre-release. It is updated together with the current application version.
 
@@ -12,10 +12,10 @@ Run the complete suite with:
 python -m pytest -q
 ```
 
-For **v0.5.0-beta.13**, the current local result is:
+For **v0.5.0-beta.14**, the current local result is:
 
 ```text
-172 passed, 2 warnings
+176 passed, 2 warnings
 ```
 
 The two warnings are the known FastAPI deprecation warnings for `@app.on_event("startup")`; they are not test failures.
@@ -24,16 +24,27 @@ The two warnings are the known FastAPI deprecation warnings for `@app.on_event("
 
 | Test file | Count | Focus |
 |---|---:|---|
-| `tests/test_static_paths.py` | 78 | Frontend structure, UI rules, calendar, customer HTML, version regressions, master-data UI wiring |
+| `tests/test_static_paths.py` | 80 | Frontend structure, UI rules, calendar, customer HTML, version regressions, master-data UI wiring |
 | `tests/test_planner.py` | 33 | Automatic planning, breaks, availability, arrival/departure, remote/on-site |
-| `tests/test_project_export.py` | 25 | Project files, PDF, customer HTML, return import and tamper protection |
+| `tests/test_project_export.py` | 27 | Project files, PDF, customer HTML, return import and tamper protection |
 | `tests/test_content_catalog.py` | 10 | Training contents, products, history and persistence |
 | `tests/test_docx_training_content.py` | 6 | DOCX import/export and unsupported-content protection |
 | `tests/test_master_data_collection.py` | 13 | Master-data template seed, extension, ordering, deletion and project compatibility |
 | `tests/test_release_docs.py` | 3 | Root TESTING/SECURITY documentation and version consistency |
 | `tests/test_codeql_workflow.py` | 2 | CodeQL configuration and language matrix |
 | `tests/test_security_regressions.py` | 2 | Security-related regressions |
-| **Total** | **172** | |
+| **Total** | **176** | |
+
+### Beta.14 customer-return and fresh-project coverage
+
+The current suite additionally verifies that:
+
+- customer returns signed with the legacy database-derived exchange key remain valid after a new stable `CUSTOMER_EXCHANGE_SECRET` is configured;
+- an invalid signature is still rejected even when the legacy fallback is enabled;
+- install/update scripts provision a stable exchange secret when it is missing;
+- the image Compose deployment passes `CUSTOMER_EXCHANGE_SECRET` to the application;
+- the UI contains a **Neues Projekt** action;
+- starting a new project removes the browser-local draft and resets the guided workflow to Product.
 
 ## 2. Master Data Collection Regression Coverage
 

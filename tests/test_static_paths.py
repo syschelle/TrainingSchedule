@@ -891,3 +891,30 @@ def test_beta13_master_data_points_no_longer_show_individual_completed_checkbox(
     assert "> Erledigt<" not in project_block
     assert ".master-data-completed" not in css
     assert "Stammdatenerhebung abgeschlossen" in javascript
+
+
+def test_beta14_new_project_clears_local_draft_and_resets_workflow():
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    javascript = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+    assert 'id="newProject"' in html
+    assert '>Neues Projekt<' in html
+    assert 'window.localStorage?.removeItem(PROJECT_DRAFT_STORAGE_KEY)' in javascript
+    assert 'project = makeDefaultProject()' in javascript
+    assert 'currentWorkflowStep = "product"' in javascript
+    assert '$("#newProject").addEventListener("click", startNewProject)' in javascript
+
+
+def test_beta14_customer_exchange_uses_stable_secret_and_legacy_fallback():
+    root = STATIC_DIR.parents[1]
+    exchange = (root / "app" / "server" / "customer_exchange.py").read_text(encoding="utf-8")
+    install = (root / "scripts" / "install.sh").read_text(encoding="utf-8")
+    update = (root / "scripts" / "update.sh").read_text(encoding="utf-8")
+    env_example = (root / ".env.example").read_text(encoding="utf-8")
+    compose = (root / "docker-compose.images.yml").read_text(encoding="utf-8")
+    assert 'CUSTOMER_EXCHANGE_SECRET' in exchange
+    assert 'def _verification_secrets()' in exchange
+    assert '_legacy_database_secret()' in exchange
+    assert 'CUSTOMER_EXCHANGE_SECRET=change-me' in env_example
+    assert 'CUSTOMER_EXCHANGE_SECRET:' in compose
+    assert 'CUSTOMER_EXCHANGE_SECRET wurde fuer stabile Kundenrueckimporte erzeugt.' in install
+    assert 'CUSTOMER_EXCHANGE_SECRET wurde fuer stabile Kundenrueckimporte erzeugt.' in update

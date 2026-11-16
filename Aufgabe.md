@@ -1766,3 +1766,10 @@ Die Version wurde auf `v0.2.36` erhoeht.
 - Die individuelle Checkbox `Erledigt` inklusive Beschriftung rechts oben aus jedem Stammdatenpunkt entfernen.
 - Den Gesamtstatus `Stammdatenerhebung abgeschlossen` auf Terminebene beibehalten.
 - Bestehende Projektdateien mit historischem `completed`-Feld weiterhin akzeptieren.
+
+## Update v0.5.0-beta.14
+
+- Kundenrueckgabe-JSON nach einem Update wieder verlaesslich importieren und anzeigen.
+- Stabilen `CUSTOMER_EXCHANGE_SECRET` fuer neue Kundenpakete einfuehren und alte datenbankbasierte Signaturen weiterhin pruefen.
+- Manipulationsschutz nicht abschwaechen.
+- Sichtbare Aktion `Neues Projekt` ergaenzen, die den lokalen Browserentwurf loescht und die Anwendung vollstaendig zuruecksetzt.
